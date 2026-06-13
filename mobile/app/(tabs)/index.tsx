@@ -12,42 +12,115 @@
  */
 
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TextInput, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../src/design/theme';
-import { TAB_BAR_HEIGHT, spacing, brandColors } from '../../src/design/tokens';
+import { TAB_BAR_HEIGHT, spacing } from '../../src/design/tokens';
+import { RideCard, RideCardData } from '../../src/components/RideCard';
+
+const DUMMY_RIDES: RideCardData[] = [
+  {
+    id: '1',
+    fromCity: 'Chandigarh',
+    toCity: 'Amity University Punjab',
+    date: 'Mon, 15 Jun',
+    time: '08:30 AM',
+    posterName: 'Rahul Verma',
+    posterCollege: 'Amity University Punjab',
+    posterIsVerified: true,
+    seatsLeft: 3,
+    fare: 150,
+    status: 'Active',
+  },
+  {
+    id: '2',
+    fromCity: 'Ambala',
+    toCity: 'Chandigarh',
+    date: 'Tue, 16 Jun',
+    time: '04:00 PM',
+    posterName: 'Priya Singh',
+    posterCollege: 'PEC Chandigarh',
+    seatsLeft: 1,
+    fare: 200,
+    status: 'Pending',
+  },
+  {
+    id: '3',
+    fromCity: 'Delhi',
+    toCity: 'Amity University Punjab',
+    date: 'Fri, 19 Jun',
+    time: '06:00 AM',
+    posterName: 'Aditya Sharma',
+    posterCollege: 'Amity University Punjab',
+    posterIsVerified: true,
+    seatsLeft: 0,
+    fare: 800,
+    status: 'Full',
+  },
+];
 
 export default function ExploreScreen(): React.JSX.Element {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  const renderHeader = () => (
+    <View style={styles.headerContainer}>
+      {/* 
+        Easter Egg hiding BEHIND the physical hardware!
+        Placed absolutely inside the scrolled content at top: 15 (relative to screen top at rest).
+        Because FlatList has paddingTop: insets.top, we negate the padding to place it at physical Y=15.
+      */}
+      {insets.top > 20 && (
+        <View style={[styles.easterEggContainer, { top: -(Math.max(insets.top, spacing.xl)) + 15, zIndex: 999 }]} pointerEvents="none">
+          <Text style={[styles.easterEggText, { color: colors.interactive.primary }]}>
+            🚗 beep beep!
+          </Text>
+        </View>
+      )}
+
+      <View style={styles.headerTop}>
+        <Text style={[styles.title, { color: colors.text.primary }]}>Explore</Text>
+        <Pressable 
+          style={[styles.filterButton, { backgroundColor: colors.background.subtle }]}
+          accessibilityLabel="Filter rides"
+          accessibilityRole="button"
+        >
+          <Ionicons name="options-outline" size={24} color={colors.text.primary} />
+        </Pressable>
+      </View>
+
+      <View style={[styles.searchContainer, { backgroundColor: colors.background.subtle, borderColor: colors.border.default }]}>
+        <Ionicons name="search" size={20} color={colors.text.placeholder} style={styles.searchIcon} />
+        <TextInput 
+          style={[styles.searchInput, { color: colors.text.primary }]}
+          placeholder="Where are you going?"
+          placeholderTextColor={colors.text.placeholder}
+          editable={false}
+          pointerEvents="none"
+        />
+      </View>
+    </View>
+  );
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background.primary }]}
-      contentContainerStyle={{ paddingBottom: TAB_BAR_HEIGHT + spacing.md, paddingTop: spacing.xl }}
-      accessibilityRole="none"
-    >
-      <View style={{ paddingHorizontal: spacing.md }}>
-        <Text
-          style={[styles.title, { color: colors.text.primary }]}
-          accessibilityRole="header"
-        >
-          Explore
-        </Text>
-        <Text style={[styles.subtitle, { color: colors.text.secondary, marginBottom: spacing.lg }]}>
-          Scroll down to see the liquid glass tab bar effect!
-        </Text>
-
-        {/* Dummy colorful cards to demonstrate the blur effect */}
-        {[brandColors.electricViolet, brandColors.coralPink, brandColors.mintGreen, brandColors.amber, '#4338ca', '#ec4899', '#14b8a6', '#f59e0b'].map((color, index) => (
-          <View
-            key={index}
-            style={[styles.dummyCard, { backgroundColor: color }]}
-          >
-            <Text style={styles.dummyText}>Ride #{index + 1}</Text>
-          </View>
-        ))}
-      </View>
-    </ScrollView>
+    <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+      <FlatList
+        data={DUMMY_RIDES}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <RideCard ride={item} />}
+        ListHeaderComponent={renderHeader}
+        style={[styles.container, { backgroundColor: 'transparent' }]}
+        contentContainerStyle={{ 
+          paddingBottom: TAB_BAR_HEIGHT + spacing.md, 
+          paddingTop: Math.max(insets.top, spacing.xl),
+          paddingHorizontal: spacing.md
+        }}
+        accessibilityRole="none"
+        showsVerticalScrollIndicator={false}
+      />
+    </View>
   );
 }
 
@@ -55,29 +128,50 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  easterEggContainer: {
+    position: 'absolute',
+    width: '100%',
+    alignItems: 'center',
+  },
+  easterEggText: {
+    fontFamily: 'PlusJakartaSans-800ExtraBold',
+    fontSize: 14,
+  },
+  headerContainer: {
+    marginBottom: spacing.md,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
   title: {
     fontSize: 32,
-    fontWeight: '800',
-    marginBottom: spacing.xs,
+    fontFamily: 'PlusJakartaSans-800ExtraBold',
+    letterSpacing: -0.3,
   },
-  subtitle: {
-    fontSize: 16,
-  },
-  dummyCard: {
-    height: 150,
-    borderRadius: 16,
-    marginBottom: spacing.md,
+  filterButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
   },
-  dummyText: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: 'bold',
-  }
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 52,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
+  },
+  searchIcon: {
+    marginRight: spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontFamily: 'PlusJakartaSans-500Medium',
+    fontSize: 16,
+  },
 });

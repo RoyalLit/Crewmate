@@ -6,7 +6,7 @@ import { WebView } from 'react-native-webview';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 // A premium interactive 3D scene from Spline
 // The user can swipe to rotate the spheres, creating a high-end feel!
@@ -57,13 +57,23 @@ export default function LandingScreen() {
                    <Text style={[styles.buttonText, { color: colors.interactive.primaryText }]}>Get Started</Text>
                  </Pressable>
 
-                 {/* For now, login just routes to register or back. A real Login screen can be added later. */}
                  <Pressable 
                    style={[styles.button, styles.secondaryButton, { borderColor: colors.border.default }]}
-                   onPress={() => router.push('/(auth)/register')}
+                   onPress={() => router.push('/(auth)/login')}
                  >
                    <Text style={[styles.buttonText, { color: colors.text.primary }]}>Log In</Text>
                  </Pressable>
+
+                 {__DEV__ && (
+                   <Pressable 
+                     style={{ alignItems: 'center', marginTop: 12 }}
+                     onPress={() => router.push('/(tabs)')}
+                   >
+                     <Text style={[styles.subtitle, { color: colors.text.placeholder, marginBottom: 0 }]}>
+                       Skip to App (Dev Only)
+                     </Text>
+                   </Pressable>
+                 )}
                </Animated.View>
              </BlurView>
           </Animated.View>

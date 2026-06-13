@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, Dimensions } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,7 +9,6 @@ import Animated, {
   runOnJS,
   withSpring
 } from 'react-native-reanimated';
-import { brandColors } from '../design/tokens';
 
 const { width, height } = Dimensions.get('window');
 

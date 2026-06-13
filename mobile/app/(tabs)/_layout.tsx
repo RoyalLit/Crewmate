@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
+  withTiming,
   interpolateColor,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
@@ -68,6 +68,8 @@ type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
 // ─── Animated Tab Item ─────────────────────────────────────────
 
+import { Easing } from 'react-native-reanimated';
+
 function AnimatedTabItem({
   isFocused,
   route,
@@ -83,15 +85,14 @@ function AnimatedTabItem({
   colors: any;
   isDark: boolean;
 }) {
-  // Use a local derived value that smoothly transitions between 0 (inactive) and 1 (active)
-  // This prevents the "overshoot" width issues caused by Math.abs(sharedIndex - myIndex)
   const progress = useSharedValue(isFocused ? 1 : 0);
 
   React.useEffect(() => {
-    progress.value = withSpring(isFocused ? 1 : 0, {
-      damping: 15,
-      stiffness: 150,
-      mass: 0.6,
+    // withTiming guarantees perfect linear synchronization between the shrinking and growing tabs.
+    // Springs overshoot and cause the total width to fluctuate, causing flexbox jiggle.
+    progress.value = withTiming(isFocused ? 1 : 0, {
+      duration: 250,
+      easing: Easing.out(Easing.cubic),
     });
   }, [isFocused]);
 
