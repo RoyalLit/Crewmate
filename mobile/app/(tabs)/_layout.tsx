@@ -7,7 +7,7 @@
 
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { View, StyleSheet, Pressable, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -40,16 +40,16 @@ const TAB_CONFIGS: TabConfig[] = [
     accessibilityLabel: 'Explore tab — browse available rides',
   },
   {
-    name: 'post',
-    title: 'Post',
-    icon: { active: 'add-circle', inactive: 'add-circle-outline' },
-    accessibilityLabel: 'Post a ride tab',
-  },
-  {
     name: 'rides',
     title: 'Rides',
     icon: { active: 'car', inactive: 'car-outline' },
     accessibilityLabel: 'My rides tab — rides you posted or joined',
+  },
+  {
+    name: 'post',
+    title: 'Post',
+    icon: { active: 'add-circle', inactive: 'add-circle-outline' },
+    accessibilityLabel: 'Post a ride tab',
   },
   {
     name: 'chats',
@@ -100,10 +100,12 @@ function AnimatedTabItem({
   }, [isFocused]);
 
   const animatedContainerStyle = useAnimatedStyle(() => {
-    // 44px inactive width, 96px active width
-    const w = 44 + progress.value * 52;
-
-    const activeBgColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)';
+    // 44px fixed width for icons only
+    const scale = 1 + progress.value * 0.15; // 1 to 1.15 scale when active
+    
+    // We remove the active background color inside the pill since ActiveTabGlow provides it, 
+    // but on Android without glow we might want a subtle tint. Let's keep a subtle tint.
+    const activeBgColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)';
     const bgColor = interpolateColor(
       progress.value,
       [0, 1],
@@ -111,22 +113,15 @@ function AnimatedTabItem({
     );
 
     return {
-      width: w,
+      width: 44,
       backgroundColor: bgColor,
-      borderRadius: 100,
-    };
-  });
-
-  const animatedTextStyle = useAnimatedStyle(() => {
-    return {
-      opacity: progress.value,
-      width: progress.value * 44,
-      marginLeft: progress.value * 4,
+      borderRadius: 22,
+      transform: [{ scale }],
     };
   });
 
   const iconName = isFocused ? config.icon.active : config.icon.inactive;
-  const iconSize = config.iconSize ?? 22;
+  const iconSize = config.iconSize ?? 24;
   const inactiveColor = colors.text.placeholder;
   
   const activeColor = colors.text.primary;
@@ -148,13 +143,8 @@ function AnimatedTabItem({
       accessibilityRole="tab"
       accessibilityState={{ selected: isFocused }}
     >
-      <Animated.View style={[tabStyles.tabItemCore, animatedContainerStyle]}>
+      <Animated.View style={[tabStyles.tabItemCore, animatedContainerStyle, { justifyContent: 'center', alignItems: 'center' }]}>
         <Ionicons name={iconName as IoniconsName} size={iconSize} color={iconColor} />
-        <Animated.View style={[{ overflow: 'hidden' }, animatedTextStyle]}>
-          <Text style={[tabStyles.tabLabelText, { color: activeColor }]} numberOfLines={1}>
-            {config.title}
-          </Text>
-        </Animated.View>
       </Animated.View>
     </Pressable>
   );
@@ -163,10 +153,12 @@ function AnimatedTabItem({
 // ─── Active Tab Glow ────────────────────────────────────────────
 
 function ActiveTabGlow({ activeIndex }: { activeIndex: number }) {
-  const translateX = useSharedValue(60 + activeIndex * 52);
+  // Center of first icon is padding (12) + half icon width (22) = 34
+  // Gap is 8, icon width is 44 -> 52 offset per index
+  const translateX = useSharedValue(34 + activeIndex * 52);
 
   React.useEffect(() => {
-    translateX.value = withTiming(60 + activeIndex * 52, { 
+    translateX.value = withTiming(34 + activeIndex * 52, { 
       duration: 250, 
       easing: Easing.out(Easing.cubic) 
     });
@@ -287,8 +279,8 @@ export default function TabsLayout(): React.JSX.Element {
         screenOptions={{ headerShown: false }}
       >
         <Tabs.Screen name="index" />
-        <Tabs.Screen name="post" />
         <Tabs.Screen name="rides" />
+        <Tabs.Screen name="post" />
         <Tabs.Screen name="chats" />
         <Tabs.Screen name="profile" />
       </Tabs>
@@ -330,7 +322,8 @@ const tabStyles = StyleSheet.create({
     overflow: 'hidden',
   },
   tabPressable: {
-    height: 40,
+    height: 44,
+    width: 44,
     justifyContent: 'center',
     alignItems: 'center',
   },

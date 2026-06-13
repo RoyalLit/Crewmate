@@ -54,8 +54,19 @@ export default function RidesScreen(): React.JSX.Element {
       <View style={[styles.headerContainer, { paddingTop: Math.max(insets.top, spacing.xl) }]}>
         <Text style={[styles.headerTitle, { color: colors.text.primary }]}>My Rides</Text>
         
-        <View style={[styles.segmentedControlContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
-          <Animated.View style={[styles.activePill, animatedPillStyle, { backgroundColor: colors.background.card, shadowOpacity: isDark ? 0 : 0.08 }]} />
+        <View style={[styles.segmentedControlContainer, { backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.05)' }]}>
+          <Animated.View 
+            style={[
+              styles.activePill, 
+              animatedPillStyle, 
+              { 
+                backgroundColor: isDark ? colors.background.subtle : colors.background.card, 
+                shadowOpacity: isDark ? 0 : 0.08,
+                borderWidth: isDark ? 1 : 0,
+                borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'transparent'
+              }
+            ]} 
+          />
           
           <Pressable style={styles.segmentButton} onPress={() => handleTabPress('active')}>
             <Text style={[styles.segmentText, { color: activeTab === 'active' ? colors.text.primary : colors.text.placeholder }]}>Active</Text>

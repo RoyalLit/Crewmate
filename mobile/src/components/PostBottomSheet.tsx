@@ -1,15 +1,26 @@
-import React, { useCallback, useMemo, forwardRef } from 'react';
-import { Text, StyleSheet } from 'react-native';
-import BottomSheet, { BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
+import React, { useCallback, useMemo, forwardRef, useState } from 'react';
+import { View, Text, StyleSheet, TextInput, Pressable } from 'react-native';
+import BottomSheet, { BottomSheetScrollView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../design/theme';
-import { spacing } from '../design/tokens';
+import { spacing, brandColors } from '../design/tokens';
 
 export type PostBottomSheetRef = BottomSheet;
 
 export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
   const { colors, isDark } = useTheme();
 
-  const snapPoints = useMemo(() => ['25%', '50%', '90%'], []);
+  const [step, setStep] = useState(1);
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
+  const [seats, setSeats] = useState(3);
+  const [fare, setFare] = useState('5');
+
+  // If snapPoints changes, the sheet re-evaluates.
+  // We use a high percentage so the keyboard avoiding view has space.
+  const snapPoints = useMemo(() => ['50%', '85%'], []);
 
   const renderBackdrop = useCallback(
     (backdropProps: any) => (
@@ -23,6 +34,125 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
     [isDark]
   );
 
+  const handleNext = () => {
+    if (step < 3) {
+      setStep(step + 1);
+    } else {
+      // Submit
+      alert(`Ride Posted!\nFrom: ${from}\nTo: ${to}\nFare: $${fare}\nSeats: ${seats}`);
+      // @ts-ignore
+      ref?.current?.close();
+      // Reset form
+      setTimeout(() => {
+        setStep(1);
+        setFrom('');
+        setTo('');
+        setDate('');
+        setTime('');
+      }, 500);
+    }
+  };
+
+  const renderStepContent = () => {
+    switch (step) {
+      case 1:
+        return (
+          <>
+            <Text style={[styles.title, { color: colors.text.primary }]}>Where are you heading?</Text>
+            <View style={[styles.inputContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+              <Ionicons name="location-outline" size={20} color={colors.text.placeholder} style={styles.inputIcon} />
+              <TextInput
+                style={[styles.input, { color: colors.text.primary }]}
+                placeholder="Leaving from..."
+                placeholderTextColor={colors.text.placeholder}
+                value={from}
+                onChangeText={setFrom}
+              />
+            </View>
+            <View style={[styles.inputContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+              <Ionicons name="flag-outline" size={20} color={colors.text.placeholder} style={styles.inputIcon} />
+              <TextInput
+                style={[styles.input, { color: colors.text.primary }]}
+                placeholder="Going to..."
+                placeholderTextColor={colors.text.placeholder}
+                value={to}
+                onChangeText={setTo}
+              />
+            </View>
+          </>
+        );
+      case 2:
+        return (
+          <>
+            <Text style={[styles.title, { color: colors.text.primary }]}>When are you leaving?</Text>
+            <View style={[styles.inputContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+              <Ionicons name="calendar-outline" size={20} color={colors.text.placeholder} style={styles.inputIcon} />
+              <TextInput
+                style={[styles.input, { color: colors.text.primary }]}
+                placeholder="Date (e.g. Today)"
+                placeholderTextColor={colors.text.placeholder}
+                value={date}
+                onChangeText={setDate}
+              />
+            </View>
+            <View style={[styles.inputContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+              <Ionicons name="time-outline" size={20} color={colors.text.placeholder} style={styles.inputIcon} />
+              <TextInput
+                style={[styles.input, { color: colors.text.primary }]}
+                placeholder="Time (e.g. 5:30 PM)"
+                placeholderTextColor={colors.text.placeholder}
+                value={time}
+                onChangeText={setTime}
+              />
+            </View>
+          </>
+        );
+      case 3:
+        const totalEarnings = (parseInt(fare) || 0) * seats;
+        return (
+          <>
+            <Text style={[styles.title, { color: colors.text.primary }]}>Set your fare</Text>
+            
+            <View style={styles.stepperContainer}>
+              <Text style={[styles.stepperLabel, { color: colors.text.secondary }]}>Available Seats</Text>
+              <View style={styles.stepperControls}>
+                <Pressable onPress={() => setSeats(Math.max(1, seats - 1))} style={[styles.stepperBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+                  <Ionicons name="remove" size={20} color={colors.text.primary} />
+                </Pressable>
+                <Text style={[styles.stepperValue, { color: colors.text.primary }]}>{seats}</Text>
+                <Pressable onPress={() => setSeats(Math.min(6, seats + 1))} style={[styles.stepperBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+                  <Ionicons name="add" size={20} color={colors.text.primary} />
+                </Pressable>
+              </View>
+            </View>
+
+            <View style={[styles.inputContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+              <Text style={[styles.currencySymbol, { color: colors.text.primary }]}>$</Text>
+              <TextInput
+                style={[styles.input, { color: colors.text.primary, fontSize: 20, fontFamily: 'PlusJakartaSans-700Bold' }]}
+                placeholder="0"
+                keyboardType="numeric"
+                placeholderTextColor={colors.text.placeholder}
+                value={fare}
+                onChangeText={setFare}
+              />
+              <Text style={[styles.perSeat, { color: colors.text.secondary }]}>/ seat</Text>
+            </View>
+
+            <View style={[styles.earningsBox, { backgroundColor: isDark ? 'rgba(123, 97, 255, 0.1)' : '#F3F0FF' }]}>
+              <Ionicons name="wallet" size={24} color={brandColors.electricViolet} />
+              <View style={styles.earningsTextCol}>
+                <Text style={[styles.earningsLabel, { color: brandColors.electricViolet }]}>Estimated Earnings</Text>
+                <Text style={[styles.earningsAmount, { color: brandColors.electricViolet }]}>${totalEarnings}</Text>
+              </View>
+            </View>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <BottomSheet
       ref={ref}
@@ -32,30 +162,133 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
       backdropComponent={renderBackdrop}
       backgroundStyle={{ backgroundColor: colors.background.card }}
       handleIndicatorStyle={{ backgroundColor: colors.text.placeholder }}
+      keyboardBehavior="extend" // Ensures sheet pushes up when keyboard opens
     >
-      <BottomSheetView style={styles.contentContainer}>
-        <Text style={[styles.title, { color: colors.text.primary }]}>Post a Ride</Text>
-        <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
-          Where are you heading?
-        </Text>
-      </BottomSheetView>
+      <BottomSheetScrollView contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
+        {renderStepContent()}
+
+        <View style={styles.footerRow}>
+          {step > 1 && (
+            <Pressable 
+              style={[styles.backButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} 
+              onPress={() => setStep(step - 1)}
+            >
+              <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            </Pressable>
+          )}
+          <Pressable style={[styles.nextButton, { flex: 1, backgroundColor: brandColors.electricViolet }]} onPress={handleNext}>
+            <Text style={styles.nextText}>{step === 3 ? 'Post Ride' : 'Continue'}</Text>
+          </Pressable>
+        </View>
+      </BottomSheetScrollView>
     </BottomSheet>
   );
 });
 
 const styles = StyleSheet.create({
   contentContainer: {
-    flex: 1,
     padding: spacing.xl,
-    alignItems: 'center',
+    paddingBottom: spacing['2xl'] * 2, // extra padding for keyboard
   },
   title: {
     fontFamily: 'PlusJakartaSans-800ExtraBold',
-    fontSize: 24,
-    marginBottom: spacing.xs,
+    fontSize: 26,
+    marginBottom: spacing.xl,
   },
-  subtitle: {
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    height: 56,
+    borderRadius: 16,
+    marginBottom: spacing.md,
+  },
+  inputIcon: {
+    marginRight: spacing.sm,
+  },
+  input: {
+    flex: 1,
+    height: '100%',
     fontFamily: 'PlusJakartaSans-500Medium',
     fontSize: 16,
+  },
+  currencySymbol: {
+    fontFamily: 'PlusJakartaSans-700Bold',
+    fontSize: 20,
+    marginRight: 4,
+  },
+  perSeat: {
+    fontFamily: 'PlusJakartaSans-600SemiBold',
+    fontSize: 14,
+  },
+  stepperContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  stepperLabel: {
+    fontFamily: 'PlusJakartaSans-600SemiBold',
+    fontSize: 16,
+  },
+  stepperControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+  },
+  stepperBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stepperValue: {
+    fontFamily: 'PlusJakartaSans-800ExtraBold',
+    fontSize: 20,
+    width: 20,
+    textAlign: 'center',
+  },
+  earningsBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.lg,
+    borderRadius: 16,
+    marginTop: spacing.md,
+    gap: spacing.md,
+  },
+  earningsTextCol: {
+    flex: 1,
+  },
+  earningsLabel: {
+    fontFamily: 'PlusJakartaSans-600SemiBold',
+    fontSize: 14,
+  },
+  earningsAmount: {
+    fontFamily: 'PlusJakartaSans-800ExtraBold',
+    fontSize: 24,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginTop: spacing.xl,
+  },
+  backButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  nextButton: {
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  nextText: {
+    fontFamily: 'PlusJakartaSans-700Bold',
+    fontSize: 18,
+    color: '#FFFFFF',
   },
 });

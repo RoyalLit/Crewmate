@@ -24,11 +24,14 @@ export function TicketRideCard({ status, date, time, from, to, price, driver }: 
   };
 
   const statusColor = getStatusColor();
+  const borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  const dualToneBg = isDark ? `${statusColor}15` : `${statusColor}08`;
 
   return (
     <View style={styles.container}>
+      
       {/* Top Ticket Portion */}
-      <View style={[styles.ticketTop, { backgroundColor: colors.background.card, borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
+      <View style={[styles.ticketTop, { backgroundColor: colors.background.card, borderColor }]}>
         <View style={styles.headerRow}>
           <Text style={[styles.dateText, { color: colors.text.secondary }]}>{date} • {time}</Text>
           <View style={[styles.statusBadge, { backgroundColor: `${statusColor}20` }]}>
@@ -52,22 +55,31 @@ export function TicketRideCard({ status, date, time, from, to, price, driver }: 
       </View>
 
       {/* Perforation Line and Cutouts */}
-      <View style={[styles.perforationContainer, { backgroundColor: colors.background.card, borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
+      <View style={styles.perforationContainer}>
+        {/* Top half gets card background, bottom half gets dual-tone background */}
+        <View style={[styles.perfHalf, { backgroundColor: colors.background.card }]} />
+        <View style={[styles.perfHalf, { backgroundColor: dualToneBg }]} />
+        
+        <View style={styles.dashedLineWrapper}>
+          <View style={[styles.dashedLine, { borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]} />
+        </View>
+
+        {/* The cutouts MUST match the page background perfectly. Without shadows, this is a 100% match. */}
         <View style={[styles.cutout, styles.cutoutLeft, { backgroundColor: colors.background.primary }]} />
-        <View style={[styles.dashedLine, { borderColor: colors.border.default }]} />
         <View style={[styles.cutout, styles.cutoutRight, { backgroundColor: colors.background.primary }]} />
       </View>
 
-      {/* Bottom Ticket Portion */}
-      <View style={[styles.ticketBottom, { backgroundColor: colors.background.card, borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
+      {/* Bottom Ticket Portion (Dual Tone) */}
+      <View style={[styles.ticketBottom, { backgroundColor: dualToneBg, borderColor }]}>
         <View style={styles.driverInfo}>
-          <View style={styles.driverAvatar}>
+          <View style={[styles.driverAvatar, { backgroundColor: statusColor }]}>
             <Ionicons name="person" size={16} color="#FFFFFF" />
           </View>
           <Text style={[styles.driverName, { color: colors.text.primary }]}>{driver}</Text>
         </View>
         <Text style={[styles.priceText, { color: colors.text.primary }]}>{price}</Text>
       </View>
+
     </View>
   );
 }
@@ -75,18 +87,60 @@ export function TicketRideCard({ status, date, time, from, to, price, driver }: 
 const styles = StyleSheet.create({
   container: {
     marginVertical: spacing.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
+    // Removed ALL shadows so the cutout color matches the page background exactly.
   },
   ticketTop: {
     padding: spacing.xl,
+    paddingBottom: spacing.lg,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderWidth: 1,
     borderBottomWidth: 0,
+  },
+  perforationContainer: {
+    height: 30,
+    position: 'relative',
+    // NO borders! So no border peeks behind the cutouts.
+  },
+  perfHalf: {
+    flex: 1,
+  },
+  dashedLineWrapper: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    overflow: 'hidden',
+  },
+  dashedLine: {
+    height: 2,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    marginTop: -1,
+  },
+  cutout: {
+    position: 'absolute',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    top: 0,
+    zIndex: 10,
+  },
+  cutoutLeft: {
+    left: -15, // exactly centered on the edge
+  },
+  cutoutRight: {
+    right: -15, // exactly centered on the edge
+  },
+  ticketBottom: {
+    padding: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    borderWidth: 1,
+    borderTopWidth: 0,
   },
   headerRow: {
     flexDirection: 'row',
@@ -128,43 +182,6 @@ const styles = StyleSheet.create({
   routeArrow: {
     paddingHorizontal: spacing.md,
   },
-  perforationContainer: {
-    height: 30,
-    justifyContent: 'center',
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    overflow: 'hidden', // Need this so cutouts don't overflow the container borders if any
-  },
-  cutout: {
-    position: 'absolute',
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    top: 0,
-    zIndex: 10,
-  },
-  cutoutLeft: {
-    left: -16,
-  },
-  cutoutRight: {
-    right: -16,
-  },
-  dashedLine: {
-    borderBottomWidth: 2,
-    borderStyle: 'dashed',
-    marginHorizontal: 24,
-  },
-  ticketBottom: {
-    padding: spacing.lg,
-    paddingHorizontal: spacing.xl,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    borderWidth: 1,
-    borderTopWidth: 0,
-  },
   driverInfo: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -174,7 +191,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: brandColors.electricViolet,
     justifyContent: 'center',
     alignItems: 'center',
   },
