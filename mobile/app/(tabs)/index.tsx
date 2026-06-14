@@ -1,73 +1,35 @@
 /**
  * Explore tab — Home feed screen.
- *
- * Placeholder screen. The rides feed, filter UI, and ride cards are
- * implemented in the rides feature PR.
- *
- * Per AGENT_RULES.md §8.7: no data fetching here.
- * Per AGENT_RULES.md §8.4: screen components receive navigation props
- * and render UI — no business logic.
- *
- * // WIP(phase 1 of 6): Foundation scaffold — screen content added in rides feature PR
  */
-
-import React from 'react';
-import { StyleSheet, Text, View, FlatList, TextInput, Pressable, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, FlatList, Pressable, Platform, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '../../src/design/theme';
 import { TAB_BAR_HEIGHT, spacing, brandColors } from '../../src/design/tokens';
-import { RideCard, RideCardData } from '../../src/components/RideCard';
-
+import { RideCard } from '../../src/components/RideCard';
 import { useThemeStore } from '../../src/store/themeStore';
-
-const DUMMY_RIDES: RideCardData[] = [
-  {
-    id: '1',
-    fromCity: 'Amity Univ, Noida',
-    toCity: 'Delhi',
-    date: 'Today',
-    time: '4:30 PM',
-    posterName: 'Rahul Verma',
-    posterCollege: 'Amity University Punjab',
-    posterIsVerified: true,
-    seatsLeft: 3,
-    fare: 150,
-    status: 'Active',
-  },
-  {
-    id: '2',
-    fromCity: 'North Campus',
-    toCity: 'Gurugram Sec 14',
-    date: 'Today',
-    time: '5:00 PM',
-    posterName: 'Priya Singh',
-    posterCollege: 'Delhi Univ, North',
-    posterIsVerified: true,
-    seatsLeft: 1,
-    fare: 200,
-    status: 'Pending',
-  },
-  {
-    id: '3',
-    fromCity: 'Delhi',
-    toCity: 'Amity University Punjab',
-    date: 'Fri, 19 Jun',
-    time: '06:00 AM',
-    posterName: 'Aditya Sharma',
-    posterCollege: 'Amity University Punjab',
-    posterIsVerified: true,
-    seatsLeft: 0,
-    fare: 800,
-    status: 'Full',
-  },
-];
+import { useBrowseRidesQuery } from '../../src/api/ridesHooks';
+import { CityAutocomplete } from '../../src/components/CityAutocomplete';
 
 export default function ExploreScreen(): React.JSX.Element {
   const { colors, isDark } = useTheme();
   const setPreference = useThemeStore((state) => state.setPreference);
   const insets = useSafeAreaInsets();
+
+  const [fromCityFilter, setFromCityFilter] = useState('');
+  const [toCityFilter, setToCityFilter] = useState('');
+  
+  // Real API Query
+  const { data, isLoading, isError, refetch, isRefetching } = useBrowseRidesQuery({
+    fromCity: fromCityFilter,
+    toCity: toCityFilter,
+    page: 1,
+    limit: 20
+  });
+
+  const rides = data?.data?.rides || [];
 
   const shadowStyle = isDark
     ? { borderWidth: 1, borderColor: '#2E2E4A' }
@@ -81,95 +43,90 @@ export default function ExploreScreen(): React.JSX.Element {
         elevation: 2,
       };
 
-  const renderHeader = () => (
-    <View style={styles.headerContainer}>
-      {/* 
-        Easter Egg hiding BEHIND the physical hardware!
-        Only applies to iOS since Android punch-holes/bezels vary drastically.
-      */}
-      {Platform.OS === 'ios' && insets.top > 20 && (
-        <View style={[styles.easterEggContainer, { top: -(Math.max(insets.top, spacing.xl)) + 15, zIndex: 999 }]} pointerEvents="none">
-          <Text style={[styles.easterEggText, { color: colors.interactive.primary }]}>
-            🚗 beep beep!
-          </Text>
-        </View>
-      )}
-
-      <View style={styles.headerTop}>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: colors.text.primary }]}>Find your crew.</Text>
-          <Text style={[styles.subtitle, { color: colors.text.secondary }]}>Where are you heading today?</Text>
-        </View>
-        <Pressable 
-          onPress={() => setPreference(isDark ? 'light' : 'dark')}
-          style={[styles.themeToggle, { backgroundColor: colors.background.subtle }]}
-          accessibilityLabel="Toggle Theme"
-          accessibilityRole="button"
-        >
-          <Ionicons name={isDark ? "sunny" : "moon"} size={22} color={colors.text.primary} />
-        </Pressable>
-      </View>
-
-      {/* Advanced Search Card */}
-      <View style={[styles.searchCard, { backgroundColor: colors.background.card }, shadowStyle]}>
-        
-        {/* Timeline for Search */}
-        <View style={styles.searchTimelineContainer}>
-          <View style={styles.searchTimeline}>
-            <Ionicons name="location" size={16} color={brandColors.electricViolet} />
-            <View style={[styles.searchTimelineLine, { backgroundColor: colors.border.default }]} />
-            <Ionicons name="location-outline" size={16} color={brandColors.coralPink} />
-          </View>
-          
-          <View style={styles.searchInputs}>
-            <View style={[styles.searchInputWrapper, { backgroundColor: colors.background.subtle }]}>
-              <TextInput 
-                style={[styles.searchInput, { color: colors.text.primary }]}
-                placeholder="Leaving from..."
-                placeholderTextColor={colors.text.placeholder}
-              />
-            </View>
-            <View style={[styles.searchInputWrapper, { backgroundColor: colors.background.subtle, marginTop: spacing.sm }]}>
-              <TextInput 
-                style={[styles.searchInput, { color: colors.text.primary }]}
-                placeholder="Going to..."
-                placeholderTextColor={colors.text.placeholder}
-              />
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.searchActions}>
-          <Pressable style={[styles.dateButton, { backgroundColor: colors.background.subtle }]}>
-            <Ionicons name="calendar-outline" size={18} color={colors.text.primary} style={{ marginRight: 8 }} />
-            <Text style={[styles.dateButtonText, { color: colors.text.primary }]}>Today</Text>
-          </Pressable>
-          <Pressable style={[styles.searchButton, { backgroundColor: brandColors.electricViolet }]}>
-            <Text style={styles.searchButtonText}>Search</Text>
-          </Pressable>
-        </View>
-      </View>
-      
-      <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Active Rides</Text>
-    </View>
-  );
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
-      <FlatList
-        data={DUMMY_RIDES}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <RideCard ride={item} />}
-        ListHeaderComponent={renderHeader}
-        style={[styles.container, { backgroundColor: 'transparent' }]}
-        contentContainerStyle={{ 
-          paddingBottom: TAB_BAR_HEIGHT + spacing.md, 
-          paddingTop: Math.max(insets.top, spacing.xl),
-          paddingHorizontal: spacing.md
-        }}
-        accessibilityRole="none"
-        showsVerticalScrollIndicator={false}
-      />
+      {/* Header rendered OUTSIDE FlatList to allow CityAutocomplete dropdowns to escape clipping */}
+      <View style={{ paddingTop: Math.max(insets.top, spacing.xl), paddingHorizontal: spacing.md, zIndex: 10 }}>
+        {Platform.OS === 'ios' && insets.top > 20 && (
+          <View style={[styles.easterEggContainer, { top: 15 }]} pointerEvents="none">
+            <Text style={[styles.easterEggText, { color: colors.interactive.primary }]}>🚗 beep beep!</Text>
+          </View>
+        )}
+
+        <View style={styles.headerTop}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.title, { color: colors.text.primary }]}>Find your crew.</Text>
+            <Text style={[styles.subtitle, { color: colors.text.secondary }]}>Where are you heading today?</Text>
+          </View>
+          <Pressable 
+            onPress={() => setPreference(isDark ? 'light' : 'dark')}
+            style={[styles.themeToggle, { backgroundColor: colors.background.subtle }]}
+          >
+            <Ionicons name={isDark ? "sunny" : "moon"} size={22} color={colors.text.primary} />
+          </Pressable>
+        </View>
+
+        {/* Search Card */}
+        <View style={[styles.searchCard, { backgroundColor: colors.background.card, zIndex: 20 }, shadowStyle]}>
+          <View style={styles.searchTimelineContainer}>
+            <View style={styles.searchTimeline}>
+              <Ionicons name="location" size={16} color={brandColors.electricViolet} />
+              <View style={[styles.searchTimelineLine, { backgroundColor: colors.border.default }]} />
+              <Ionicons name="location-outline" size={16} color={brandColors.coralPink} />
+            </View>
+            
+            <View style={styles.searchInputs}>
+              {/* Z-index matters here: top one needs higher z-index so its dropdown covers the bottom one */}
+              <View style={{ zIndex: 2 }}>
+                <CityAutocomplete 
+                  value={fromCityFilter}
+                  onChange={setFromCityFilter}
+                  placeholder="Leaving from..."
+                  iconName="car-outline"
+                />
+              </View>
+              <View style={{ marginTop: spacing.sm, zIndex: 1 }}>
+                <CityAutocomplete 
+                  value={toCityFilter}
+                  onChange={setToCityFilter}
+                  placeholder="Going to..."
+                  iconName="flag-outline"
+                />
+              </View>
+            </View>
+          </View>
+        </View>
+        
+        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Active Rides</Text>
+      </View>
+
+      {/* Rides List */}
+      <View style={{ flex: 1, zIndex: 1 }}>
+        {isLoading ? (
+          <ActivityIndicator size="large" color={colors.interactive.primary} style={{ marginTop: 40 }} />
+        ) : isError ? (
+          <Text style={{ textAlign: 'center', marginTop: 40, color: colors.text.secondary }}>Failed to load rides.</Text>
+        ) : rides.length === 0 ? (
+          <Text style={{ textAlign: 'center', marginTop: 40, color: colors.text.secondary }}>
+            No rides found for this route.
+          </Text>
+        ) : (
+          <FlatList
+            data={rides}
+            keyExtractor={(item: any) => item.id || item._id}
+            renderItem={({ item }) => <RideCard ride={item} />}
+            style={[styles.container, { backgroundColor: 'transparent' }]}
+            contentContainerStyle={{ 
+              paddingBottom: TAB_BAR_HEIGHT + spacing.md, 
+              paddingHorizontal: spacing.md,
+              paddingTop: spacing.md
+            }}
+            showsVerticalScrollIndicator={false}
+            refreshing={isRefetching}
+            onRefresh={refetch}
+          />
+        )}
+      </View>
     </View>
   );
 }
@@ -182,13 +139,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: '100%',
     alignItems: 'center',
+    zIndex: 999,
   },
   easterEggText: {
     fontFamily: 'PlusJakartaSans-800ExtraBold',
     fontSize: 14,
-  },
-  headerContainer: {
-    marginBottom: spacing.sm,
   },
   headerTop: {
     flexDirection: 'row',
@@ -220,7 +175,6 @@ const styles = StyleSheet.create({
   },
   searchTimelineContainer: {
     flexDirection: 'row',
-    marginBottom: spacing.md,
   },
   searchTimeline: {
     alignItems: 'center',
@@ -235,44 +189,6 @@ const styles = StyleSheet.create({
   },
   searchInputs: {
     flex: 1,
-  },
-  searchInputWrapper: {
-    height: 48,
-    borderRadius: 12,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.md,
-  },
-  searchInput: {
-    fontFamily: 'PlusJakartaSans-500Medium',
-    fontSize: 15,
-  },
-  searchActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  dateButton: {
-    flex: 1,
-    height: 48,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dateButtonText: {
-    fontFamily: 'PlusJakartaSans-600SemiBold',
-    fontSize: 15,
-  },
-  searchButton: {
-    flex: 1,
-    height: 48,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  searchButtonText: {
-    color: '#FFFFFF',
-    fontFamily: 'PlusJakartaSans-700Bold',
-    fontSize: 15,
   },
   sectionTitle: {
     fontSize: 20,

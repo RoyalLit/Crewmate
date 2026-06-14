@@ -46,6 +46,15 @@ export function useUpdateProfileMutation() {
   });
 }
 
+export function useResendOtpMutation() {
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const response = await apiClient.post('/auth/resend-otp', data);
+      return response.data;
+    },
+  });
+}
+
 export function useLogoutMutation() {
   return useMutation({
     mutationFn: async () => {

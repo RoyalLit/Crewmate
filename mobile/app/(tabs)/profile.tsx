@@ -25,7 +25,7 @@ export default function ProfileScreen(): React.JSX.Element {
   
   const handleLogout = async () => {
     try {
-      await logoutMutation.mutateAsync({});
+      await logoutMutation.mutateAsync();
     } catch (e) {
       // ignore
     } finally {

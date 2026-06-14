@@ -1,37 +1,28 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, Pressable, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Pressable, Dimensions, ActivityIndicator, Alert } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../src/design/theme';
 import { TAB_BAR_HEIGHT, spacing } from '../../src/design/tokens';
 import { TicketRideCard } from '../../src/components/TicketRideCard';
+import { useMyRidesQuery, useCancelRideMutation } from '../../src/api/ridesHooks';
 
 const { width } = Dimensions.get('window');
-
-// Dummy data
-const ACTIVE_RIDES = [
-  { id: '1', status: 'active' as const, date: 'Today', time: '5:30 PM', from: 'Campus', to: 'Downtown', price: '$4.50', driver: 'Alex R.' },
-];
-
-const PAST_RIDES = [
-  { id: '2', status: 'completed' as const, date: 'Yesterday', time: '9:00 AM', from: 'Downtown', to: 'Campus', price: '$4.50', driver: 'Sarah J.' },
-  { id: '3', status: 'cancelled' as const, date: 'Mon, Oct 12', time: '1:15 PM', from: 'Campus', to: 'Airport', price: '$12.00', driver: 'Mike T.' },
-];
 
 export default function RidesScreen(): React.JSX.Element {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
 
+  const { data, isLoading, isError } = useMyRidesQuery();
+  const cancelMutation = useCancelRideMutation();
+
   // Shared value for the sliding pill
   const translateX = useSharedValue(0);
 
   const handleTabPress = (tab: 'active' | 'history') => {
     setActiveTab(tab);
-    // The segmented control has padding 4px on each side.
-    // Total width is window.width - 2*spacing.lg.
-    // Each button is roughly half of (Total width - 8px).
     const segmentWidth = (width - spacing.lg * 2 - 8) / 2;
     translateX.value = withSpring(tab === 'active' ? 0 : segmentWidth, {
       mass: 0.8,
@@ -46,7 +37,34 @@ export default function RidesScreen(): React.JSX.Element {
     };
   });
 
-  const displayRides = activeTab === 'active' ? ACTIVE_RIDES : PAST_RIDES;
+  const allRides = data?.data?.rides || [];
+  
+  // Active rides are those not cancelled and date is in future/today
+  const activeRides = allRides.filter((r: any) => r.status === 'active');
+  const pastRides = allRides.filter((r: any) => r.status === 'cancelled' || r.status === 'expired');
+
+  const displayRides = activeTab === 'active' ? activeRides : pastRides;
+
+  const handleCancelRide = (rideId: string) => {
+    Alert.alert(
+      "Cancel Ride",
+      "Are you sure you want to cancel this ride? This action cannot be undone.",
+      [
+        { text: "No", style: "cancel" },
+        { 
+          text: "Yes, Cancel", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await cancelMutation.mutateAsync(rideId);
+            } catch (e: any) {
+              Alert.alert('Error', e.response?.data?.error?.message || 'Failed to cancel ride');
+            }
+          }
+        }
+      ]
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
@@ -88,11 +106,28 @@ export default function RidesScreen(): React.JSX.Element {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {displayRides.map((ride) => (
-          <TicketRideCard key={ride.id} {...ride} />
+        {isLoading && <ActivityIndicator size="large" color={colors.interactive.primary} style={{ marginTop: 40 }} />}
+        
+        {!isLoading && isError && (
+          <Text style={{ textAlign: 'center', marginTop: 40, color: colors.text.secondary }}>Failed to load rides.</Text>
+        )}
+
+        {!isLoading && !isError && displayRides.map((ride: any) => (
+          <Pressable 
+            key={ride.id || ride._id}
+            onLongPress={() => ride.status === 'active' ? handleCancelRide(ride.id || ride._id) : null}
+            delayLongPress={500}
+          >
+            <TicketRideCard ride={ride} />
+            {ride.status === 'active' && (
+              <Text style={{ textAlign: 'center', fontSize: 12, color: colors.text.secondary, marginTop: -4, marginBottom: 8 }}>
+                Long press to cancel
+              </Text>
+            )}
+          </Pressable>
         ))}
 
-        {displayRides.length === 0 && (
+        {!isLoading && !isError && displayRides.length === 0 && (
           <View style={styles.emptyState}>
             <Text style={[styles.emptyText, { color: colors.text.secondary }]}>No rides found.</Text>
           </View>
@@ -108,7 +143,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.md,
   },
   headerTitle: {
     fontFamily: 'PlusJakartaSans-800ExtraBold',
@@ -117,7 +152,8 @@ const styles = StyleSheet.create({
   },
   segmentedControlContainer: {
     flexDirection: 'row',
-    borderRadius: 12,
+    height: 44,
+    borderRadius: 22,
     padding: 4,
     position: 'relative',
   },
@@ -125,28 +161,27 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 4,
     left: 4,
-    bottom: 4,
+    height: 36,
     width: (width - spacing.lg * 2 - 8) / 2,
-    borderRadius: 8,
+    borderRadius: 18,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 8,
-    elevation: 2,
   },
   segmentButton: {
     flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1, // Ensure text is above the pill
+    alignItems: 'center',
+    zIndex: 1,
   },
   segmentText: {
-    fontFamily: 'PlusJakartaSans-700Bold',
+    fontFamily: 'PlusJakartaSans-600SemiBold',
     fontSize: 15,
   },
   emptyState: {
-    paddingVertical: 40,
+    paddingVertical: spacing['3xl'],
     alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyText: {
     fontFamily: 'PlusJakartaSans-500Medium',

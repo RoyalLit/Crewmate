@@ -40,7 +40,7 @@ SplashScreen.preventAutoHideAsync();
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function RootLayout(): React.JSX.Element | null {
-  const [bootComplete, setBootComplete] = useState(false);
+  const [animationDone, setAnimationDone] = useState(false);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const { isAuthenticated, login } = useAuthStore();
   const segments = useSegments();
@@ -112,7 +112,7 @@ export default function RootLayout(): React.JSX.Element | null {
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
           </Stack>
-          {(!bootComplete || !isAuthChecked) && <BootScreen onAnimationDone={() => setBootComplete(true)} />}
+          {(!animationDone || !isAuthChecked) && <BootScreen onAnimationDone={() => setAnimationDone(true)} />}
         </ThemeProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

@@ -5,27 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../design/theme';
 import { brandColors, spacing } from '../design/tokens';
 import { Avatar } from './Avatar';
-import { StatusChip, RideStatus } from './StatusChip';
+import { StatusChip } from './StatusChip';
 import { SeatsBadge } from './SeatsBadge';
 
-// Temporary type until we connect the backend
-export interface RideCardData {
-  id: string;
-  fromCity: string;
-  toCity: string;
-  date: string;
-  time: string;
-  posterName: string;
-  posterCollege: string;
-  posterAvatar?: string;
-  posterIsVerified?: boolean;
-  seatsLeft: number;
-  fare: number;
-  status: RideStatus;
-}
-
 interface RideCardProps {
-  ride: RideCardData;
+  ride: any; // Using any for now to handle both dummy and real API data shapes flexibly
   onPress?: () => void;
 }
 
@@ -83,10 +67,10 @@ export function RideCard({ ride, onPress }: RideCardProps) {
         <View style={styles.dateContainer}>
           <Ionicons name="calendar-outline" size={16} color={colors.text.secondary} />
           <Text style={[styles.dateText, { color: colors.text.secondary }]}>
-            {ride.date}
+            {ride.departureDate || ride.date}
           </Text>
         </View>
-        <StatusChip status={ride.status} />
+        <StatusChip status={ride.status as any} />
       </View>
 
       {/* Route Timeline */}
@@ -99,21 +83,26 @@ export function RideCard({ ride, onPress }: RideCardProps) {
 
         <View style={styles.routeLocations}>
           <View style={styles.locationRow}>
+            <Text style={[styles.timeText, { color: colors.text.primary }]}>
+              {ride.departureTime || ride.time}
+            </Text>
             <Text style={[styles.cityText, { color: colors.text.primary }]} numberOfLines={1}>
               {ride.fromCity}
             </Text>
-            <Text style={[styles.timeText, { color: colors.text.primary }]}>
-              {ride.time}
-            </Text>
           </View>
-          <View style={styles.locationRow}>
+          
+          <View style={[styles.locationRow, { marginTop: 12 }]}>
+            <Text style={[styles.timeText, { color: colors.text.primary }]}>
+              {/* No arrival time yet, just placeholder dash */}
+              --:--
+            </Text>
             <Text style={[styles.cityText, { color: colors.text.primary }]} numberOfLines={1}>
               {ride.toCity}
             </Text>
             {/* Hardcoded arrival estimation placeholder like the Stitch design */}
             <Text style={[styles.timeText, { color: colors.text.secondary }]}>
               {/* This will eventually be calculated, e.g., ~5:45 PM */}
-              ~ {ride.time.replace(/([0-9]+):([0-9]+) (AM|PM)/, (_, h) => `${parseInt(h) + 1}:45 ${parseInt(h) >= 11 && parseInt(h) !== 12 ? 'PM' : 'AM'}`)}
+              ~ {(ride.departureTime || ride.time || '12:00').replace(/([0-9]+):([0-9]+) (AM|PM)/, (_: any, h: string) => `${parseInt(h) + 1}:45 ${parseInt(h) >= 11 && parseInt(h) !== 12 ? 'PM' : 'AM'}`)}
             </Text>
           </View>
         </View>
@@ -128,16 +117,16 @@ export function RideCard({ ride, onPress }: RideCardProps) {
         <View style={styles.posterInfo}>
           <Avatar
             size="sm"
-            name={ride.posterName}
-            imageUrl={ride.posterAvatar}
-            isVerified={ride.posterIsVerified}
+            name={ride.poster ? `${ride.poster.firstName} ${ride.poster.lastName}` : ride.posterName}
+            imageUrl={ride.poster?.profilePicture || ride.posterAvatar}
+            isVerified={ride.poster?.isVerified ?? ride.posterIsVerified}
           />
           <View style={styles.posterTextContainer}>
             <Text style={[styles.posterName, { color: colors.text.primary }]} numberOfLines={1}>
-              {ride.posterName}
+              {ride.poster ? `${ride.poster.firstName} ${ride.poster.lastName}` : ride.posterName}
             </Text>
             <Text style={[styles.posterCollege, { color: colors.text.secondary }]} numberOfLines={1}>
-              {ride.posterCollege}
+              {ride.poster?.college || ride.posterCollege}
             </Text>
           </View>
         </View>
@@ -145,9 +134,9 @@ export function RideCard({ ride, onPress }: RideCardProps) {
         {/* Right: Fare & Seats */}
         <View style={styles.fareContainer}>
           <Text style={[styles.fareText, { color: colors.text.primary }]}>
-            ₹{ride.fare}
+            ₹{ride.farePerSeat || ride.fare}
           </Text>
-          <SeatsBadge seatsLeft={ride.seatsLeft} />
+          <SeatsBadge seatsLeft={ride.availableSeats ?? ride.seatsLeft} />
         </View>
       </View>
     </AnimatedPressable>

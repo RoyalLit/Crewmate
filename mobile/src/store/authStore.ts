@@ -6,9 +6,11 @@ interface User {
   name: string;
   email: string;
   college: string;
-  city: string;
-  avatarUrl?: string;
-  isVerified: boolean;
+  homeCity?: string;
+  profilePhotoUrl?: string;
+  isEmailVerified: boolean;
+  status: string;
+  createdAt: Date;
 }
 
 interface AuthState {
@@ -27,7 +29,9 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: (user) => set({ isAuthenticated: true, user }),
   logout: () => {
-    AsyncStorage.removeItem('crewmute_token');
+    AsyncStorage.removeItem('crewmute_token').catch((e) => {
+      console.error('Failed to clear auth token', e);
+    });
     set({ isAuthenticated: false, user: null });
   },
   updateProfile: (data) =>

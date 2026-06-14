@@ -3,6 +3,7 @@ import { authController } from './auth.controller';
 import { 
   registerValidator, 
   verifyOtpValidator, 
+  resendOtpValidator,
   loginValidator 
 } from './auth.validators';
 import validate from '../../middleware/validate';
@@ -13,6 +14,7 @@ const router = Router();
 // Public routes
 router.post('/register', registerValidator, validate, authController.register);
 router.post('/verify-otp', verifyOtpValidator, validate, authController.verifyOTP);
+router.post('/resend-otp', resendOtpValidator, validate, authController.resendOTP);
 router.post('/login', loginValidator, validate, authController.login);
 router.post('/refresh', authController.refreshToken); // Payload is validated inline in controller
 

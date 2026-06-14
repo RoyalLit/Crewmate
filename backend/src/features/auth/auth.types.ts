@@ -10,6 +10,10 @@ export interface VerifyOTPRequestDTO {
   otp: string;
 }
 
+export interface ResendOTPRequestDTO {
+  email: string;
+}
+
 export interface LoginRequestDTO {
   email: string;
   password?: string;

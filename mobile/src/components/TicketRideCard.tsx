@@ -5,22 +5,16 @@ import { useTheme } from '../design/theme';
 import { spacing, brandColors } from '../design/tokens';
 
 interface TicketRideCardProps {
-  status: 'active' | 'completed' | 'cancelled';
-  date: string;
-  time: string;
-  from: string;
-  to: string;
-  price: string;
-  driver: string;
+  ride: any; // Using any for now to handle backend RideResponseDTO
 }
 
-export function TicketRideCard({ status, date, time, from, to, price, driver }: TicketRideCardProps) {
+export function TicketRideCard({ ride }: TicketRideCardProps) {
   const { colors, isDark } = useTheme();
 
   const getStatusColor = () => {
-    if (status === 'active') return brandColors.mintGreen;
-    if (status === 'completed') return brandColors.electricViolet;
-    return brandColors.coralPink;
+    if (ride.status === 'active') return brandColors.mintGreen;
+    if (ride.status === 'completed') return brandColors.electricViolet;
+    return brandColors.coralPink; // cancelled or expired
   };
 
   const statusColor = getStatusColor();
@@ -33,22 +27,24 @@ export function TicketRideCard({ status, date, time, from, to, price, driver }: 
       {/* Top Ticket Portion */}
       <View style={[styles.ticketTop, { backgroundColor: colors.background.card, borderColor }]}>
         <View style={styles.headerRow}>
-          <Text style={[styles.dateText, { color: colors.text.secondary }]}>{date} • {time}</Text>
+          <Text style={[styles.dateText, { color: colors.text.secondary }]}>
+            {ride.departureDate || ride.date} • {ride.departureTime || ride.time}
+          </Text>
           <View style={[styles.statusBadge, { backgroundColor: `${statusColor}20` }]}>
-            <Text style={[styles.statusText, { color: statusColor }]}>{status.toUpperCase()}</Text>
+            <Text style={[styles.statusText, { color: statusColor }]}>{(ride.status || 'ACTIVE').toUpperCase()}</Text>
           </View>
         </View>
 
         <View style={styles.routeContainer}>
           <View style={styles.routeCol}>
-            <Text style={[styles.cityText, { color: colors.text.primary }]}>{from}</Text>
+            <Text style={[styles.cityText, { color: colors.text.primary }]}>{ride.fromCity || ride.from}</Text>
             <Text style={[styles.timeText, { color: colors.text.secondary }]}>Departure</Text>
           </View>
           <View style={styles.routeArrow}>
             <Ionicons name="arrow-forward" size={24} color={colors.text.placeholder} />
           </View>
           <View style={[styles.routeCol, { alignItems: 'flex-end' }]}>
-            <Text style={[styles.cityText, { color: colors.text.primary }]}>{to}</Text>
+            <Text style={[styles.cityText, { color: colors.text.primary }]}>{ride.toCity || ride.to}</Text>
             <Text style={[styles.timeText, { color: colors.text.secondary }]}>Arrival</Text>
           </View>
         </View>
@@ -75,9 +71,11 @@ export function TicketRideCard({ status, date, time, from, to, price, driver }: 
           <View style={[styles.driverAvatar, { backgroundColor: statusColor }]}>
             <Ionicons name="person" size={16} color="#FFFFFF" />
           </View>
-          <Text style={[styles.driverName, { color: colors.text.primary }]}>{driver}</Text>
+          <Text style={[styles.driverName, { color: colors.text.primary }]}>
+            {ride.poster ? `${ride.poster.firstName} ${ride.poster.lastName}` : (ride.posterName || ride.driver || 'Driver')}
+          </Text>
         </View>
-        <Text style={[styles.priceText, { color: colors.text.primary }]}>{price}</Text>
+        <Text style={[styles.priceText, { color: colors.text.primary }]}>₹{ride.farePerSeat || ride.fare || ride.price}</Text>
       </View>
 
     </View>

@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { authRepository } from './auth.repository';
-import { RegisterRequestDTO, LoginRequestDTO, VerifyOTPRequestDTO, AuthTokens, UserResponseDTO, JwtPayload } from './auth.types';
+import { RegisterRequestDTO, LoginRequestDTO, VerifyOTPRequestDTO, ResendOTPRequestDTO, AuthTokens, UserResponseDTO, JwtPayload } from './auth.types';
 import { ConflictError, UnauthorizedError, AppError } from '../../shared/errors';
 import env from '../../config/env';
 import logger from '../../shared/logger';
@@ -57,7 +57,7 @@ export class AuthService {
       } else {
         // Allow re-registration if not verified
         // Delete the existing unverified user to prevent E11000 duplicate key error
-        await authRepository.deleteUser(existingUser._id as string);
+        await authRepository.deleteUser(String((existingUser as any)._id));
       }
     }
 
@@ -81,12 +81,47 @@ export class AuthService {
     mailerService.sendOTP(newUser.email, otpCode).catch((e) => {
       logger.error(`Background OTP sending failed: ${e.message}`);
     });
-    logger.info(`OTP for ${newUser.email} is ${otpCode}`);
+    if (env.nodeEnv === 'development') {
+      logger.info(`OTP for ${newUser.email} is ${otpCode}`);
+    }
 
     return {
       user: this.formatUser(newUser),
       message: 'Registration successful. Please verify your email with the OTP sent.',
     };
+  }
+
+  /**
+   * Resends a new OTP to an unverified user's email.
+   */
+  async resendOTP(data: ResendOTPRequestDTO): Promise<{ message: string }> {
+    const user = await authRepository.findByEmail(data.email);
+
+    if (!user) {
+      throw new UnauthorizedError('No account found with this email.');
+    }
+
+    if (user.isEmailVerified) {
+      throw new ConflictError('Email is already verified.');
+    }
+
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await authRepository.updateUser((user as any)._id.toString(), {
+      otpCode,
+      otpExpiresAt,
+    });
+
+    mailerService.sendOTP(user.email, otpCode).catch((e) => {
+      logger.error(`Background OTP resend failed: ${e.message}`);
+    });
+
+    if (env.nodeEnv === 'development') {
+      logger.info(`Resent OTP for ${user.email} is ${otpCode}`);
+    }
+
+    return { message: 'OTP resent successfully.' };
   }
 
   /**

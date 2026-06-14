@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../../src/design/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { useVerifyOtpMutation } from '../../src/api/authHooks';
+import { useVerifyOtpMutation, useResendOtpMutation } from '../../src/api/authHooks';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { brandColors } from '../../src/design/tokens';
 
@@ -19,6 +19,7 @@ export default function VerifyScreen() {
   const [countdown, setCountdown] = useState(60);
   
   const verifyMutation = useVerifyOtpMutation();
+  const resendMutation = useResendOtpMutation();
   const loading = verifyMutation.isPending;
   
   const inputRef = useRef<TextInput>(null);
@@ -34,6 +35,7 @@ export default function VerifyScreen() {
   const handleOtpChange = (text: string) => {
     const cleaned = text.replace(/[^0-9]/g, '').slice(0, 6);
     setOtp(cleaned);
+    setError('');
 
     if (cleaned.length === 6) {
       inputRef.current?.blur();
@@ -45,20 +47,20 @@ export default function VerifyScreen() {
     setError('');
     const fullOtp = overrideOtp || otp;
     
+    if (fullOtp.length !== 6) return;
+
     try {
       const response = await verifyMutation.mutateAsync({ email, otp: fullOtp });
-      // Save token
       if (response?.data?.tokens?.accessToken) {
         await AsyncStorage.setItem('crewmute_token', response.data.tokens.accessToken);
       }
       
-      // Route to onboarding so the user can finish setting up their profile
       router.replace({ 
         pathname: '/(auth)/onboarding', 
         params: { 
           email: params.email,
           name: params.name,
-          college: params.college
+          college: params.college,
         } 
       });
     } catch (err: any) {
@@ -67,17 +69,27 @@ export default function VerifyScreen() {
         const firstError = Object.values(errorObj.details)[0];
         setError(firstError as string);
       } else {
-        setError(errorObj?.message || 'Invalid OTP');
+        setError(errorObj?.message || 'Invalid OTP. Try again.');
       }
     }
   };
 
+  const handleRetry = () => {
+    setOtp('');
+    setError('');
+    inputRef.current?.focus();
+  };
+
   const resendOtp = async () => {
-    if (countdown > 0) return;
-    // Simulate resend
-    setTimeout(() => {
+    if (countdown > 0 || resendMutation.isPending) return;
+    try {
+      await resendMutation.mutateAsync({ email });
       setCountdown(60);
-    }, 1000);
+      setError('');
+    } catch (err: any) {
+      const errorObj = err.response?.data?.error;
+      setError(errorObj?.message || 'Failed to resend code.');
+    }
   };
 
   return (
@@ -94,58 +106,63 @@ export default function VerifyScreen() {
           We sent a 6-digit code to {email || 'your email'}
         </Text>
 
-        <View style={styles.otpContainer}>
-          <Pressable 
-            style={StyleSheet.absoluteFillObject}
-            onPress={() => inputRef.current?.focus()}
-          />
-          {[0, 1, 2, 3, 4, 5].map((index) => {
-            const digit = otp[index] || '';
-            const isActive = otp.length === index;
-            return (
-              <View
-                key={index}
-                style={[
-                  styles.otpBox,
-                  { 
-                    backgroundColor: colors.background.subtle, 
-                    borderColor: isActive ? colors.interactive.primary : (digit ? colors.interactive.primary : colors.border.default),
-                  }
-                ]}
-              >
-                <Text style={[styles.otpText, { color: colors.text.primary }]}>{digit}</Text>
-              </View>
-            );
-          })}
-          
-          <TextInput
-            ref={inputRef}
-            style={styles.hiddenInput}
-            keyboardType="number-pad"
-            textContentType="oneTimeCode"
-            maxLength={6}
-            value={otp}
-            onChangeText={handleOtpChange}
-            autoFocus
-            caretHidden={true}
-            autoCorrect={false}
-          />
-        </View>
+        <Pressable onPress={() => inputRef.current?.focus()}>
+          <View style={styles.otpContainer}>
+            {[0, 1, 2, 3, 4, 5].map((index) => {
+              const digit = otp[index] || '';
+              const isActive = otp.length === index;
+              return (
+                <View
+                  key={index}
+                  style={[
+                    styles.otpBox,
+                    { 
+                      backgroundColor: colors.background.subtle, 
+                      borderColor: isActive ? colors.interactive.primary : (digit ? colors.interactive.primary : colors.border.default),
+                    }
+                  ]}
+                >
+                  <Text style={[styles.otpText, { color: colors.text.primary }]}>{digit}</Text>
+                </View>
+              );
+            })}
+            
+            <TextInput
+              ref={inputRef}
+              style={styles.hiddenInput}
+              keyboardType="number-pad"
+              textContentType="oneTimeCode"
+              maxLength={6}
+              value={otp}
+              onChangeText={handleOtpChange}
+              autoFocus
+              caretHidden={true}
+              autoCorrect={false}
+            />
+          </View>
+        </Pressable>
 
-        {error ? <Text style={[styles.errorText, { color: brandColors.coralPink }]}>{error}</Text> : null}
+        {error ? (
+          <View style={styles.errorContainer}>
+            <Text style={[styles.errorText, { color: brandColors.coralPink }]}>{error}</Text>
+            <Pressable onPress={handleRetry} style={styles.retryButton}>
+              <Text style={[styles.retryText, { color: colors.interactive.primary }]}>Clear & retry</Text>
+            </Pressable>
+          </View>
+        ) : null}
 
         {loading && <ActivityIndicator color={colors.interactive.primary} style={styles.loader} />}
 
         <Pressable 
           onPress={resendOtp} 
-          disabled={countdown > 0}
+          disabled={countdown > 0 || resendMutation.isPending}
           style={styles.resendContainer}
         >
           <Text style={[
             styles.resendText, 
             { color: countdown > 0 ? colors.text.placeholder : colors.interactive.primary }
           ]}>
-            {countdown > 0 ? `Resend code in ${countdown}s` : 'Resend code'}
+            {countdown > 0 ? `Resend code in ${countdown}s` : resendMutation.isPending ? 'Sending...' : 'Resend code'}
           </Text>
         </Pressable>
       </View>
@@ -169,19 +186,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    fontFamily: 'PlusJakartaSans-Bold',
+    fontFamily: 'PlusJakartaSans-700Bold',
     fontSize: 24,
     marginBottom: 8,
   },
   subtext: {
-    fontFamily: 'PlusJakartaSans-Regular',
+    fontFamily: 'PlusJakartaSans-400Regular',
     fontSize: 16,
     marginBottom: 40,
   },
   otpContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 24,
     position: 'relative',
   },
   otpBox: {
@@ -197,16 +213,30 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   hiddenInput: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    width: 1,
+    height: 1,
     opacity: 0,
     color: 'transparent',
     backgroundColor: 'transparent',
   },
+  errorContainer: {
+    marginTop: 24,
+    alignItems: 'center',
+    gap: 12,
+  },
   errorText: {
-    fontFamily: 'PlusJakartaSans-Regular',
+    fontFamily: 'PlusJakartaSans-400Regular',
     fontSize: 14,
     textAlign: 'center',
-    marginBottom: 16,
+  },
+  retryButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  retryText: {
+    fontFamily: 'PlusJakartaSans-700Bold',
+    fontSize: 14,
   },
   loader: {
     marginBottom: 16,
@@ -216,7 +246,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   resendText: {
-    fontFamily: 'PlusJakartaSans-Bold',
+    fontFamily: 'PlusJakartaSans-700Bold',
     fontSize: 15,
   },
 });
