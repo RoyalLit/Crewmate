@@ -1,37 +1,34 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../../src/design/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { spacing } from '../../src/design/tokens';
+import { spacing, brandColors } from '../../src/design/tokens';
 import { useAuthStore } from '../../src/store/authStore';
+import { useUpdateProfileMutation } from '../../src/api/authHooks';
 
 export default function OnboardingScreen() {
   const { colors, isDark } = useTheme();
-  const params = useLocalSearchParams();
   const loginAction = useAuthStore((state) => state.login);
 
   const [city, setCity] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  const updateProfileMutation = useUpdateProfileMutation();
+  const loading = updateProfileMutation.isPending;
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (!city) return;
+    setError('');
 
-    setLoading(true);
-    // Simulate finalizing profile
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const response = await updateProfileMutation.mutateAsync({ homeCity: city });
+      
       // Firing login will trigger the Auth Guard to redirect to (tabs)
-      loginAction({
-        id: '1',
-        name: params.name as string || 'New User',
-        email: params.email as string || '',
-        college: params.college as string || 'Unknown College',
-        city: city,
-        isVerified: true
-      });
-    }, 1500);
+      loginAction(response.data.user);
+    } catch (err: any) {
+      setError('Failed to update profile');
+    }
   };
 
   const isFormValid = city.length > 0;
@@ -77,6 +74,7 @@ export default function OnboardingScreen() {
               </View>
             </View>
           </View>
+          {error ? <Text style={[styles.errorText, { color: brandColors.coralPink }]}>{error}</Text> : null}
         </ScrollView>
 
         {/* Footer CTAs */}
@@ -158,9 +156,14 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: 'PlusJakartaSans-600SemiBold',
-    fontSize: 13,
+    fontSize: 14,
     marginBottom: 8,
-    marginLeft: 4,
+  },
+  errorText: {
+    fontFamily: 'PlusJakartaSans-500Medium',
+    fontSize: 14,
+    marginTop: 12,
+    textAlign: 'center',
   },
   inputWrapper: {
     flexDirection: 'row',

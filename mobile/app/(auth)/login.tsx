@@ -4,8 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/design/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { spacing } from '../../src/design/tokens';
+import { spacing, brandColors } from '../../src/design/tokens';
 import { useAuthStore } from '../../src/store/authStore';
+
+import { useLoginMutation } from '../../src/api/authHooks';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
   const { colors, isDark } = useTheme();
@@ -14,27 +17,32 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
   const loginAction = useAuthStore((state) => state.login);
+  const loginMutation = useLoginMutation();
+  const loading = loginMutation.isPending;
 
   const handleLogin = async () => {
+    setError('');
     // Basic validation
     if (!email || !password) return;
 
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      // Mock login state. The root _layout.tsx will automatically redirect us!
-      loginAction({
-        id: '1',
-        name: 'Mock User',
-        email: email,
-        college: 'Mock College',
-        city: 'Mock City',
-        isVerified: true
-      });
-    }, 1500);
+    try {
+      const response = await loginMutation.mutateAsync({ email, password });
+      
+      const { user, tokens } = response.data;
+      
+      // Save token
+      if (tokens?.accessToken) {
+        await AsyncStorage.setItem('crewmute_token', tokens.accessToken);
+      }
+      
+      // Update store and the Auth Guard in _layout.tsx will redirect us
+      loginAction(user);
+    } catch (err: any) {
+      setError(err.response?.data?.error?.message || 'Invalid email or password');
+    }
   };
 
   const isFormValid = email.length > 0 && password.length > 0;
@@ -95,6 +103,7 @@ export default function LoginScreen() {
               </Pressable>
             </View>
           </View>
+          {error ? <Text style={[styles.errorText, { color: brandColors.coralPink }]}>{error}</Text> : null}
         </View>
 
         {/* Footer CTAs */}
@@ -189,6 +198,12 @@ const styles = StyleSheet.create({
   eyeIcon: {
     padding: 8,
     marginRight: -8,
+  },
+  errorText: {
+    fontFamily: 'PlusJakartaSans-500Medium',
+    fontSize: 14,
+    marginTop: 12,
+    textAlign: 'center',
   },
   footer: {
     paddingBottom: spacing.xl,

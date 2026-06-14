@@ -41,7 +41,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function RootLayout(): React.JSX.Element | null {
   const [bootComplete, setBootComplete] = useState(false);
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, login } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
 
@@ -53,17 +53,36 @@ export default function RootLayout(): React.JSX.Element | null {
     PlusJakartaSans_800ExtraBold,
   });
 
+  // Simple fetch wrapper since we can't use React Query hooks at the root level before Provider mounts
+  // Actually we CAN use hooks if we move logic to an inner component, but for simplicity we'll just use the raw apiClient here
+  const checkToken = async () => {
+    try {
+      // The interceptor automatically attaches the token
+      const { apiClient } = require('../src/api/client');
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      
+      const token = await AsyncStorage.getItem('crewmute_token');
+      if (token) {
+        const response = await apiClient.get('/auth/me');
+        if (response.data?.data?.user) {
+          login(response.data.data.user);
+        }
+      }
+    } catch (e) {
+      console.log('Auto-login failed', e);
+    } finally {
+      // Hide the native splash screen once fonts are ready AND we checked token
+      if (fontsLoaded || fontError) {
+        SplashScreen.hideAsync();
+      }
+    }
+  };
+
   useEffect(() => {
     if (fontsLoaded || fontError) {
-      // Hide the native splash screen once fonts are ready
-      // This reveals our custom BootScreen which is already mounted with the same #0F0F1A background!
-      SplashScreen.hideAsync();
+      checkToken();
     }
   }, [fontsLoaded, fontError]);
-
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
 
   useEffect(() => {
     if (!fontsLoaded || !bootComplete) return;
@@ -78,6 +97,10 @@ export default function RootLayout(): React.JSX.Element | null {
       router.replace('/(tabs)');
     }
   }, [isAuthenticated, segments, fontsLoaded, bootComplete]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

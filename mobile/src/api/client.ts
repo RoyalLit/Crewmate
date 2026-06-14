@@ -1,11 +1,12 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import mobileEnv from '../config/env';
 
-// Use localhost for iOS simulator, 10.0.2.2 for Android emulator
-const API_URL = Platform.OS === 'android' 
-  ? 'http://10.0.2.2:3000/api/v1' 
-  : 'http://localhost:3000/api/v1';
+// Use env var if available, otherwise fallback to localhost for simulator / 10.0.2.2 for emulator
+const API_URL = mobileEnv.apiUrl || (Platform.OS === 'android' 
+  ? 'http://10.0.2.2:5000/api/v1' 
+  : 'http://localhost:5000/api/v1');
 
 export const apiClient = axios.create({
   baseURL: API_URL,

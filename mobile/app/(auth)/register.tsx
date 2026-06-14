@@ -6,6 +6,8 @@ import { useTheme } from '../../src/design/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { brandColors } from '../../src/design/tokens';
 
+import { useRegisterMutation } from '../../src/api/authHooks';
+
 export default function RegisterScreen() {
   const { colors } = useTheme();
   const router = useRouter();
@@ -18,8 +20,10 @@ export default function RegisterScreen() {
   });
   
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  const registerMutation = useRegisterMutation();
+  const loading = registerMutation.isPending;
 
   const handleRegister = async () => {
     setError('');
@@ -29,13 +33,13 @@ export default function RegisterScreen() {
       return;
     }
 
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await registerMutation.mutateAsync(form);
       // Pass email to the verify screen so it knows who to verify
       router.push({ pathname: '/(auth)/verify', params: { email: form.email, name: form.name, college: form.college } });
-    }, 1500);
+    } catch (err: any) {
+      setError(err.response?.data?.error?.message || 'Registration failed');
+    }
   };
 
   return (

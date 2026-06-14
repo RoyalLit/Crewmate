@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/design/theme';
 import { brandColors } from '../../src/design/tokens';
+import { useAuthStore } from '../../src/store/authStore';
 import Animated, { 
   FadeInDown, 
   useSharedValue, 
@@ -81,7 +82,19 @@ export default function LandingScreen() {
               {__DEV__ && (
                 <Pressable 
                   style={{ alignItems: 'center', marginTop: 12 }}
-                  onPress={() => router.push('/(tabs)')}
+                  onPress={() => {
+                    useAuthStore.getState().login({
+                      id: 'dev-user',
+                      name: 'Dev User',
+                      email: 'dev@college.edu',
+                      college: 'Dev College',
+                      homeCity: 'Dev City',
+                      isEmailVerified: true,
+                      status: 'active',
+                      profilePhotoUrl: '',
+                      createdAt: new Date(),
+                    });
+                  }}
                 >
                   <Text style={[styles.devText, { color: colors.text.placeholder }]}>
                     Skip to App (Dev Only)

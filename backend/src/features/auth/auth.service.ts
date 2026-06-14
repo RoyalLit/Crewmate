@@ -8,6 +8,8 @@ import logger from '../../shared/logger';
 // Node's native jsonwebtoken library is typically used for JWTs
 import * as jwt from 'jsonwebtoken';
 
+import { mailerService } from '../../shared/mailer';
+
 export class AuthService {
   /**
    * Generates Access and Refresh Tokens
@@ -74,7 +76,8 @@ export class AuthService {
       tokenVersion: 0,
     });
 
-    // TODO: Send OTP via email using Nodemailer
+    // Send OTP via email using Nodemailer
+    await mailerService.sendOTP(newUser.email, otpCode);
     logger.info(`OTP for ${newUser.email} is ${otpCode}`);
 
     return {
@@ -185,6 +188,17 @@ export class AuthService {
    */
   async logoutGlobal(userId: string): Promise<void> {
     await authRepository.incrementTokenVersion(userId);
+  }
+
+  /**
+   * Get the current user
+   */
+  async getMe(userId: string): Promise<UserResponseDTO> {
+    const user = await authRepository.findById(userId);
+    if (!user) {
+      throw new UnauthorizedError('User not found.');
+    }
+    return this.formatUser(user);
   }
 }
 

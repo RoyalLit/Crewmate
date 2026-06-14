@@ -4,6 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../../src/design/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useVerifyOtpMutation } from '../../src/api/authHooks';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { brandColors } from '../../src/design/tokens';
 
 export default function VerifyScreen() {
@@ -13,9 +15,11 @@ export default function VerifyScreen() {
   const email = params.email as string;
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState(60);
+  
+  const verifyMutation = useVerifyOtpMutation();
+  const loading = verifyMutation.isPending;
   
   const inputRefs = useRef<Array<TextInput | null>>([]);
 
@@ -55,11 +59,15 @@ export default function VerifyScreen() {
 
   const verifyOtp = async () => {
     setError('');
-    setLoading(true);
+    const fullOtp = otp.join('');
     
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const response = await verifyMutation.mutateAsync({ email, otp: fullOtp });
+      // Save token
+      if (response?.data?.accessToken) {
+        await AsyncStorage.setItem('crewmute_token', response.data.accessToken);
+      }
+      
       // Route to onboarding so the user can finish setting up their profile
       router.replace({ 
         pathname: '/(auth)/onboarding', 
@@ -69,7 +77,9 @@ export default function VerifyScreen() {
           college: params.college
         } 
       });
-    }, 1500);
+    } catch (err: any) {
+      setError(err.response?.data?.error?.message || 'Invalid OTP');
+    }
   };
 
   const resendOtp = async () => {

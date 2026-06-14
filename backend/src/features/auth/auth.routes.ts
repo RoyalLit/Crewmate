@@ -17,6 +17,7 @@ router.post('/login', loginValidator, validate, authController.login);
 router.post('/refresh', authController.refreshToken); // Payload is validated inline in controller
 
 // Protected routes
+router.get('/me', requireAuth, authController.getMe);
 router.post('/logout', requireAuth, authController.logoutGlobal);
 
 export default router;
