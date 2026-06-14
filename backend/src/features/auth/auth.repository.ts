@@ -45,6 +45,13 @@ export class AuthRepository {
     ).lean();
     return user ? user.tokenVersion : null;
   }
+
+  /**
+   * Deletes a user by ID.
+   */
+  async deleteUser(id: string): Promise<void> {
+    await UserModel.findByIdAndDelete(id);
+  }
 }
 
 export const authRepository = new AuthRepository();

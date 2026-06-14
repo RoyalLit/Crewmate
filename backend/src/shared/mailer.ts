@@ -24,8 +24,10 @@ class MailerService {
     }
 
     try {
+      const senderEmail = env.email.user === 'resend' ? 'onboarding@resend.dev' : env.email.user;
+      
       await this.transporter.sendMail({
-        from: `"Crewmute" <${env.email.user}>`,
+        from: `"Crewmute" <${senderEmail}>`,
         to,
         subject: 'Your Crewmute Verification Code',
         text: `Your verification code is ${otpCode}. It will expire in 15 minutes.`,

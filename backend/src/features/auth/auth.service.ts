@@ -56,7 +56,8 @@ export class AuthService {
         throw new ConflictError('User already exists with this email.');
       } else {
         // Allow re-registration if not verified
-        // For simplicity, we could update the existing unverified user here.
+        // Delete the existing unverified user to prevent E11000 duplicate key error
+        await authRepository.deleteUser(existingUser._id as string);
       }
     }
 

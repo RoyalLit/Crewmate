@@ -44,9 +44,9 @@ export default function VerifyScreen() {
     
     // Auto-submit if last digit
     if (text.length === 1 && index === 5) {
-      const fullOtp = newOtp.join('');
-      if (fullOtp.length === 6) {
-        verifyOtp();
+      const fullOtpToSubmit = newOtp.join('');
+      if (fullOtpToSubmit.length === 6) {
+        verifyOtp(fullOtpToSubmit);
       }
     }
   };
@@ -57,9 +57,9 @@ export default function VerifyScreen() {
     }
   };
 
-  const verifyOtp = async () => {
+  const verifyOtp = async (overrideOtp?: string) => {
     setError('');
-    const fullOtp = otp.join('');
+    const fullOtp = overrideOtp || otp.join('');
     
     try {
       const response = await verifyMutation.mutateAsync({ email, otp: fullOtp });
@@ -78,7 +78,13 @@ export default function VerifyScreen() {
         } 
       });
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Invalid OTP');
+      const errorObj = err.response?.data?.error;
+      if (errorObj?.code === 'VALIDATION_ERROR' && errorObj.details) {
+        const firstError = Object.values(errorObj.details)[0];
+        setError(firstError as string);
+      } else {
+        setError(errorObj?.message || 'Invalid OTP');
+      }
     }
   };
 
