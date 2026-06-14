@@ -41,6 +41,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function RootLayout(): React.JSX.Element | null {
   const [bootComplete, setBootComplete] = useState(false);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
   const { isAuthenticated, login } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
@@ -71,6 +72,7 @@ export default function RootLayout(): React.JSX.Element | null {
     } catch (e) {
       console.log('Auto-login failed', e);
     } finally {
+      setIsAuthChecked(true);
       // Hide the native splash screen once fonts are ready AND we checked token
       if (fontsLoaded || fontError) {
         SplashScreen.hideAsync();
@@ -85,18 +87,18 @@ export default function RootLayout(): React.JSX.Element | null {
   }, [fontsLoaded, fontError]);
 
   useEffect(() => {
-    if (!fontsLoaded || !bootComplete) return;
+    if (!fontsLoaded || !isAuthChecked) return;
 
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!isAuthenticated && !inAuthGroup) {
-      // Redirect to the login page.
-      router.replace('/(auth)/login');
+      // Redirect to the auth splash screen
+      router.replace('/(auth)');
     } else if (isAuthenticated && inAuthGroup) {
       // Redirect to the tabs page.
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated, segments, fontsLoaded, bootComplete]);
+  }, [isAuthenticated, segments, fontsLoaded, isAuthChecked]);
 
   if (!fontsLoaded && !fontError) {
     return null;
@@ -110,7 +112,7 @@ export default function RootLayout(): React.JSX.Element | null {
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
           </Stack>
-          {!bootComplete && <BootScreen onAnimationDone={() => setBootComplete(true)} />}
+          {(!bootComplete || !isAuthChecked) && <BootScreen onAnimationDone={() => setBootComplete(true)} />}
         </ThemeProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

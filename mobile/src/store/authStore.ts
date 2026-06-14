@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface User {
   id: string;
@@ -25,7 +26,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
 
   login: (user) => set({ isAuthenticated: true, user }),
-  logout: () => set({ isAuthenticated: false, user: null }),
+  logout: () => {
+    AsyncStorage.removeItem('crewmute_token');
+    set({ isAuthenticated: false, user: null });
+  },
   updateProfile: (data) =>
     set((state) => ({
       user: state.user ? { ...state.user, ...data } : null,

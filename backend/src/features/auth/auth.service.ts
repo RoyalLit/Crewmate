@@ -77,8 +77,10 @@ export class AuthService {
       tokenVersion: 0,
     });
 
-    // Send OTP via email using Nodemailer
-    await mailerService.sendOTP(newUser.email, otpCode);
+    // Send OTP via email using Nodemailer asynchronously
+    mailerService.sendOTP(newUser.email, otpCode).catch((e) => {
+      logger.error(`Background OTP sending failed: ${e.message}`);
+    });
     logger.info(`OTP for ${newUser.email} is ${otpCode}`);
 
     return {

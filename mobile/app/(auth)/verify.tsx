@@ -14,14 +14,14 @@ export default function VerifyScreen() {
   const params = useLocalSearchParams();
   const email = params.email as string;
 
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState(60);
   
   const verifyMutation = useVerifyOtpMutation();
   const loading = verifyMutation.isPending;
   
-  const inputRefs = useRef<Array<TextInput | null>>([]);
+  const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
@@ -31,35 +31,19 @@ export default function VerifyScreen() {
     return () => clearTimeout(timer);
   }, [countdown]);
 
-  const handleOtpChange = (text: string, index: number) => {
-    // Basic array copy
-    const newOtp = [...otp];
-    newOtp[index] = text;
-    setOtp(newOtp);
+  const handleOtpChange = (text: string) => {
+    const cleaned = text.replace(/[^0-9]/g, '').slice(0, 6);
+    setOtp(cleaned);
 
-    // Auto-advance
-    if (text.length === 1 && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
-    
-    // Auto-submit if last digit
-    if (text.length === 1 && index === 5) {
-      const fullOtpToSubmit = newOtp.join('');
-      if (fullOtpToSubmit.length === 6) {
-        verifyOtp(fullOtpToSubmit);
-      }
-    }
-  };
-
-  const handleKeyPress = (e: any, index: number) => {
-    if (e.nativeEvent.key === 'Backspace' && otp[index] === '' && index > 0) {
-      inputRefs.current[index - 1]?.focus();
+    if (cleaned.length === 6) {
+      inputRef.current?.blur();
+      verifyOtp(cleaned);
     }
   };
 
   const verifyOtp = async (overrideOtp?: string) => {
     setError('');
-    const fullOtp = overrideOtp || otp.join('');
+    const fullOtp = overrideOtp || otp;
     
     try {
       const response = await verifyMutation.mutateAsync({ email, otp: fullOtp });
@@ -111,26 +95,41 @@ export default function VerifyScreen() {
         </Text>
 
         <View style={styles.otpContainer}>
-          {otp.map((digit, index) => (
-            <TextInput
-              key={index}
-              ref={(ref) => { inputRefs.current[index] = ref; }}
-              style={[
-                styles.otpBox,
-                { 
-                  backgroundColor: colors.background.subtle, 
-                  color: colors.text.primary,
-                  borderColor: digit ? colors.interactive.primary : colors.border.default,
-                }
-              ]}
-              keyboardType="number-pad"
-              maxLength={1}
-              value={digit}
-              onChangeText={(text) => handleOtpChange(text, index)}
-              onKeyPress={(e) => handleKeyPress(e, index)}
-              selectTextOnFocus
-            />
-          ))}
+          <Pressable 
+            style={StyleSheet.absoluteFillObject}
+            onPress={() => inputRef.current?.focus()}
+          />
+          {[0, 1, 2, 3, 4, 5].map((index) => {
+            const digit = otp[index] || '';
+            const isActive = otp.length === index;
+            return (
+              <View
+                key={index}
+                style={[
+                  styles.otpBox,
+                  { 
+                    backgroundColor: colors.background.subtle, 
+                    borderColor: isActive ? colors.interactive.primary : (digit ? colors.interactive.primary : colors.border.default),
+                  }
+                ]}
+              >
+                <Text style={[styles.otpText, { color: colors.text.primary }]}>{digit}</Text>
+              </View>
+            );
+          })}
+          
+          <TextInput
+            ref={inputRef}
+            style={styles.hiddenInput}
+            keyboardType="number-pad"
+            textContentType="oneTimeCode"
+            maxLength={6}
+            value={otp}
+            onChangeText={handleOtpChange}
+            autoFocus
+            caretHidden={true}
+            autoCorrect={false}
+          />
         </View>
 
         {error ? <Text style={[styles.errorText, { color: brandColors.coralPink }]}>{error}</Text> : null}
@@ -183,15 +182,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 24,
+    position: 'relative',
   },
   otpBox: {
     width: 48,
     height: 56,
     borderWidth: 2,
     borderRadius: 10,
-    textAlign: 'center',
-    fontFamily: 'PlusJakartaSans-Bold',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  otpText: {
+    fontFamily: 'PlusJakartaSans-700Bold',
     fontSize: 24,
+  },
+  hiddenInput: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0,
+    color: 'transparent',
+    backgroundColor: 'transparent',
   },
   errorText: {
     fontFamily: 'PlusJakartaSans-Regular',

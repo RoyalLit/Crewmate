@@ -55,7 +55,16 @@ export default function LoginScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={styles.backButton}>
+          <Pressable 
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(auth)');
+              }
+            }} 
+            style={styles.backButton}
+          >
             <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
           </Pressable>
           <Text style={[styles.title, { color: colors.text.primary }]}>Welcome back</Text>

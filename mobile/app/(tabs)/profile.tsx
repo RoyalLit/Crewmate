@@ -8,13 +8,30 @@ import { useTheme } from '../../src/design/theme';
 import { useThemeStore } from '../../src/store/themeStore';
 import { TAB_BAR_HEIGHT, spacing, brandColors } from '../../src/design/tokens';
 
+import { useAuthStore } from '../../src/store/authStore';
+import { useLogoutMutation } from '../../src/api/authHooks';
+
 export default function ProfileScreen(): React.JSX.Element {
   const { colors, isDark } = useTheme();
   const preference = useThemeStore((state) => state.preference);
   const setPreference = useThemeStore((state) => state.setPreference);
+  const user = useAuthStore((state) => state.user);
+  const logoutAction = useAuthStore((state) => state.logout);
+  const logoutMutation = useLogoutMutation();
   const insets = useSafeAreaInsets();
 
   const isLight = preference === 'light';
+  const initials = user?.name ? user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : 'JD';
+  
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync({});
+    } catch (e) {
+      // ignore
+    } finally {
+      logoutAction();
+    }
+  };
   
   // Custom bento box style
   const bentoBox = {
@@ -51,18 +68,20 @@ export default function ProfileScreen(): React.JSX.Element {
           />
           <View style={styles.avatarContainer}>
             <View style={styles.avatarCircle}>
-              <Text style={styles.avatarText}>JD</Text>
+              <Text style={styles.avatarText}>{initials}</Text>
             </View>
-            <View style={styles.verifiedBadge}>
-              <Ionicons name="checkmark" size={14} color="#FFFFFF" />
-            </View>
+            {user?.isEmailVerified && (
+              <View style={styles.verifiedBadge}>
+                <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+              </View>
+            )}
           </View>
-          <Text style={[styles.name, { color: colors.text.primary }]}>John Doe</Text>
-          <Text style={[styles.college, { color: colors.text.secondary }]}>Amity University</Text>
+          <Text style={[styles.name, { color: colors.text.primary }]}>{user?.name || 'John Doe'}</Text>
+          <Text style={[styles.college, { color: colors.text.secondary }]}>{user?.college || 'University'}</Text>
           
           <View style={[styles.locationChip, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
             <Ionicons name="location" size={14} color={colors.text.secondary} />
-            <Text style={[styles.locationText, { color: colors.text.secondary }]}>Chandigarh</Text>
+            <Text style={[styles.locationText, { color: colors.text.secondary }]}>{user?.homeCity || 'Location not set'}</Text>
           </View>
         </View>
 
@@ -139,8 +158,8 @@ export default function ProfileScreen(): React.JSX.Element {
           </Pressable>
           <View style={[styles.divider, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} />
 
-          <Pressable style={styles.settingRow}>
-            <View style={styles.settingIcon}>
+          <Pressable style={styles.settingRow} onPress={handleLogout}>
+            <View style={[styles.settingIcon, { backgroundColor: 'rgba(255, 107, 107, 0.1)' }]}>
               <Ionicons name="log-out" size={20} color={brandColors.coralPink} />
             </View>
             <Text style={[styles.settingLabel, { color: brandColors.coralPink }]}>Log Out</Text>

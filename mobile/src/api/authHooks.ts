@@ -45,3 +45,12 @@ export function useUpdateProfileMutation() {
     },
   });
 }
+
+export function useLogoutMutation() {
+  return useMutation({
+    mutationFn: async () => {
+      const response = await apiClient.post('/auth/logout');
+      return response.data;
+    },
+  });
+}
