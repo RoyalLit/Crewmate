@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, Dimensions, Pressable, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { 
@@ -12,10 +12,16 @@ import Animated, {
   Easing,
   withRepeat,
   withSequence,
+  useAnimatedReaction,
+  SharedValue,
+  runOnJS,
 } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { StatusBar } from 'expo-status-bar';
 
 const { width, height } = Dimensions.get('window');
 
@@ -46,7 +52,7 @@ const SCENE_4 = require('../../assets/images/onboarding/scene4.png');
 
 // --- Subcomponents ---
 
-function StaggeredText({ text, isActive }: { text: string; isActive: boolean }) {
+function StaggeredText({ text, currentIndex, myIndex }: { text: string; currentIndex: SharedValue<number>; myIndex: number }) {
   const words = text.split(' ');
   
   return (
@@ -55,15 +61,19 @@ function StaggeredText({ text, isActive }: { text: string; isActive: boolean }) 
         const translateY = useSharedValue(12);
         const opacity = useSharedValue(0);
 
-        useEffect(() => {
-          if (isActive) {
-            translateY.value = withDelay(200 + i * 60, withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) }));
-            opacity.value = withDelay(200 + i * 60, withTiming(1, { duration: 400 }));
-          } else {
-            translateY.value = 12;
-            opacity.value = 0;
+        useAnimatedReaction(
+          () => Math.abs(currentIndex.value - myIndex) < 0.85,
+          (isActive) => {
+            if (isActive) {
+              const delay = myIndex === 0 ? 0 : i * 20;
+              translateY.value = withDelay(delay, withTiming(0, { duration: 250, easing: Easing.out(Easing.cubic) }));
+              opacity.value = withDelay(delay, withTiming(1, { duration: 250 }));
+            } else {
+              translateY.value = 12;
+              opacity.value = 0;
+            }
           }
-        }, [isActive]);
+        );
 
         const animatedStyle = useAnimatedStyle(() => ({
           transform: [{ translateY: translateY.value }],
@@ -80,57 +90,329 @@ function StaggeredText({ text, isActive }: { text: string; isActive: boolean }) 
   );
 }
 
-function AnimatedNumber({ isActive }: { isActive: boolean }) {
+// React state is acceptable for numbers that require JS formatting (like ₹), 
+// but we'll useAnimatedReaction to trigger the state loop instead of passing props.
+function AnimatedNumber({ currentIndex, myIndex }: { currentIndex: SharedValue<number>; myIndex: number }) {
   const [value, setValue] = useState(0);
 
-  useEffect(() => {
-    if (isActive) {
-      let startTimestamp: number | null = null;
-      const duration = 1200;
+  const startAnimation = () => {
+    let startTimestamp: number | null = null;
+    const duration = 1200;
+    const step = (timestamp: number) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
       
-      const step = (timestamp: number) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        // easeOutCubic
-        const easeProgress = 1 - Math.pow(1 - progress, 3);
-        
-        setValue(Math.floor(easeProgress * 450));
-        if (progress < 1) {
-          requestAnimationFrame(step);
-        }
-      };
-      requestAnimationFrame(step);
-    } else {
-      setValue(0);
+      setValue(Math.floor(easeProgress * 450));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+
+  const resetAnimation = () => {
+    setValue(0);
+  };
+
+  useAnimatedReaction(
+    () => Math.round(currentIndex.value) === myIndex,
+    (isActive, wasActive) => {
+      // Only run the JS logic if state actually toggled to avoid re-renders during smooth scrolling
+      if (isActive && !wasActive) {
+        runOnJS(startAnimation)();
+      } else if (!isActive && wasActive) {
+        runOnJS(resetAnimation)();
+      }
     }
-  }, [isActive]);
+  );
 
   return <Text style={styles.savingsNumber}>₹{value}</Text>;
 }
 
-export default function OnboardingFlow() {
+// --- Screens ---
+const Screen1 = ({ currentIndex, myIndex, topInset }: { currentIndex: SharedValue<number>; myIndex: number; topInset: number }) => {
+  const subOpacity = useSharedValue(0);
+  useAnimatedReaction(
+    () => Math.abs(currentIndex.value - myIndex) < 0.85,
+    (isActive) => {
+      const delay = myIndex === 0 ? 0 : 100;
+      if (isActive) subOpacity.value = withDelay(delay, withTiming(1, { duration: 250 }));
+      else subOpacity.value = 0;
+    }
+  );
+
+  return (
+    <View style={styles.screenContent}>
+      <View style={[styles.heroZone, { top: 0, height: height * 0.65 }]}>
+        <Image source={SCENE_1} style={[styles.heroImage, { height: height * 0.65 }]} resizeMode="cover" />
+        <LinearGradient
+          colors={[tokens.bg, 'rgba(13,13,28,0.8)', 'transparent']}
+          locations={[0, 0.4, 1]}
+          style={[styles.gradientMaskTop, { height: topInset + 60 }]}
+        />
+        <LinearGradient
+          colors={['transparent', 'rgba(13,13,28,0)', tokens.bg]}
+          locations={[0, 0.4, 1]}
+          style={styles.gradientMask}
+        />
+      </View>
+      <View style={[styles.bottomZone, { top: height * 0.65 }]}>
+        <StaggeredText text="Why is getting home this hard?" currentIndex={currentIndex} myIndex={myIndex} />
+        <Animated.Text style={[styles.subtext, { opacity: subOpacity }]}>
+          75 unread messages and still no ride sorted.
+        </Animated.Text>
+      </View>
+    </View>
+  );
+};
+
+const Screen2 = ({ currentIndex, myIndex, topInset }: { currentIndex: SharedValue<number>; myIndex: number; topInset: number }) => {
+  const subOpacity = useSharedValue(0);
+  const pillScale = useSharedValue(0.8);
+  const pillOpacity = useSharedValue(0);
+
+  useAnimatedReaction(
+    () => Math.abs(currentIndex.value - myIndex) < 0.85,
+    (isActive) => {
+      if (isActive) {
+        subOpacity.value = withDelay(100, withTiming(1, { duration: 250 }));
+        pillScale.value = withDelay(150, withSpring(1, { damping: 15, stiffness: 200 }));
+        pillOpacity.value = withDelay(150, withTiming(1, { duration: 250, easing: Easing.out(Easing.cubic) }));
+      } else {
+        subOpacity.value = 0;
+        pillScale.value = 0.8;
+        pillOpacity.value = 0;
+      }
+    }
+  );
+
+  return (
+    <View style={styles.screenContent}>
+      <View style={[styles.heroZone, { top: 0, height: height * 0.58 }]}>
+        <Image source={SCENE_2} style={[styles.heroImage, { height: height * 0.65, transform: [{ scale: 1.05 }] }]} resizeMode="cover" />
+        <LinearGradient
+          colors={[tokens.bg, 'rgba(13,13,28,0.8)', 'transparent']}
+          locations={[0, 0.4, 1]}
+          style={[styles.gradientMaskTop, { height: topInset + 60 }]}
+        />
+        <LinearGradient
+          colors={['transparent', 'rgba(13,13,28,0)', tokens.bg]}
+          locations={[0, 0.4, 1]}
+          style={styles.gradientMask}
+        />
+      </View>
+      <View style={[styles.bottomZone, { top: height * 0.58 }]}>
+        <StaggeredText text="Your campus. Your people." currentIndex={currentIndex} myIndex={myIndex} />
+        <Animated.Text style={[styles.subtext, { opacity: subOpacity }]}>
+          Everyone here goes to your college. That's the vibe check.
+        </Animated.Text>
+        <Animated.View style={[styles.trustPill, { transform: [{ scale: pillScale }], opacity: pillOpacity }]}>
+          <View style={styles.trustShield}>
+            <Ionicons name="checkmark-sharp" size={12} color="#FFFFFF" />
+          </View>
+          <Text style={styles.trustPillText}>College email verified</Text>
+        </Animated.View>
+      </View>
+    </View>
+  );
+};
+
+const Screen3 = ({ currentIndex, myIndex, topInset }: { currentIndex: SharedValue<number>; myIndex: number; topInset: number }) => {
+  const subOpacity = useSharedValue(0);
+  
+  useAnimatedReaction(
+    () => Math.abs(currentIndex.value - myIndex) < 0.85,
+    (isActive) => {
+      if (isActive) subOpacity.value = withDelay(100, withTiming(1, { duration: 250 }));
+      else subOpacity.value = 0;
+    }
+  );
+
+  return (
+    <View style={styles.screenContent}>
+      <View style={[styles.heroZone, { top: 0, height: height * 0.50 }]}>
+        <Image source={SCENE_3} style={[styles.heroImage, { height: height * 0.65 }]} resizeMode="cover" />
+        <LinearGradient
+          colors={[tokens.bg, 'rgba(13,13,28,0.8)', 'transparent']}
+          locations={[0, 0.4, 1]}
+          style={[styles.gradientMaskTop, { height: topInset + 60 }]}
+        />
+        <LinearGradient
+          colors={['transparent', 'rgba(13,13,28,0)', tokens.bg]}
+          locations={[0, 0.4, 1]}
+          style={styles.gradientMask}
+        />
+      </View>
+      <View style={[styles.bottomZone, { top: height * 0.50 }]}>
+        <StaggeredText text="Stop paying full price to go home." currentIndex={currentIndex} myIndex={myIndex} />
+        <Animated.Text style={[styles.subtext, { opacity: subOpacity }]}>
+          Four of you. One cab. One-fourth the price. Simple math.
+        </Animated.Text>
+        <View style={styles.savingsCard}>
+          <AnimatedNumber currentIndex={currentIndex} myIndex={myIndex} />
+          <Text style={styles.savingsLabel}>average saved per trip</Text>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const Screen4 = ({ currentIndex, myIndex, topInset }: { currentIndex: SharedValue<number>; myIndex: number; topInset: number }) => {
+  const subOpacity = useSharedValue(0);
+  const avatars = ['AK', 'PS', 'RV', 'KD'];
+  const avatarColors = [tokens.primary, tokens.accent, tokens.warning, '#FF6584'];
+
+  useAnimatedReaction(
+    () => Math.abs(currentIndex.value - myIndex) < 0.85,
+    (isActive) => {
+      if (isActive) subOpacity.value = withDelay(100, withTiming(1, { duration: 250 }));
+      else subOpacity.value = 0;
+    }
+  );
+
+  return (
+    <View style={styles.screenContent}>
+      <View style={[styles.heroZone, { top: 0, height: height * 0.52 }]}>
+        {/* Aggressive scale to completely crop out the gold ring */}
+        <Image source={SCENE_4} style={[styles.heroImage, { height: height * 0.65, transform: [{ scale: 1.6 }] }]} resizeMode="cover" />
+        <LinearGradient
+          colors={[tokens.bg, 'rgba(13,13,28,0.8)', 'transparent']}
+          locations={[0, 0.4, 1]}
+          style={[styles.gradientMaskTop, { height: topInset + 60 }]}
+        />
+        <LinearGradient
+          colors={['transparent', 'rgba(13,13,28,0)', tokens.bg]}
+          locations={[0, 0.4, 1]}
+          style={styles.gradientMask}
+        />
+      </View>
+      <View style={[styles.bottomZone, { top: height * 0.52 }]}>
+        <StaggeredText text="Someone's always heading your way." currentIndex={currentIndex} myIndex={myIndex} />
+        <Animated.Text style={[styles.subtext, { opacity: subOpacity }]}>
+          Every weekend, students from your campus go home. Now you go together.
+        </Animated.Text>
+        <View style={styles.avatarRow}>
+          <View style={styles.avatarStack}>
+            {avatars.map((initials, i) => {
+              const scale = useSharedValue(0);
+              
+              useAnimatedReaction(
+                () => Math.abs(currentIndex.value - myIndex) < 0.85,
+                (isActive) => {
+                  if (isActive) {
+                    scale.value = withDelay(150 + i * 40, withSequence(
+                      withTiming(1.08, { duration: 100 }),
+                      withSpring(1, { damping: 12, stiffness: 150 })
+                    ));
+                  } else {
+                    scale.value = 0;
+                  }
+                }
+              );
+
+              return (
+                <Animated.View 
+                  key={i} 
+                  style={[
+                    styles.avatarCircle, 
+                    { backgroundColor: avatarColors[i], left: i * 32, zIndex: 4 - i, transform: [{ scale }] }
+                  ]}
+                >
+                  <Text style={styles.avatarText}>{initials}</Text>
+                </Animated.View>
+              );
+            })}
+          </View>
+          <Animated.Text style={[styles.avatarLabel, { opacity: subOpacity }]}>
+            12 students going home this weekend
+          </Animated.Text>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const AuthScreen = ({ currentIndex, myIndex }: { currentIndex: SharedValue<number>; myIndex: number }) => {
   const router = useRouter();
+  const logoScale = useSharedValue(0.6);
+  const wordmarkOpacity = useSharedValue(0);
+  const wordmarkY = useSharedValue(12);
+  const taglineOpacity = useSharedValue(0);
+  const btnOpacity = useSharedValue(0);
+  const btnY = useSharedValue(24);
+  const glowOpacity = useSharedValue(0.15);
+
+  useAnimatedReaction(
+    () => Math.round(currentIndex.value) === myIndex,
+    (isActive) => {
+      if (isActive) {
+        logoScale.value = withSpring(1, { damping: 12, stiffness: 100 });
+        wordmarkOpacity.value = withDelay(300, withTiming(1, { duration: 400 }));
+        wordmarkY.value = withDelay(300, withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) }));
+        taglineOpacity.value = withDelay(500, withTiming(1, { duration: 400 }));
+        btnOpacity.value = withDelay(900, withTiming(1, { duration: 400 }));
+        btnY.value = withDelay(900, withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) }));
+        
+        glowOpacity.value = withRepeat(
+          withSequence(
+            withTiming(0.3, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+            withTiming(0.15, { duration: 1200, easing: Easing.inOut(Easing.ease) })
+          ),
+          -1,
+          true
+        );
+      } else {
+        logoScale.value = 0.6;
+        wordmarkOpacity.value = 0;
+        wordmarkY.value = 12;
+        taglineOpacity.value = 0;
+        btnOpacity.value = 0;
+        btnY.value = 24;
+        glowOpacity.value = 0.15;
+      }
+    }
+  );
+
+  const wmStyle = useAnimatedStyle(() => ({ opacity: wordmarkOpacity.value, transform: [{ translateY: wordmarkY.value }] }));
+  const tagStyle = useAnimatedStyle(() => ({ opacity: taglineOpacity.value }));
+  const btnStyle = useAnimatedStyle(() => ({ opacity: btnOpacity.value, transform: [{ translateY: btnY.value }] }));
+
+  return (
+    <View style={styles.authScreen}>
+      <View style={styles.authTop}>
+        <Animated.View style={[styles.radialGlow, { opacity: glowOpacity }]} />
+        <Animated.View style={[styles.logoBox, { transform: [{ scale: logoScale }] }]}>
+          <View style={styles.logoDots} />
+          <View style={styles.logoLine} />
+          <View style={[styles.logoDots, { marginTop: 16, marginLeft: 16 }]} />
+        </Animated.View>
+        <Animated.Text style={[styles.wordmark, wmStyle]}>Crewmute</Animated.Text>
+        <Animated.Text style={[styles.tagline, tagStyle]}>Your campus. Your ride.</Animated.Text>
+      </View>
+
+      <Animated.View style={[styles.authBottom, btnStyle]}>
+        <Pressable style={styles.createBtn} onPress={() => router.push('/(auth)/register')}>
+          <View style={styles.violetGlow} />
+          <Text style={styles.createBtnText}>Create Account</Text>
+        </Pressable>
+        <Pressable style={styles.signInBtn} onPress={() => router.push('/(auth)/login')}>
+          <Text style={styles.signInBtnText}>Sign In</Text>
+        </Pressable>
+        <Text style={styles.authFooter}>Only for verified college students.</Text>
+      </Animated.View>
+    </View>
+  );
+};
+
+export default function OnboardingFlow() {
   const insets = useSafeAreaInsets();
   
   const currentIndex = useSharedValue(0);
   const translationX = useSharedValue(0);
-  
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  // Sync state for components that need JS re-renders (like staggered text)
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (Math.round(currentIndex.value) !== activeIndex) {
-        setActiveIndex(Math.round(currentIndex.value));
-      }
-    }, 50);
-    return () => clearInterval(id);
-  }, [activeIndex]);
 
   const goToNext = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (currentIndex.value < 4) {
-      currentIndex.value = withSpring(currentIndex.value + 1, SPRING_CONFIG);
+      currentIndex.value = withSpring(Math.round(currentIndex.value) + 1, SPRING_CONFIG);
     }
   };
 
@@ -140,10 +422,9 @@ export default function OnboardingFlow() {
 
   const panGesture = Gesture.Pan()
     .onUpdate((e) => {
-      if (currentIndex.value === 4) return; // No swipe on auth screen
+      if (currentIndex.value === 4) return;
       
       let newTranslation = e.translationX;
-      // 30% rubber band resistance for swiping back on first screen
       if (currentIndex.value === 0 && e.translationX > 0) {
         newTranslation = e.translationX * 0.3;
       }
@@ -163,28 +444,39 @@ export default function OnboardingFlow() {
       currentIndex.value = withSpring(nextIndex, SPRING_CONFIG);
     });
 
-  const renderScreen = (index: number) => {
+  const Dot = ({ index }: { index: number }) => {
+    const style = useAnimatedStyle(() => {
+      const isActive = Math.round(currentIndex.value) === index;
+      return {
+        width: withTiming(isActive ? 24 : 6, { duration: 200, easing: Easing.out(Easing.ease) }),
+        backgroundColor: isActive ? tokens.primary : '#2E2E4A',
+        height: 6,
+        borderRadius: 3,
+      };
+    });
+    return <Animated.View style={[styles.dot, style]} />;
+  };
+
+  const AnimatedScreen = ({ index }: { index: number }) => {
     const style = useAnimatedStyle(() => {
       const position = index - (currentIndex.value - translationX.value);
       
-      // Incoming slides from right at 1.0
-      // Outgoing slides left + fades to 0.6
       let translateX = position * width;
       let opacity = 1;
 
       if (position < 0) {
-        // Outgoing to left
-        translateX = position * (width * 0.5); // Slower parallax
+        translateX = position * (width * 0.5); 
         opacity = interpolate(position, [-1, 0], [0.6, 1], Extrapolate.CLAMP);
       } else if (position > 0) {
-        // Incoming from right
         opacity = 1;
       }
 
-      // If jumping to screen 5 via skip (crossfade directly without slide)
-      if (currentIndex.value > 3.9 && index === 4) {
+      if (index === 4) {
         opacity = interpolate(currentIndex.value, [3, 4], [0, 1], Extrapolate.CLAMP);
         translateX = 0;
+      } else if (currentIndex.value > 3) {
+        // Fade out all previous screens completely when transitioning to the final AuthScreen
+        opacity = interpolate(currentIndex.value, [3, 4], [opacity, 0], Extrapolate.CLAMP);
       }
 
       return {
@@ -198,266 +490,83 @@ export default function OnboardingFlow() {
     });
 
     return (
-      <Animated.View key={index} style={[style, styles.screen]}>
-        {index === 0 && <Screen1 isActive={activeIndex === 0} />}
-        {index === 1 && <Screen2 isActive={activeIndex === 1} />}
-        {index === 2 && <Screen3 isActive={activeIndex === 2} />}
-        {index === 3 && <Screen4 isActive={activeIndex === 3} />}
-        {index === 4 && <AuthScreen />}
+      <Animated.View style={[style, styles.screen]}>
+        {index === 0 && <Screen1 currentIndex={currentIndex} myIndex={0} topInset={insets.top} />}
+        {index === 1 && <Screen2 currentIndex={currentIndex} myIndex={1} topInset={insets.top} />}
+        {index === 2 && <Screen3 currentIndex={currentIndex} myIndex={2} topInset={insets.top} />}
+        {index === 3 && <Screen4 currentIndex={currentIndex} myIndex={3} topInset={insets.top} />}
+        {index === 4 && <AuthScreen currentIndex={currentIndex} myIndex={4} />}
       </Animated.View>
     );
   };
 
-  // --- Screens ---
-  const Screen1 = ({ isActive }: { isActive: boolean }) => {
-    const subOpacity = useSharedValue(0);
-    useEffect(() => {
-      if (isActive) subOpacity.value = withDelay(800, withTiming(1, { duration: 400 }));
-      else subOpacity.value = 0;
-    }, [isActive]);
-
-    return (
-      <View style={styles.screenContent}>
-        <View style={styles.heroZone}>
-          <Image source={SCENE_1} style={styles.heroImage} resizeMode="contain" />
-        </View>
-        <View style={styles.bottomZone}>
-          <StaggeredText text="Getting home shouldn't feel like this." isActive={isActive} />
-          <Animated.Text style={[styles.subtext, { opacity: subOpacity }]}>
-            Chaotic WhatsApp threads. No-shows. Strangers you can't trust.
-          </Animated.Text>
-        </View>
-      </View>
-    );
-  };
-
-  const Screen2 = ({ isActive }: { isActive: boolean }) => {
-    const subOpacity = useSharedValue(0);
-    const pillScale = useSharedValue(0.8);
-    const pillOpacity = useSharedValue(0);
-
-    useEffect(() => {
-      if (isActive) {
-        subOpacity.value = withDelay(800, withTiming(1, { duration: 400 }));
-        pillScale.value = withDelay(600, withSpring(1, { damping: 15, stiffness: 200 }));
-        pillOpacity.value = withDelay(600, withTiming(1, { duration: 300, easing: Easing.out(Easing.cubic) }));
-      } else {
-        subOpacity.value = 0;
-        pillScale.value = 0.8;
-        pillOpacity.value = 0;
-      }
-    }, [isActive]);
-
-    return (
-      <View style={styles.screenContent}>
-        <View style={styles.heroZone}>
-          <Image source={SCENE_2} style={styles.heroImage} resizeMode="contain" />
-        </View>
-        <View style={styles.bottomZone}>
-          <StaggeredText text="Only your campus. Only verified." isActive={isActive} />
-          <Animated.Text style={[styles.subtext, { opacity: subOpacity }]}>
-            Every person on Crewmute is verified with a college email. Same campus, same trust.
-          </Animated.Text>
-          <Animated.View style={[styles.trustPill, { transform: [{ scale: pillScale }], opacity: pillOpacity }]}>
-            <View style={styles.trustShield} />
-            <Text style={styles.trustPillText}>College email verified</Text>
-          </Animated.View>
-        </View>
-      </View>
-    );
-  };
-
-  const Screen3 = ({ isActive }: { isActive: boolean }) => {
-    const subOpacity = useSharedValue(0);
-    useEffect(() => {
-      if (isActive) subOpacity.value = withDelay(800, withTiming(1, { duration: 400 }));
-      else subOpacity.value = 0;
-    }, [isActive]);
-
-    return (
-      <View style={styles.screenContent}>
-        <View style={styles.heroZone}>
-          <Image source={SCENE_3} style={styles.heroImage} resizeMode="contain" />
-        </View>
-        <View style={styles.bottomZone}>
-          <StaggeredText text="Split the fare. Keep the rest." isActive={isActive} />
-          <Animated.Text style={[styles.subtext, { opacity: subOpacity }]}>
-            A cab home doesn't have to cost a fortune. Share it, and everyone wins.
-          </Animated.Text>
-          <View style={styles.savingsCard}>
-            <AnimatedNumber isActive={isActive} />
-            <Text style={styles.savingsLabel}>average saved per trip</Text>
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  const Screen4 = ({ isActive }: { isActive: boolean }) => {
-    const subOpacity = useSharedValue(0);
-    const avatars = ['AK', 'PS', 'RV', 'KD'];
-    const colors = [tokens.primary, tokens.accent, tokens.warning, '#FF6584'];
-
-    useEffect(() => {
-      if (isActive) subOpacity.value = withDelay(800, withTiming(1, { duration: 400 }));
-      else subOpacity.value = 0;
-    }, [isActive]);
-
-    return (
-      <View style={styles.screenContent}>
-        <View style={styles.heroZone}>
-          <Image source={SCENE_4} style={styles.heroImage} resizeMode="contain" />
-        </View>
-        <View style={styles.bottomZone}>
-          <StaggeredText text="Your crew is already waiting." isActive={isActive} />
-          <Animated.Text style={[styles.subtext, { opacity: subOpacity }]}>
-            Students from your campus heading the same way. Every weekend.
-          </Animated.Text>
-          <View style={styles.avatarRow}>
-            <View style={styles.avatarStack}>
-              {avatars.map((initials, i) => {
-                const scale = useSharedValue(0);
-                useEffect(() => {
-                  if (isActive) {
-                    scale.value = withDelay(800 + i * 80, withSequence(
-                      withTiming(1.08, { duration: 150 }),
-                      withSpring(1, { damping: 12, stiffness: 150 })
-                    ));
-                  } else {
-                    scale.value = 0;
-                  }
-                }, [isActive]);
-
-                return (
-                  <Animated.View 
-                    key={i} 
-                    style={[
-                      styles.avatarCircle, 
-                      { backgroundColor: colors[i], left: i * 32, zIndex: 4 - i, transform: [{ scale }] }
-                    ]}
-                  >
-                    <Text style={styles.avatarText}>{initials}</Text>
-                  </Animated.View>
-                );
-              })}
-            </View>
-            <Animated.Text style={[styles.avatarLabel, { opacity: subOpacity }]}>
-              12 students going home this weekend
-            </Animated.Text>
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  const AuthScreen = () => {
-    const logoScale = useSharedValue(0.6);
-    const wordmarkOpacity = useSharedValue(0);
-    const wordmarkY = useSharedValue(12);
-    const taglineOpacity = useSharedValue(0);
-    const btnOpacity = useSharedValue(0);
-    const btnY = useSharedValue(24);
-    const glowOpacity = useSharedValue(0.15);
-
-    useEffect(() => {
-      if (activeIndex === 4) {
-        logoScale.value = withSpring(1, { damping: 12, stiffness: 100 });
-        wordmarkOpacity.value = withDelay(300, withTiming(1, { duration: 400 }));
-        wordmarkY.value = withDelay(300, withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) }));
-        taglineOpacity.value = withDelay(500, withTiming(1, { duration: 400 }));
-        btnOpacity.value = withDelay(900, withTiming(1, { duration: 400 }));
-        btnY.value = withDelay(900, withTiming(0, { duration: 400, easing: Easing.out(Easing.cubic) }));
-        
-        glowOpacity.value = withRepeat(
-          withSequence(
-            withTiming(0.3, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
-            withTiming(0.15, { duration: 1200, easing: Easing.inOut(Easing.ease) })
-          ),
-          -1,
-          true
-        );
-      }
-    }, [activeIndex]);
-
-    const wmStyle = useAnimatedStyle(() => ({ opacity: wordmarkOpacity.value, transform: [{ translateY: wordmarkY.value }] }));
-    const tagStyle = useAnimatedStyle(() => ({ opacity: taglineOpacity.value }));
-    const btnStyle = useAnimatedStyle(() => ({ opacity: btnOpacity.value, transform: [{ translateY: btnY.value }] }));
-
-    return (
-      <View style={styles.authScreen}>
-        <View style={styles.authTop}>
-          <Animated.View style={[styles.radialGlow, { opacity: glowOpacity }]} />
-          <Animated.View style={[styles.logoBox, { transform: [{ scale: logoScale }] }]}>
-            <View style={styles.logoDots} />
-            <View style={styles.logoLine} />
-            <View style={[styles.logoDots, { marginTop: 16, marginLeft: 16 }]} />
-          </Animated.View>
-          <Animated.Text style={[styles.wordmark, wmStyle]}>Crewmute</Animated.Text>
-          <Animated.Text style={[styles.tagline, tagStyle]}>Your campus. Your ride.</Animated.Text>
-        </View>
-
-        <Animated.View style={[styles.authBottom, btnStyle]}>
-          <Pressable style={styles.createBtn} onPress={() => router.push('/(auth)/register')}>
-            <View style={styles.violetGlow} />
-            <Text style={styles.createBtnText}>Create Account</Text>
-          </Pressable>
-          <Pressable style={styles.signInBtn} onPress={() => router.push('/(auth)/login')}>
-            <Text style={styles.signInBtnText}>Sign In</Text>
-          </Pressable>
-          <Text style={styles.authFooter}>Only for verified college students.</Text>
-        </Animated.View>
-      </View>
-    );
-  };
-
-  // --- Layout Elements ---
-  const renderDots = () => {
-    return (
-      <View style={[styles.dotsContainer, { top: height * 0.55 + 24 }]}>
-        {[0, 1, 2, 3].map((i) => {
-          const style = useAnimatedStyle(() => {
-            const isActive = Math.round(currentIndex.value) === i;
-            return {
-              width: withTiming(isActive ? 24 : 8, { duration: 200, easing: Easing.out(Easing.ease) }),
-              backgroundColor: isActive ? tokens.primary : '#2E2E4A',
-              height: isActive ? 8 : 4,
-              borderRadius: 4,
-            };
-          });
-          return <Animated.View key={i} style={[styles.dot, style]} />;
-        })}
-      </View>
-    );
-  };
+  // UI styling for conditional elements based strictly on currentIndex
+  const continueBtnStyle = useAnimatedStyle(() => {
+    const isVisible = currentIndex.value < 3.9;
+    return {
+      opacity: withTiming(isVisible ? 1 : 0, { duration: 200 }),
+      zIndex: isVisible ? 100 : -1,
+    };
+  });
+  
+  const skipBtnStyle = useAnimatedStyle(() => {
+    const isVisible = currentIndex.value < 3.9;
+    return {
+      opacity: withTiming(isVisible ? 1 : 0, { duration: 200 }),
+      zIndex: isVisible ? 100 : -1,
+    };
+  });
 
   return (
     <GestureDetector gesture={panGesture}>
       <View style={styles.container}>
-        {[0, 1, 2, 3, 4].map(renderScreen)}
+        <StatusBar style="light" />
+        {[0, 1, 2, 3, 4].map(i => <AnimatedScreen key={i} index={i} />)}
 
-        {activeIndex < 4 && (
-          <>
-            <Pressable 
-              style={[styles.skipBtn, { top: Math.max(insets.top, 24) }]} 
-              onPress={skipToAuth}
-            >
-              <Text style={styles.skipText}>Skip</Text>
-            </Pressable>
+        <Animated.View style={[styles.skipBtn, { top: Math.max(insets.top, 24) }, skipBtnStyle]}>
+          <Pressable onPress={skipToAuth}>
+            <Text style={styles.skipText}>Skip</Text>
+          </Pressable>
+        </Animated.View>
 
-            {renderDots()}
+        <Animated.View style={[styles.dotsContainer, { bottom: Math.max(insets.bottom, 24) + 80 }, skipBtnStyle]} pointerEvents="none">
+          {[0, 1, 2, 3].map((i) => <Dot key={i} index={i} />)}
+        </Animated.View>
 
-            <View style={[styles.actionContainer, { bottom: Math.max(insets.bottom, 24) }]} pointerEvents="box-none">
-              <Pressable style={styles.continueBtn} onPress={goToNext}>
-                {activeIndex === 3 && <View style={styles.violetGlow} />}
-                <Text style={styles.continueText}>
-                  {activeIndex === 3 ? "Find My Crew →" : "Continue"}
-                </Text>
-              </Pressable>
-            </View>
-          </>
-        )}
+        <Animated.View style={[styles.actionContainer, { bottom: Math.max(insets.bottom, 24) }, continueBtnStyle]} pointerEvents="box-none">
+          <Pressable style={styles.continueBtn} onPress={goToNext}>
+            {/* Find my crew dynamic text logic handled safely. Since we removed React state for performance,
+                we can just use an animated component or rely on simple conditional based on current UI.
+                We'll use a simple component that updates its text based on animated reaction for peak perf. */}
+            <DynamicContinueText currentIndex={currentIndex} />
+          </Pressable>
+        </Animated.View>
       </View>
     </GestureDetector>
+  );
+}
+
+function DynamicContinueText({ currentIndex }: { currentIndex: SharedValue<number> }) {
+  const [isLast, setIsLast] = useState(false);
+  
+  const updateState = (active: boolean) => setIsLast(active);
+
+  useAnimatedReaction(
+    () => Math.round(currentIndex.value) === 3,
+    (active, prev) => {
+      if (active !== prev) {
+        runOnJS(updateState)(active);
+      }
+    }
+  );
+
+  return (
+    <>
+      {isLast && <View style={styles.violetGlow} />}
+      <Text style={styles.continueText}>
+        {isLast ? "Find My Crew →" : "Continue"}
+      </Text>
+    </>
   );
 }
 
@@ -465,6 +574,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: tokens.bg,
+    overflow: 'hidden', 
   },
   screen: {
     ...StyleSheet.absoluteFillObject,
@@ -473,20 +583,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   heroZone: {
-    height: '55%',
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 40,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    overflow: 'hidden',
   },
   heroImage: {
     width: '100%',
     height: '100%',
   },
+  gradientMaskTop: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    zIndex: 2,
+  },
+  gradientMask: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '100%', // Gradient covers entire hero zone, going from transparent to solid black
+  },
   bottomZone: {
-    height: '45%',
-    paddingTop: 60,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     paddingHorizontal: 24,
+    paddingTop: 16, // Text flows directly from the gradient point
   },
   headlineWrapper: {
     flexDirection: 'row',
@@ -509,7 +635,6 @@ const styles = StyleSheet.create({
   skipBtn: {
     position: 'absolute',
     right: 24,
-    zIndex: 100,
   },
   skipText: {
     fontFamily: 'PlusJakartaSans-600SemiBold',
@@ -521,7 +646,6 @@ const styles = StyleSheet.create({
     left: 24,
     flexDirection: 'row',
     alignItems: 'center',
-    zIndex: 100,
   },
   dot: {
     marginRight: 6,
@@ -530,7 +654,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    zIndex: 100,
   },
   continueBtn: {
     height: 56,
@@ -557,7 +680,6 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.95 }],
   },
   
-  // Screen 2 Extra
   trustPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -576,6 +698,8 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.primary,
     borderRadius: 8,
     marginRight: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   trustPillText: {
     fontFamily: 'PlusJakartaSans-600SemiBold',
@@ -583,7 +707,6 @@ const styles = StyleSheet.create({
     color: '#7C74FF',
   },
 
-  // Screen 3 Extra
   savingsCard: {
     backgroundColor: tokens.card,
     borderRadius: 16,
@@ -592,16 +715,19 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
     borderColor: '#2E2E4A',
     alignSelf: 'flex-start',
-    marginTop: 24,
+    marginTop: 12,
     alignItems: 'center',
   },
   savingsNumber: {
     fontFamily: 'PlusJakartaSans-800ExtraBold',
-    fontSize: 48,
-    color: tokens.primary,
-    textShadowColor: 'rgba(34,211,238,0.4)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+    fontSize: 40,
+    color: tokens.accent,
+    textShadowColor: 'rgba(34,211,238,0.6)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 12,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   savingsLabel: {
     fontFamily: 'PlusJakartaSans-500Medium',
@@ -610,14 +736,13 @@ const styles = StyleSheet.create({
     marginTop: -4,
   },
 
-  // Screen 4 Extra
   avatarRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 24,
   },
   avatarStack: {
-    width: 130, // 4 avatars * 32px
+    width: 130,
     height: 44,
   },
   avatarCircle: {
@@ -642,7 +767,6 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
 
-  // Screen 5
   authScreen: {
     flex: 1,
     justifyContent: 'center',

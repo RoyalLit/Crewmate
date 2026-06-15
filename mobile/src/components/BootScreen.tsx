@@ -22,7 +22,7 @@ const MAX_SCALE = (Math.max(width, height) * 1.5) / HOLE_START;
 
 const LETTERS = ['C', 'R', 'E', 'W', 'M', 'U', 'T', 'E'];
 
-export function BootScreen({ onAnimationDone }: { onAnimationDone: () => void }) {
+export function BootScreen({ onAnimationDone, isReady }: { onAnimationDone: () => void, isReady?: boolean }) {
   const letterProgress = useSharedValue(0);
   const letterOpacity = useSharedValue(1);
   const solidOpacity = useSharedValue(1);
@@ -37,9 +37,14 @@ export function BootScreen({ onAnimationDone }: { onAnimationDone: () => void })
       stiffness: 100,
       mass: 1,
     });
+  }, []);
+
+  useEffect(() => {
+    if (isReady === false) return; // Wait until ready
 
     // 2. Explode the circle outwards using GPU scale
-    setTimeout(() => {
+    // Add a tiny 200ms delay to allow React Native to decode the image texture to GPU
+    const timer = setTimeout(() => {
       // Instantly hide the solid background to reveal the 10px hole
       solidOpacity.value = 0;
       // Fade out letters
@@ -54,8 +59,10 @@ export function BootScreen({ onAnimationDone }: { onAnimationDone: () => void })
           runOnJS(onAnimationDone)();
         }
       });
-    }, 1200);
-  }, []);
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [isReady]);
 
   const holeStyle = useAnimatedStyle(() => ({
     transform: [{ scale: holeScale.value }],

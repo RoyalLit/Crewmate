@@ -26,6 +26,7 @@ import {
 import { QueryClientProvider } from '@tanstack/react-query';
 import { SplashScreen, Stack, useRouter, useSegments } from 'expo-router';
 import React, { useEffect, useState } from 'react';
+import { Image } from 'react-native';
 
 import { useAuthStore } from '../src/store/authStore';
 
@@ -69,6 +70,14 @@ export default function RootLayout(): React.JSX.Element | null {
           login(response.data.data.user);
         }
       }
+
+      const { Asset } = require('expo-asset');
+      await Asset.loadAsync([
+        require('../assets/images/onboarding/scene1.png'),
+        require('../assets/images/onboarding/scene2.png'),
+        require('../assets/images/onboarding/scene3.png'),
+        require('../assets/images/onboarding/scene4.png'),
+      ]);
     } catch (e) {
       console.log('Auto-login failed', e);
     } finally {
@@ -112,7 +121,7 @@ export default function RootLayout(): React.JSX.Element | null {
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
           </Stack>
-          {(!animationDone || !isAuthChecked) && <BootScreen onAnimationDone={() => setAnimationDone(true)} />}
+          {(!animationDone || !isAuthChecked) && <BootScreen onAnimationDone={() => setAnimationDone(true)} isReady={isAuthChecked} />}
         </ThemeProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
