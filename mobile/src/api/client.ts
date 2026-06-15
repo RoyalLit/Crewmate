@@ -32,3 +32,17 @@ apiClient.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// Response interceptor to catch 401 errors globally
+import { useAuthStore } from '../store/authStore';
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      console.log('401 Unauthorized caught globally. Logging out...');
+      useAuthStore.getState().logout();
+    }
+    return Promise.reject(error);
+  }
+);

@@ -18,11 +18,11 @@ export class AuthService {
     const payload: JwtPayload = { userId, tokenVersion };
 
     const accessToken = jwt.sign(payload, env.accessTokenSecret, {
-      expiresIn: '15m',
+      expiresIn: '30d',
     });
 
     const refreshToken = jwt.sign(payload, env.refreshTokenSecret, {
-      expiresIn: '7d',
+      expiresIn: '30d',
     });
 
     return { accessToken, refreshToken };

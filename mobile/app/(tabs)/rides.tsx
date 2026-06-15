@@ -20,9 +20,9 @@ export default function RidesScreen(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<'riding' | 'driving' | 'history'>('riding');
   const [isPulling, setIsPulling] = useState(false);
 
-  const { data, isLoading, isError, refetch: refetchMyRides, isRefetching: isRefetchingRides } = useMyRidesQuery();
-  const { data: myReqData, isLoading: reqLoading, refetch: refetchMyReqs, isRefetching: isRefetchingReqs } = useMyRequestsQuery();
-  const { data: incomingData, refetch: refetchIncoming, isRefetching: isRefetchingIncoming } = useIncomingRequestsQuery();
+  const { data, isLoading, isError, error: myRidesError, refetch: refetchMyRides, isRefetching: isRefetchingRides } = useMyRidesQuery();
+  const { data: myReqData, isLoading: reqLoading, error: myReqError, refetch: refetchMyReqs, isRefetching: isRefetchingReqs } = useMyRequestsQuery();
+  const { data: incomingData, error: incomingError, refetch: refetchIncoming, isRefetching: isRefetchingIncoming } = useIncomingRequestsQuery();
 
   const cancelMutation = useCancelRideMutation();
 
@@ -176,11 +176,16 @@ export default function RidesScreen(): React.JSX.Element {
       >
         {isScreenLoading && <ActivityIndicator size="large" color={colors.interactive.primary} style={{ marginTop: 40 }} />}
         
-        {!isScreenLoading && isError && (
-          <Text style={{ textAlign: 'center', marginTop: 40, color: colors.text.secondary }}>Failed to load rides.</Text>
+        {!isScreenLoading && (isError || myReqError || incomingError) && (
+          <Text style={{ textAlign: 'center', marginTop: 40, color: colors.text.secondary, paddingHorizontal: 20 }}>
+            Failed to load rides.
+            {myRidesError ? `\nMy Rides Error: ${(myRidesError as any).message}` : ''}
+            {myReqError ? `\nRequests Error: ${(myReqError as any).message}` : ''}
+            {incomingError ? `\nIncoming Error: ${(incomingError as any).message}` : ''}
+          </Text>
         )}
 
-        {!isScreenLoading && !isError && displayRides.map((ride: any) => {
+        {!isScreenLoading && !isError && !myReqError && !incomingError && displayRides.map((ride: any) => {
           const rideId = ride.id || ride._id;
           // Find pending incoming requests for this ride if I am the poster
           const pendingRequests = incomingRequests.filter((req: any) => 
