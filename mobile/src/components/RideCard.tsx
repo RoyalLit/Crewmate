@@ -117,13 +117,13 @@ export function RideCard({ ride, onPress }: RideCardProps) {
         <View style={styles.posterInfo}>
           <Avatar
             size="sm"
-            name={ride.poster ? `${ride.poster.firstName} ${ride.poster.lastName}` : ride.posterName}
-            imageUrl={ride.poster?.profilePicture || ride.posterAvatar}
+            name={ride.poster ? ride.poster.name : ride.posterName}
+            imageUrl={ride.poster?.profilePhotoUrl || ride.posterAvatar}
             isVerified={ride.poster?.isVerified ?? ride.posterIsVerified}
           />
           <View style={styles.posterTextContainer}>
             <Text style={[styles.posterName, { color: colors.text.primary }]} numberOfLines={1}>
-              {ride.poster ? `${ride.poster.firstName} ${ride.poster.lastName}` : ride.posterName}
+              {ride.poster ? ride.poster.name : ride.posterName}
             </Text>
             <Text style={[styles.posterCollege, { color: colors.text.secondary }]} numberOfLines={1}>
               {ride.poster?.college || ride.posterCollege}

@@ -6,12 +6,17 @@ import { spacing, brandColors } from '../design/tokens';
 
 interface TicketRideCardProps {
   ride: any; // Using any for now to handle backend RideResponseDTO
+  requestStatus?: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
 }
 
-export function TicketRideCard({ ride }: TicketRideCardProps) {
+export function TicketRideCard({ ride, requestStatus }: TicketRideCardProps) {
   const { colors, isDark } = useTheme();
 
   const getStatusColor = () => {
+    if (requestStatus === 'accepted') return brandColors.mintGreen;
+    if (requestStatus === 'pending') return '#F59E0B'; // Amber
+    if (requestStatus === 'rejected') return brandColors.coralPink;
+    
     if (ride.status === 'active') return brandColors.mintGreen;
     if (ride.status === 'completed') return brandColors.electricViolet;
     return brandColors.coralPink; // cancelled or expired
@@ -31,7 +36,9 @@ export function TicketRideCard({ ride }: TicketRideCardProps) {
             {ride.departureDate || ride.date} • {ride.departureTime || ride.time}
           </Text>
           <View style={[styles.statusBadge, { backgroundColor: `${statusColor}20` }]}>
-            <Text style={[styles.statusText, { color: statusColor }]}>{(ride.status || 'ACTIVE').toUpperCase()}</Text>
+            <Text style={[styles.statusText, { color: statusColor }]}>
+              {requestStatus ? requestStatus.toUpperCase() : (ride.status || 'ACTIVE').toUpperCase()}
+            </Text>
           </View>
         </View>
 
@@ -72,7 +79,7 @@ export function TicketRideCard({ ride }: TicketRideCardProps) {
             <Ionicons name="person" size={16} color="#FFFFFF" />
           </View>
           <Text style={[styles.driverName, { color: colors.text.primary }]}>
-            {ride.poster ? `${ride.poster.firstName} ${ride.poster.lastName}` : (ride.posterName || ride.driver || 'Driver')}
+            {ride.poster ? ride.poster.name : (ride.posterName || ride.driver || 'Driver')}
           </Text>
         </View>
         <Text style={[styles.priceText, { color: colors.text.primary }]}>₹{ride.farePerSeat || ride.fare || ride.price}</Text>

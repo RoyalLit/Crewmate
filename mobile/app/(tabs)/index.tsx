@@ -12,14 +12,17 @@ import { RideCard } from '../../src/components/RideCard';
 import { useThemeStore } from '../../src/store/themeStore';
 import { useBrowseRidesQuery } from '../../src/api/ridesHooks';
 import { CityAutocomplete } from '../../src/components/CityAutocomplete';
+import { useRouter } from 'expo-router';
 
 export default function ExploreScreen(): React.JSX.Element {
   const { colors, isDark } = useTheme();
   const setPreference = useThemeStore((state) => state.setPreference);
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   const [fromCityFilter, setFromCityFilter] = useState('');
   const [toCityFilter, setToCityFilter] = useState('');
+  const [isPulling, setIsPulling] = useState(false);
   
   // Real API Query
   const { data, isLoading, isError, refetch, isRefetching } = useBrowseRidesQuery({
@@ -29,7 +32,13 @@ export default function ExploreScreen(): React.JSX.Element {
     limit: 20
   });
 
-  const rides = data?.data?.rides || [];
+  const rides = data?.data?.data || [];
+
+  const handleRefresh = async () => {
+    setIsPulling(true);
+    await refetch();
+    setIsPulling(false);
+  };
 
   const shadowStyle = isDark
     ? { borderWidth: 1, borderColor: '#2E2E4A' }
@@ -114,7 +123,18 @@ export default function ExploreScreen(): React.JSX.Element {
           <FlatList
             data={rides}
             keyExtractor={(item: any) => item.id || item._id}
-            renderItem={({ item }) => <RideCard ride={item} />}
+            renderItem={({ item }) => (
+              <RideCard 
+                ride={item} 
+                onPress={() => {
+                  const id = item._id || item.id;
+                  if (id) {
+                    // @ts-ignore - expo router dynamic routes typed loosely
+                    router.push(`/ride/${id}`);
+                  }
+                }}
+              />
+            )}
             style={[styles.container, { backgroundColor: 'transparent' }]}
             contentContainerStyle={{ 
               paddingBottom: TAB_BAR_HEIGHT + spacing.md, 
@@ -122,8 +142,8 @@ export default function ExploreScreen(): React.JSX.Element {
               paddingTop: spacing.md
             }}
             showsVerticalScrollIndicator={false}
-            refreshing={isRefetching}
-            onRefresh={refetch}
+            refreshing={isPulling}
+            onRefresh={handleRefresh}
           />
         )}
       </View>

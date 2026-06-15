@@ -70,6 +70,8 @@ export default function RegisterScreen() {
               placeholderTextColor={colors.text.placeholder}
               value={form.name}
               onChangeText={(t) => setForm({ ...form, name: t })}
+              textContentType="name"
+              autoComplete="name"
             />
           </View>
 
@@ -83,6 +85,8 @@ export default function RegisterScreen() {
               autoCapitalize="none"
               value={form.email}
               onChangeText={(t) => setForm({ ...form, email: t })}
+              textContentType="username"
+              autoComplete="email"
             />
           </View>
 
@@ -94,6 +98,8 @@ export default function RegisterScreen() {
               placeholderTextColor={colors.text.placeholder}
               value={form.college}
               onChangeText={(t) => setForm({ ...form, college: t })}
+              textContentType="organizationName"
+              autoComplete="off"
             />
           </View>
 
@@ -107,6 +113,8 @@ export default function RegisterScreen() {
                 secureTextEntry={!showPassword}
                 value={form.password}
                 onChangeText={(t) => setForm({ ...form, password: t })}
+                textContentType="newPassword"
+                autoComplete="new-password"
               />
               <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
                 <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.text.secondary} />

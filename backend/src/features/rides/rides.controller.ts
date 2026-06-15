@@ -14,7 +14,11 @@ export class RidesController {
 
   async browseRides(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const rides = await ridesService.browseRides(req.query as any);
+      const query = req.query as any;
+      if (req.user?.userId) {
+        query.excludePosterId = req.user.userId;
+      }
+      const rides = await ridesService.browseRides(query);
       res.status(200).json(successResponse(rides));
     } catch (error) {
       next(error);

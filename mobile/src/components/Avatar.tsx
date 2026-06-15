@@ -44,9 +44,10 @@ export function Avatar({ size, name, imageUrl, isVerified = false }: AvatarProps
   const fontSize = FONT_MAP[size];
   const badgeSize = BADGE_MAP[size];
 
-  const initials = name
+  const safeName = name || '?';
+  const initials = safeName
     .split(' ')
-    .map((n) => n[0])
+    .map((n) => n?.[0] || '')
     .slice(0, 2)
     .join('')
     .toUpperCase();

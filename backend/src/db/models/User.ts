@@ -81,8 +81,7 @@ const UserSchema = new Schema<IUser>(
   }
 );
 
-// Supports: UserRepository.findByEmail()
-UserSchema.index({ email: 1 });
+// Email index is implicitly created by unique: true on the schema definition
 
 // Supports: UserRepository.findActiveUsers()
 UserSchema.index({ status: 1 });

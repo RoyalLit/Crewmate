@@ -48,6 +48,7 @@ export function useBrowseRidesQuery(filters: RideFilterData) {
       const response = await apiClient.get(`/rides?${params.toString()}`);
       return response.data;
     },
+    refetchInterval: 10000,
   });
 }
 
@@ -58,6 +59,7 @@ export function useMyRidesQuery() {
       const response = await apiClient.get('/rides/me');
       return response.data;
     },
+    refetchInterval: 10000,
   });
 }
 
@@ -69,6 +71,7 @@ export function useRideDetailsQuery(id: string) {
       return response.data;
     },
     enabled: !!id,
+    refetchInterval: 10000,
   });
 }
 

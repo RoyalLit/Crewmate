@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TextInput, Text, StyleSheet, FlatList, Pressable, ActivityIndicator } from 'react-native';
+import { View, TextInput, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../design/theme';
 import { spacing } from '../design/tokens';
@@ -95,12 +95,10 @@ export function CityAutocomplete({ value, onChange, placeholder, iconName }: Cit
 
       {showDropdown && results.length > 0 && (
         <View style={[styles.dropdown, { backgroundColor: colors.background.subtle, borderColor: colors.border.default }]}>
-          <FlatList
-            data={results}
-            keyExtractor={(item) => item.place_id.toString()}
-            keyboardShouldPersistTaps="handled"
-            renderItem={({ item }) => (
+          <ScrollView keyboardShouldPersistTaps="handled">
+            {results.map((item) => (
               <Pressable
+                key={item.place_id.toString()}
                 style={({ pressed }) => [
                   styles.dropdownItem,
                   pressed && { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
@@ -117,8 +115,8 @@ export function CityAutocomplete({ value, onChange, placeholder, iconName }: Cit
                   </Text>
                 </View>
               </Pressable>
-            )}
-          />
+            ))}
+          </ScrollView>
         </View>
       )}
     </View>

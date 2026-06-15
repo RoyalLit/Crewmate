@@ -26,8 +26,6 @@ import {
 import { QueryClientProvider } from '@tanstack/react-query';
 import { SplashScreen, Stack, useRouter, useSegments } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Image } from 'react-native';
-
 import { useAuthStore } from '../src/store/authStore';
 
 import { ThemeProvider } from '../src/design/theme';
@@ -120,6 +118,7 @@ export default function RootLayout(): React.JSX.Element | null {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="ride/[id]" />
           </Stack>
           {(!animationDone || !isAuthChecked) && <BootScreen onAnimationDone={() => setAnimationDone(true)} isReady={isAuthChecked} />}
         </ThemeProvider>

@@ -1,30 +1,38 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, Pressable, Dimensions, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Pressable, Dimensions, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 import { useTheme } from '../../src/design/theme';
 import { TAB_BAR_HEIGHT, spacing } from '../../src/design/tokens';
 import { TicketRideCard } from '../../src/components/TicketRideCard';
+import { IncomingRequestItem } from '../../src/components/IncomingRequestItem';
 import { useMyRidesQuery, useCancelRideMutation } from '../../src/api/ridesHooks';
+import { useMyRequestsQuery, useIncomingRequestsQuery } from '../../src/api/requestsHooks';
 
 const { width } = Dimensions.get('window');
 
 export default function RidesScreen(): React.JSX.Element {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'riding' | 'driving' | 'history'>('riding');
+  const [isPulling, setIsPulling] = useState(false);
 
-  const { data, isLoading, isError } = useMyRidesQuery();
+  const { data, isLoading, isError, refetch: refetchMyRides, isRefetching: isRefetchingRides } = useMyRidesQuery();
+  const { data: myReqData, isLoading: reqLoading, refetch: refetchMyReqs, isRefetching: isRefetchingReqs } = useMyRequestsQuery();
+  const { data: incomingData, refetch: refetchIncoming, isRefetching: isRefetchingIncoming } = useIncomingRequestsQuery();
+
   const cancelMutation = useCancelRideMutation();
 
-  // Shared value for the sliding pill
   const translateX = useSharedValue(0);
 
-  const handleTabPress = (tab: 'active' | 'history') => {
+  const handleTabPress = (tab: 'riding' | 'driving' | 'history') => {
     setActiveTab(tab);
-    const segmentWidth = (width - spacing.lg * 2 - 8) / 2;
-    translateX.value = withSpring(tab === 'active' ? 0 : segmentWidth, {
+    const segmentWidth = (width - spacing.lg * 2 - 8) / 3;
+    const index = tab === 'riding' ? 0 : tab === 'driving' ? 1 : 2;
+    translateX.value = withSpring(index * segmentWidth, {
       mass: 0.8,
       damping: 15,
       stiffness: 150,
@@ -37,13 +45,54 @@ export default function RidesScreen(): React.JSX.Element {
     };
   });
 
-  const allRides = data?.data?.rides || [];
+  const allRides = Array.isArray(data?.data) ? data.data : [];
+  const myRequests = Array.isArray(myReqData?.data) ? myReqData.data : [];
+  const incomingRequests = Array.isArray(incomingData?.data) ? incomingData.data : [];
   
-  // Active rides are those not cancelled and date is in future/today
-  const activeRides = allRides.filter((r: any) => r.status === 'active');
-  const pastRides = allRides.filter((r: any) => r.status === 'cancelled' || r.status === 'expired');
+  // Format requested rides to look like normal rides but with a requestStatus
+  const requestedRides = myRequests.map((req: any) => {
+    // req.ride might be fully populated or just an object
+    return {
+      ...(req.ride || {}),
+      _requestStatus: req.status,
+      _requestId: req.id,
+      // Fallbacks in case populate fails slightly or shape differs
+      status: req.ride?.status || 'active'
+    };
+  });
 
-  const displayRides = activeTab === 'active' ? activeRides : pastRides;
+  const drivingRides = allRides.filter((r: any) => r.status === 'active');
+  
+  const ridingRides = requestedRides.filter((r: any) => 
+    r.status === 'active' && 
+    r._requestStatus !== 'rejected' && 
+    r._requestStatus !== 'withdrawn'
+  );
+  
+  const combinedRides = [...allRides, ...requestedRides];
+  const uniqueRides = Array.from(new Map(combinedRides.map(r => [r._id || r.id, r])).values());
+  
+  const pastRides = uniqueRides.filter((r: any) => 
+    r.status === 'cancelled' || 
+    r.status === 'completed' || 
+    r.status === 'expired' || 
+    r._requestStatus === 'rejected' ||
+    r._requestStatus === 'withdrawn'
+  );
+
+  const displayRides = activeTab === 'riding' ? ridingRides : activeTab === 'driving' ? drivingRides : pastRides;
+  const isScreenLoading = isLoading || reqLoading;
+  const isRefetching = isRefetchingRides || isRefetchingReqs || isRefetchingIncoming;
+
+  const handleRefresh = async () => {
+    setIsPulling(true);
+    await Promise.all([
+      refetchMyRides(),
+      refetchMyReqs(),
+      refetchIncoming()
+    ]);
+    setIsPulling(false);
+  };
 
   const handleCancelRide = (rideId: string) => {
     Alert.alert(
@@ -66,6 +115,13 @@ export default function RidesScreen(): React.JSX.Element {
     );
   };
 
+  const handlePressRide = (rideId: string) => {
+    if (rideId) {
+      // @ts-ignore
+      router.push(`/ride/${rideId}`);
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
       {/* Header and Segmented Control */}
@@ -81,13 +137,18 @@ export default function RidesScreen(): React.JSX.Element {
                 backgroundColor: isDark ? colors.background.subtle : colors.background.card, 
                 shadowOpacity: isDark ? 0 : 0.08,
                 borderWidth: isDark ? 1 : 0,
-                borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'transparent'
+                borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'transparent',
+                width: (width - spacing.lg * 2 - 8) / 3
               }
             ]} 
           />
           
-          <Pressable style={styles.segmentButton} onPress={() => handleTabPress('active')}>
-            <Text style={[styles.segmentText, { color: activeTab === 'active' ? colors.text.primary : colors.text.placeholder }]}>Active</Text>
+          <Pressable style={styles.segmentButton} onPress={() => handleTabPress('riding')}>
+            <Text style={[styles.segmentText, { color: activeTab === 'riding' ? colors.text.primary : colors.text.placeholder }]}>Riding</Text>
+          </Pressable>
+
+          <Pressable style={styles.segmentButton} onPress={() => handleTabPress('driving')}>
+            <Text style={[styles.segmentText, { color: activeTab === 'driving' ? colors.text.primary : colors.text.placeholder }]}>Driving</Text>
           </Pressable>
           
           <Pressable style={styles.segmentButton} onPress={() => handleTabPress('history')}>
@@ -105,29 +166,51 @@ export default function RidesScreen(): React.JSX.Element {
           gap: spacing.md,
         }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl 
+             refreshing={isPulling} 
+             onRefresh={handleRefresh} 
+             tintColor={colors.interactive.primary} 
+          />
+        }
       >
-        {isLoading && <ActivityIndicator size="large" color={colors.interactive.primary} style={{ marginTop: 40 }} />}
+        {isScreenLoading && <ActivityIndicator size="large" color={colors.interactive.primary} style={{ marginTop: 40 }} />}
         
-        {!isLoading && isError && (
+        {!isScreenLoading && isError && (
           <Text style={{ textAlign: 'center', marginTop: 40, color: colors.text.secondary }}>Failed to load rides.</Text>
         )}
 
-        {!isLoading && !isError && displayRides.map((ride: any) => (
-          <Pressable 
-            key={ride.id || ride._id}
-            onLongPress={() => ride.status === 'active' ? handleCancelRide(ride.id || ride._id) : null}
-            delayLongPress={500}
-          >
-            <TicketRideCard ride={ride} />
-            {ride.status === 'active' && (
-              <Text style={{ textAlign: 'center', fontSize: 12, color: colors.text.secondary, marginTop: -4, marginBottom: 8 }}>
-                Long press to cancel
-              </Text>
-            )}
-          </Pressable>
-        ))}
+        {!isScreenLoading && !isError && displayRides.map((ride: any) => {
+          const rideId = ride.id || ride._id;
+          // Find pending incoming requests for this ride if I am the poster
+          const pendingRequests = incomingRequests.filter((req: any) => 
+            (req.rideId === rideId || req.ride === rideId) && req.status === 'pending'
+          );
 
-        {!isLoading && !isError && displayRides.length === 0 && (
+          return (
+            <View key={rideId} style={{ marginBottom: pendingRequests.length > 0 ? spacing.md : 0 }}>
+              <Pressable 
+                onPress={() => handlePressRide(rideId)}
+                onLongPress={() => ride.status === 'active' && !ride._requestStatus ? handleCancelRide(rideId) : null}
+                delayLongPress={500}
+              >
+                <TicketRideCard ride={ride} requestStatus={ride._requestStatus} />
+                {ride.status === 'active' && !ride._requestStatus && (
+                  <Text style={{ textAlign: 'center', fontSize: 12, color: colors.text.secondary, marginTop: -4, marginBottom: 8 }}>
+                    Long press to cancel
+                  </Text>
+                )}
+              </Pressable>
+
+              {/* Render Incoming Requests inline under the ride card */}
+              {pendingRequests.map((req: any) => (
+                <IncomingRequestItem key={req.id} request={req} />
+              ))}
+            </View>
+          );
+        })}
+
+        {!isScreenLoading && !isError && displayRides.length === 0 && (
           <View style={styles.emptyState}>
             <Text style={[styles.emptyText, { color: colors.text.secondary }]}>No rides found.</Text>
           </View>
@@ -162,7 +245,7 @@ const styles = StyleSheet.create({
     top: 4,
     left: 4,
     height: 36,
-    width: (width - spacing.lg * 2 - 8) / 2,
+    width: (width - spacing.lg * 2 - 8) / 3,
     borderRadius: 18,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

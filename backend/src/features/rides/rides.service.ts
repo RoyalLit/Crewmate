@@ -49,11 +49,14 @@ export class RidesService {
   async browseRides(query: RideFilterQuery): Promise<PaginatedResult<RideResponseDTO>> {
     const result = await ridesRepository.findRides(query);
     
-    // Format all rides
-    const formattedData = result.data.map(ride => this.formatRide(ride));
-    
-    // Potentially populate poster data here in a real scenario (or aggregate in repository). 
-    // For simplicity, we just return the standard format.
+    // Format all rides and populate poster
+    const formattedData = await Promise.all(result.data.map(async ride => {
+      const formattedRide = this.formatRide(ride);
+      try {
+        formattedRide.poster = await usersService.getPublicProfile(formattedRide.posterId);
+      } catch (error) {}
+      return formattedRide;
+    }));
     
     return {
       ...result,
@@ -63,7 +66,13 @@ export class RidesService {
 
   async getMyRides(userId: string): Promise<RideResponseDTO[]> {
     const rides = await ridesRepository.findRidesByPoster(userId);
-    return rides.map(ride => this.formatRide(ride));
+    return Promise.all(rides.map(async ride => {
+      const formattedRide = this.formatRide(ride);
+      try {
+        formattedRide.poster = await usersService.getPublicProfile(formattedRide.posterId);
+      } catch (error) {}
+      return formattedRide;
+    }));
   }
 
   async updateRide(id: string, userId: string, data: UpdateRideRequestDTO): Promise<RideResponseDTO> {

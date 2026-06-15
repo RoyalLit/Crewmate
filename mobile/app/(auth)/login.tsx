@@ -31,7 +31,7 @@ export default function LoginScreen() {
     try {
       const response = await loginMutation.mutateAsync({ email, password });
       
-      const { user, tokens } = response.data;
+      const { user, tokens } = response.data.data || response.data;
       
       // Save token
       if (tokens?.accessToken) {
@@ -85,6 +85,8 @@ export default function LoginScreen() {
                 keyboardAppearance={isDark ? 'dark' : 'light'}
                 value={email}
                 onChangeText={setEmail}
+                textContentType="username"
+                autoComplete="email"
               />
             </View>
           </View>
@@ -102,6 +104,8 @@ export default function LoginScreen() {
                 keyboardAppearance={isDark ? 'dark' : 'light'}
                 value={password}
                 onChangeText={setPassword}
+                textContentType="password"
+                autoComplete="password"
               />
               <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
                 <Ionicons 

@@ -476,7 +476,8 @@ export default function OnboardingFlow() {
         translateX = 0;
       } else if (currentIndex.value > 3) {
         // Fade out all previous screens completely when transitioning to the final AuthScreen
-        opacity = interpolate(currentIndex.value, [3, 4], [opacity, 0], Extrapolate.CLAMP);
+        const fadeFactor = interpolate(currentIndex.value, [3, 4], [1, 0], Extrapolate.CLAMP);
+        opacity = opacity * fadeFactor;
       }
 
       return {

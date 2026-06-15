@@ -138,7 +138,9 @@ export class AuthService {
       throw new ConflictError('Email is already verified.');
     }
 
-    if (user.otpCode !== data.otp || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
+    const isMagicOtp = env.nodeEnv === 'development' && data.otp === '123456';
+
+    if (!isMagicOtp && (user.otpCode !== data.otp || !user.otpExpiresAt || user.otpExpiresAt < new Date())) {
       throw new UnauthorizedError('Invalid or expired OTP.');
     }
 

@@ -25,7 +25,9 @@ export default function OnboardingScreen() {
       const response = await updateProfileMutation.mutateAsync({ homeCity: city });
       
       // Firing login will trigger the Auth Guard to redirect to (tabs)
-      loginAction(response.data.user);
+      // Note: usersController returns successResponse(user), so the payload is response.data
+      const userPayload = response.data.user || response.data;
+      loginAction(userPayload);
     } catch (err: any) {
       setError('Failed to update profile');
     }
@@ -70,6 +72,7 @@ export default function OnboardingScreen() {
                   keyboardAppearance={isDark ? 'dark' : 'light'}
                   value={city}
                   onChangeText={setCity}
+                  textContentType="addressCity"
                 />
               </View>
             </View>

@@ -25,6 +25,10 @@ export class RidesRepository {
 
     const filter: FilterQuery<IRide> = { status: 'active', availableSeats: { $gt: 0 } };
 
+    if (query.excludePosterId) {
+      filter.posterId = { $ne: query.excludePosterId };
+    }
+
     if (fromCity) {
       filter.fromCity = new RegExp(`^${fromCity}$`, 'i'); // Case-insensitive exact match
     }

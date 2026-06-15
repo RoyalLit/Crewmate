@@ -23,6 +23,7 @@ export interface RideFilterQuery extends PaginationQuery {
   fromCity?: string;
   toCity?: string;
   date?: string;
+  excludePosterId?: string;
 }
 
 export interface RideResponseDTO {
