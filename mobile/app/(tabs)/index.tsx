@@ -25,7 +25,7 @@ export default function ExploreScreen(): React.JSX.Element {
   const [isPulling, setIsPulling] = useState(false);
   
   // Real API Query
-  const { data, isLoading, isError, refetch, isRefetching } = useBrowseRidesQuery({
+  const { data, isLoading, isError, refetch } = useBrowseRidesQuery({
     fromCity: fromCityFilter,
     toCity: toCityFilter,
     page: 1,

@@ -13,6 +13,8 @@ export class RidesService {
       toCity: ride.toCity,
       departureDate: ride.departureDate,
       departureTime: ride.departureTime,
+      arrivalTime: ride.arrivalTime,
+      stops: ride.stops || [],
       totalSeats: ride.totalSeats,
       availableSeats: ride.availableSeats,
       farePerSeat: ride.farePerSeat,

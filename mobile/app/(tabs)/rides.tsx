@@ -20,9 +20,9 @@ export default function RidesScreen(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<'riding' | 'driving' | 'history'>('riding');
   const [isPulling, setIsPulling] = useState(false);
 
-  const { data, isLoading, isError, error: myRidesError, refetch: refetchMyRides, isRefetching: isRefetchingRides } = useMyRidesQuery();
-  const { data: myReqData, isLoading: reqLoading, error: myReqError, refetch: refetchMyReqs, isRefetching: isRefetchingReqs } = useMyRequestsQuery();
-  const { data: incomingData, error: incomingError, refetch: refetchIncoming, isRefetching: isRefetchingIncoming } = useIncomingRequestsQuery();
+  const { data, isLoading, isError, error: myRidesError, refetch: refetchMyRides } = useMyRidesQuery();
+  const { data: myReqData, isLoading: reqLoading, error: myReqError, refetch: refetchMyReqs } = useMyRequestsQuery();
+  const { data: incomingData, error: incomingError, refetch: refetchIncoming } = useIncomingRequestsQuery();
 
   const cancelMutation = useCancelRideMutation();
 
@@ -82,8 +82,6 @@ export default function RidesScreen(): React.JSX.Element {
 
   const displayRides = activeTab === 'riding' ? ridingRides : activeTab === 'driving' ? drivingRides : pastRides;
   const isScreenLoading = isLoading || reqLoading;
-  const isRefetching = isRefetchingRides || isRefetchingReqs || isRefetchingIncoming;
-
   const handleRefresh = async () => {
     setIsPulling(true);
     await Promise.all([

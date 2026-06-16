@@ -1,25 +1,19 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import React from 'react';
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 import { useTheme } from '../../src/design/theme';
-import { TAB_BAR_HEIGHT, spacing } from '../../src/design/tokens';
+import { TAB_BAR_HEIGHT, spacing, brandColors } from '../../src/design/tokens';
 import { ChatRow } from '../../src/components/ChatRow';
-
-const INITIAL_CHATS = [
-  { id: '1', name: 'Alex R.', lastMessage: 'Are we still meeting at the library?', time: '2m ago', unreadCount: 1 },
-  { id: '2', name: 'Sarah J.', lastMessage: 'Sounds good, see you then! Sounds good, see you then! Sounds good, see you then!', time: '1h ago', unreadCount: 0 },
-  { id: '3', name: 'Mike T.', lastMessage: 'No worries.', time: 'Yesterday', unreadCount: 0 },
-];
+import { useChatsList } from '../../src/api/chatsHooks';
 
 export default function ChatsScreen(): React.JSX.Element {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const [chats, setChats] = useState(INITIAL_CHATS);
+  const router = useRouter();
 
-  const handleDelete = (id: string) => {
-    setChats(chats.filter((chat) => chat.id !== id));
-  };
+  const { data: chats, isLoading, refetch, isRefetching } = useChatsList();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
@@ -27,22 +21,38 @@ export default function ChatsScreen(): React.JSX.Element {
         <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Chats</Text>
       </View>
 
-      <ScrollView
-        contentContainerStyle={{
-          paddingBottom: TAB_BAR_HEIGHT + spacing['2xl'],
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-        {chats.map((chat) => (
-          <ChatRow key={chat.id} {...chat} onDelete={handleDelete} />
-        ))}
+      {isLoading && !isRefetching ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={brandColors.electricViolet} />
+        </View>
+      ) : (
+        <ScrollView
+          contentContainerStyle={{
+            paddingBottom: TAB_BAR_HEIGHT + spacing['2xl'],
+            flexGrow: 1,
+          }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+        >
+          {chats?.map((chat) => (
+            <ChatRow 
+              key={chat.id} 
+              id={chat.id}
+              name={chat.otherUser.name}
+              lastMessage={chat.lastMessage}
+              time={new Date(chat.time).toLocaleDateString()}
+              unreadCount={chat.unreadCount}
+              onPress={() => router.push(`/chat/${chat.rideId}/${chat.otherUser.id}`)}
+            />
+          ))}
 
-        {chats.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text style={[styles.emptyText, { color: colors.text.secondary }]}>No conversations yet.</Text>
-          </View>
-        )}
-      </ScrollView>
+          {(!chats || chats.length === 0) && (
+            <View style={styles.emptyState}>
+              <Text style={[styles.emptyText, { color: colors.text.secondary }]}>No conversations yet.</Text>
+            </View>
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -58,6 +68,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: 'PlusJakartaSans-800ExtraBold',
     fontSize: 28,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emptyState: {
     paddingVertical: 60,

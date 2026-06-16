@@ -86,23 +86,23 @@ export function RideCard({ ride, onPress }: RideCardProps) {
             <Text style={[styles.timeText, { color: colors.text.primary }]}>
               {ride.departureTime || ride.time}
             </Text>
-            <Text style={[styles.cityText, { color: colors.text.primary }]} numberOfLines={1}>
+            <Text 
+              style={[styles.cityText, { color: colors.text.primary }]} 
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
               {ride.fromCity}
             </Text>
           </View>
           
-          <View style={[styles.locationRow, { marginTop: 12 }]}>
-            <Text style={[styles.timeText, { color: colors.text.primary }]}>
-              {/* No arrival time yet, just placeholder dash */}
-              --:--
-            </Text>
-            <Text style={[styles.cityText, { color: colors.text.primary }]} numberOfLines={1}>
+          <View style={[styles.locationRow, { marginTop: spacing.sm }]}>
+            <Text style={[styles.timeText, { color: colors.text.primary }]}>{ride.arrivalTime}</Text>
+            <Text 
+              style={[styles.cityText, { color: colors.text.primary }]} 
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
               {ride.toCity}
-            </Text>
-            {/* Hardcoded arrival estimation placeholder like the Stitch design */}
-            <Text style={[styles.timeText, { color: colors.text.secondary }]}>
-              {/* This will eventually be calculated, e.g., ~5:45 PM */}
-              ~ {(ride.departureTime || ride.time || '12:00').replace(/([0-9]+):([0-9]+) (AM|PM)/, (_: any, h: string) => `${parseInt(h) + 1}:45 ${parseInt(h) >= 11 && parseInt(h) !== 12 ? 'PM' : 'AM'}`)}
             </Text>
           </View>
         </View>

@@ -33,7 +33,7 @@ export function TicketRideCard({ ride, requestStatus }: TicketRideCardProps) {
       <View style={[styles.ticketTop, { backgroundColor: colors.background.card, borderColor }]}>
         <View style={styles.headerRow}>
           <Text style={[styles.dateText, { color: colors.text.secondary }]}>
-            {ride.departureDate || ride.date} • {ride.departureTime || ride.time}
+            {ride.departureDate || ride.date} • {ride.departureTime || ride.time} {ride.arrivalTime ? `- ${ride.arrivalTime}` : ''}
           </Text>
           <View style={[styles.statusBadge, { backgroundColor: `${statusColor}20` }]}>
             <Text style={[styles.statusText, { color: statusColor }]}>
@@ -44,14 +44,26 @@ export function TicketRideCard({ ride, requestStatus }: TicketRideCardProps) {
 
         <View style={styles.routeContainer}>
           <View style={styles.routeCol}>
-            <Text style={[styles.cityText, { color: colors.text.primary }]}>{ride.fromCity || ride.from}</Text>
+            <Text 
+              style={[styles.cityText, { color: colors.text.primary }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              {ride.fromCity || ride.from}
+            </Text>
             <Text style={[styles.timeText, { color: colors.text.secondary }]}>Departure</Text>
           </View>
           <View style={styles.routeArrow}>
             <Ionicons name="arrow-forward" size={24} color={colors.text.placeholder} />
           </View>
           <View style={[styles.routeCol, { alignItems: 'flex-end' }]}>
-            <Text style={[styles.cityText, { color: colors.text.primary }]}>{ride.toCity || ride.to}</Text>
+            <Text 
+              style={[styles.cityText, { color: colors.text.primary }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              {ride.toCity || ride.to}
+            </Text>
             <Text style={[styles.timeText, { color: colors.text.secondary }]}>Arrival</Text>
           </View>
         </View>

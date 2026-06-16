@@ -15,6 +15,7 @@
  * The layout handles the auth check; screens render UI only.
  */
 
+import 'react-native-gesture-handler';
 import {
   PlusJakartaSans_400Regular,
   PlusJakartaSans_500Medium,
@@ -30,6 +31,8 @@ import { useAuthStore } from '../src/store/authStore';
 
 import { ThemeProvider } from '../src/design/theme';
 import { queryClient } from '../src/lib/queryClient';
+import { AuthProvider } from '../src/context/AuthContext';
+import { SocketProvider } from '../src/context/SocketContext';
 
 import { BootScreen } from '../src/components/BootScreen';
 
@@ -115,12 +118,16 @@ export default function RootLayout(): React.JSX.Element | null {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="ride/[id]" />
-          </Stack>
-          {(!animationDone || !isAuthChecked) && <BootScreen onAnimationDone={() => setAnimationDone(true)} isReady={isAuthChecked} />}
+          <AuthProvider>
+          <SocketProvider>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="ride/[id]" />
+            </Stack>
+            {(!animationDone || !isAuthChecked) && <BootScreen onAnimationDone={() => setAnimationDone(true)} isReady={isAuthChecked} />}
+          </SocketProvider>
+          </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

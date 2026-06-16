@@ -17,9 +17,26 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
   const [to, setTo] = useState('');
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [time, setTime] = useState('14:30');
+  const [arrivalTime, setArrivalTime] = useState('18:30');
+  const [stops, setStops] = useState<string[]>([]);
   const [seats, setSeats] = useState(3);
   const [fare, setFare] = useState('150');
-  const [cabType, setCabType] = useState<'Uber Go' | 'Uber XL' | 'Ola Mini' | 'Ola Prime Sedan' | 'Other'>('Other');
+  const [cabType, setCabType] = useState<string>('');
+
+  const formatDateMask = (text: string) => {
+    const cleaned = text.replace(/[^0-9]/g, '');
+    let formatted = cleaned;
+    if (cleaned.length > 4) formatted = cleaned.slice(0, 4) + '-' + cleaned.slice(4);
+    if (cleaned.length > 6) formatted = formatted.slice(0, 7) + '-' + cleaned.slice(6);
+    setDate(formatted.slice(0, 10));
+  };
+
+  const formatTimeMask = (text: string, setter: (val: string) => void) => {
+    const cleaned = text.replace(/[^0-9]/g, '');
+    let formatted = cleaned;
+    if (cleaned.length > 2) formatted = cleaned.slice(0, 2) + ':' + cleaned.slice(2);
+    setter(formatted.slice(0, 5));
+  };
 
   const createRideMutation = useCreateRideMutation();
 
@@ -49,20 +66,37 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
            return;
         }
         if (!/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(time)) {
-           Alert.alert('Invalid Time', 'Time must be in 24-hour HH:mm format (e.g. 14:30)');
+           Alert.alert('Invalid Departure Time', 'Departure Time must be in 24-hour HH:mm format (e.g. 14:30)');
            return;
+        }
+        if (!/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(arrivalTime)) {
+           Alert.alert('Invalid Arrival Time', 'Arrival Time must be in 24-hour HH:mm format (e.g. 18:30)');
+           return;
+        }
+      }
+      if (step === 3) {
+        if (!cabType) {
+          Alert.alert('Missing Field', 'Please select a vehicle type.');
+          return;
         }
       }
       setStep(step + 1);
     } else {
+      if (!cabType) {
+        Alert.alert('Missing Field', 'Please select a vehicle type.');
+        return;
+      }
       try {
         await createRideMutation.mutateAsync({
           fromCity: from,
           toCity: to,
           departureDate: date,
           departureTime: time,
+          arrivalTime: arrivalTime,
+          stops: stops.filter(s => s.trim() !== ''),
           totalSeats: seats,
           farePerSeat: parseInt(fare) || 0,
+          // @ts-ignore
           cabType: cabType,
         });
 
@@ -73,8 +107,10 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
           setStep(1);
           setFrom('');
           setTo('');
+          setStops([]);
           setDate('');
           setTime('');
+          setArrivalTime('');
         }, 500);
       } catch (e: any) {
         Alert.alert('Error', e.response?.data?.error?.message || 'Failed to post ride');
@@ -86,48 +122,105 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
     switch (step) {
       case 1:
         return (
-          <View style={{ zIndex: 10 }}>
-            <Text style={[styles.title, { color: colors.text.primary }]}>Where are you heading?</Text>
-            <View style={{ marginBottom: spacing.md, zIndex: 20 }}>
+          <>
+            <Text style={[styles.stepperLabel, { color: colors.text.primary, marginBottom: spacing.md }]}>Route Details</Text>
+            <View style={{ zIndex: 100 }}>
               <CityAutocomplete
                 value={from}
                 onChange={setFrom}
-                placeholder="Leaving from..."
+                placeholder="Leaving from"
                 iconName="location-outline"
               />
             </View>
-            <View style={{ marginBottom: spacing.md, zIndex: 10 }}>
+            
+            <View style={{ marginTop: spacing.md, zIndex: 50 }}>
               <CityAutocomplete
                 value={to}
                 onChange={setTo}
-                placeholder="Going to..."
+                placeholder="Going to"
                 iconName="flag-outline"
               />
             </View>
-          </View>
+
+            {stops.map((stop, index) => (
+              <View key={index} style={{ zIndex: 49 - index, marginTop: spacing.md, flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ flex: 1 }}>
+                  <CityAutocomplete
+                    value={stop}
+                    onChange={(val) => {
+                      const newStops = [...stops];
+                      newStops[index] = val;
+                      setStops(newStops);
+                    }}
+                    placeholder={`Stop ${index + 1} (optional)`}
+                    iconName="pin-outline"
+                  />
+                </View>
+                <Pressable 
+                  onPress={() => {
+                    const newStops = [...stops];
+                    newStops.splice(index, 1);
+                    setStops(newStops);
+                  }}
+                  style={{ padding: spacing.sm, marginLeft: spacing.xs }}
+                >
+                  <Ionicons name="close-circle" size={24} color={colors.text.placeholder} />
+                </Pressable>
+              </View>
+            ))}
+
+            <Pressable 
+              onPress={() => setStops([...stops, ''])} 
+              style={{ marginTop: spacing.md, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingVertical: spacing.xs }}
+            >
+               <Ionicons name="add-circle-outline" size={20} color={brandColors.electricViolet} style={{ marginRight: 6 }} />
+               <Text style={{ color: brandColors.electricViolet, fontFamily: 'PlusJakartaSans-600SemiBold' }}>Add intermediate stop</Text>
+            </Pressable>
+          </>
         );
       case 2:
         return (
           <>
             <Text style={[styles.title, { color: colors.text.primary }]}>When are you leaving?</Text>
+            <Text style={[styles.stepperLabel, { color: colors.text.primary, marginBottom: spacing.sm }]}>Date of travel</Text>
             <View style={[styles.inputContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
               <Ionicons name="calendar-outline" size={20} color={colors.text.placeholder} style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, { color: colors.text.primary }]}
-                placeholder="Date (e.g. Today)"
+                placeholder="YYYY-MM-DD"
                 placeholderTextColor={colors.text.placeholder}
                 value={date}
-                onChangeText={setDate}
+                onChangeText={formatDateMask}
+                keyboardType="numeric"
+                maxLength={10}
               />
             </View>
+
+            <Text style={[styles.stepperLabel, { color: colors.text.primary, marginTop: spacing.md, marginBottom: spacing.sm }]}>Departure Time</Text>
             <View style={[styles.inputContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
               <Ionicons name="time-outline" size={20} color={colors.text.placeholder} style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, { color: colors.text.primary }]}
-                placeholder="Time (e.g. 5:30 PM)"
+                placeholder="HH:mm (24hr)"
                 placeholderTextColor={colors.text.placeholder}
                 value={time}
-                onChangeText={setTime}
+                onChangeText={(t) => formatTimeMask(t, setTime)}
+                keyboardType="numeric"
+                maxLength={5}
+              />
+            </View>
+
+            <Text style={[styles.stepperLabel, { color: colors.text.primary, marginTop: spacing.md, marginBottom: spacing.sm }]}>Estimated Arrival Time</Text>
+            <View style={[styles.inputContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+              <Ionicons name="time-outline" size={20} color={colors.text.placeholder} style={styles.inputIcon} />
+              <TextInput
+                style={[styles.input, { color: colors.text.primary }]}
+                placeholder="HH:mm (24hr)"
+                placeholderTextColor={colors.text.placeholder}
+                value={arrivalTime}
+                onChangeText={(t) => formatTimeMask(t, setArrivalTime)}
+                keyboardType="numeric"
+                maxLength={5}
               />
             </View>
           </>
@@ -162,6 +255,27 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
                 onChangeText={setFare}
               />
               <Text style={[styles.perSeat, { color: colors.text.secondary }]}>/ seat</Text>
+            </View>
+
+            <Text style={[styles.stepperLabel, { color: colors.text.primary, marginTop: spacing.md, marginBottom: spacing.sm }]}>Vehicle Type</Text>
+            <View style={{ marginBottom: spacing.md, flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+              {['Hatchback', 'Sedan', 'SUV', 'MUV', 'Any'].map(type => (
+                <Pressable
+                  key={type}
+                  onPress={() => setCabType(type)}
+                  style={[
+                    styles.cabChip,
+                    cabType === type ? { backgroundColor: brandColors.electricViolet, borderColor: brandColors.electricViolet } : { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }
+                  ]}
+                >
+                  <Text style={[
+                    styles.cabChipText,
+                    cabType === type ? { color: '#FFF' } : { color: colors.text.secondary }
+                  ]}>
+                    {type}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
 
             <View style={[styles.earningsBox, { backgroundColor: isDark ? 'rgba(123, 97, 255, 0.1)' : '#F3F0FF' }]}>
@@ -323,5 +437,15 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans-700Bold',
     fontSize: 18,
     color: '#FFFFFF',
+  },
+  cabChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 100,
+    borderWidth: 1,
+  },
+  cabChipText: {
+    fontFamily: 'PlusJakartaSans-600SemiBold',
+    fontSize: 14,
   },
 });

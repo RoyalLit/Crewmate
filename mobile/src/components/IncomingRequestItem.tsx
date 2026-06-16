@@ -32,11 +32,6 @@ export function IncomingRequestItem({ request }: IncomingRequestItemProps) {
     });
   };
 
-  // If status is not pending, don't show the actionable item, or show it disabled
-  if (request.status !== 'pending') {
-    return null; // For simplicity, only show pending requests in this component
-  }
-
   return (
     <View style={[styles.container, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : colors.background.subtle, borderColor: colors.border.default }]}>
       <View style={styles.header}>
@@ -56,31 +51,39 @@ export function IncomingRequestItem({ request }: IncomingRequestItemProps) {
         </View>
       </View>
       
-      <View style={styles.actions}>
-        <Pressable 
-          style={[styles.btn, styles.btnReject, { borderColor: colors.border.default }]} 
-          onPress={handleReject}
-          disabled={rejectMutation.isPending || acceptMutation.isPending}
-        >
-          {rejectMutation.isPending ? (
-            <ActivityIndicator size="small" color={colors.text.primary} />
-          ) : (
-            <Text style={[styles.btnText, { color: colors.text.primary }]}>Decline</Text>
-          )}
-        </Pressable>
-        
-        <Pressable 
-          style={[styles.btn, styles.btnAccept]} 
-          onPress={handleAccept}
-          disabled={rejectMutation.isPending || acceptMutation.isPending}
-        >
-          {acceptMutation.isPending ? (
-            <ActivityIndicator size="small" color="#FFF" />
-          ) : (
-            <Text style={[styles.btnText, { color: '#FFF' }]}>Accept</Text>
-          )}
-        </Pressable>
-      </View>
+      {request.status === 'pending' && (
+        <View style={styles.actions}>
+          <Pressable 
+            style={[styles.btn, styles.btnReject, { borderColor: colors.border.default }]} 
+            onPress={handleReject}
+            disabled={rejectMutation.isPending || acceptMutation.isPending}
+          >
+            {rejectMutation.isPending ? (
+              <ActivityIndicator size="small" color={colors.text.primary} />
+            ) : (
+              <Text style={[styles.btnText, { color: colors.text.primary }]}>Decline</Text>
+            )}
+          </Pressable>
+          
+          <Pressable 
+            style={[styles.btn, styles.btnAccept]} 
+            onPress={handleAccept}
+            disabled={rejectMutation.isPending || acceptMutation.isPending}
+          >
+            {acceptMutation.isPending ? (
+              <ActivityIndicator size="small" color="#FFF" />
+            ) : (
+              <Text style={[styles.btnText, { color: '#FFF' }]}>Accept</Text>
+            )}
+          </Pressable>
+        </View>
+      )}
+
+      {request.status === 'accepted' && (
+        <View style={[styles.actions, { justifyContent: 'center', backgroundColor: brandColors.mintGreen, paddingVertical: 8, borderRadius: 8 }]}>
+          <Text style={[styles.btnText, { color: '#FFF' }]}>Seat Confirmed ✓</Text>
+        </View>
+      )}
     </View>
   );
 }

@@ -12,9 +12,10 @@ function hexToRGBA(hex: string, alpha: number) {
 
 interface SeatsBadgeProps {
   seatsLeft: number;
+  style?: any;
 }
 
-export function SeatsBadge({ seatsLeft }: SeatsBadgeProps) {
+export function SeatsBadge({ seatsLeft, style }: SeatsBadgeProps) {
   let color: string = brandColors.mintGreen;
 
   if (seatsLeft === 0) {
@@ -26,7 +27,7 @@ export function SeatsBadge({ seatsLeft }: SeatsBadgeProps) {
   const bg = hexToRGBA(color, 0.15);
 
   return (
-    <View style={[styles.container, { backgroundColor: bg }]}>
+    <View style={[styles.container, { backgroundColor: bg }, style]}>
       <Text style={[styles.text, { color }]}>
         {seatsLeft === 0 ? 'Full' : `${seatsLeft} left`}
       </Text>
@@ -39,7 +40,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 100,
-    alignSelf: 'flex-end', // align right inside its flex container
+    alignSelf: 'flex-end', // align right inside its flex container by default
   },
   text: {
     fontFamily: 'PlusJakartaSans-600SemiBold',

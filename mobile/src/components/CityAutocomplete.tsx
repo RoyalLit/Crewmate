@@ -51,7 +51,20 @@ export function CityAutocomplete({ value, onChange, placeholder, iconName }: Cit
           }
         );
         const data = await response.json();
-        setResults(data);
+        const uniqueData = data.reduce((acc: any[], current: any) => {
+          const addr = current.address || {};
+          // Prioritize actual place types over district to avoid replacing villages with districts
+          const canonicalName = addr.city || addr.town || addr.village || addr.suburb || addr.municipality || addr.state_district || current.name;
+          const displayStr = `${canonicalName}${addr.state ? `, ${addr.state}` : ''}`;
+          
+          if (!acc.find(item => item.canonicalName === canonicalName)) {
+            current.canonicalName = canonicalName;
+            current.displayStr = displayStr;
+            acc.push(current);
+          }
+          return acc;
+        }, []);
+        setResults(uniqueData);
         setShowDropdown(true);
       } catch (error) {
         console.error('City search failed', error);
@@ -62,10 +75,7 @@ export function CityAutocomplete({ value, onChange, placeholder, iconName }: Cit
   };
 
   const handleSelect = (cityItem: any) => {
-    // Extract the primary city/town name
-    const address = cityItem.address;
-    const cityName = address.city || address.town || address.village || address.state_district || cityItem.name;
-    
+    const cityName = cityItem.canonicalName || cityItem.name;
     setQuery(cityName);
     onChange(cityName);
     setShowDropdown(false);
@@ -96,24 +106,30 @@ export function CityAutocomplete({ value, onChange, placeholder, iconName }: Cit
       {showDropdown && results.length > 0 && (
         <View style={[styles.dropdown, { backgroundColor: colors.background.subtle, borderColor: colors.border.default }]}>
           <ScrollView keyboardShouldPersistTaps="handled">
-            {results.map((item) => (
+            {results.map((item, index) => (
               <Pressable
                 key={item.place_id.toString()}
-                style={({ pressed }) => [
-                  styles.dropdownItem,
-                  pressed && { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
-                ]}
                 onPress={() => handleSelect(item)}
               >
-                <Ionicons name="location-outline" size={16} color={colors.text.secondary} style={{ marginRight: 8, marginTop: 2 }} />
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.itemTitle, { color: colors.text.primary }]}>
-                    {item.name}
-                  </Text>
-                  <Text style={[styles.itemSubtitle, { color: colors.text.secondary }]} numberOfLines={1}>
-                    {item.display_name}
-                  </Text>
-                </View>
+                {({ pressed }) => (
+                  <View style={[
+                    styles.dropdownItem,
+                    pressed && { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' },
+                    index === results.length - 1 && { borderBottomWidth: 0 }
+                  ]}>
+                    <Ionicons name="location-outline" size={16} color={colors.text.secondary} style={{ marginRight: 12, marginTop: 2 }} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.itemTitle, { color: colors.text.primary }]}>
+                        {item.canonicalName}
+                      </Text>
+                      {item.canonicalName !== item.displayStr && (
+                        <Text style={[styles.itemSubtitle, { color: colors.text.secondary }]} numberOfLines={1}>
+                          {item.displayStr}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                )}
               </Pressable>
             ))}
           </ScrollView>

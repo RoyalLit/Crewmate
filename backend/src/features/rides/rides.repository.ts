@@ -33,7 +33,10 @@ export class RidesRepository {
       filter.fromCity = new RegExp(`^${fromCity}$`, 'i'); // Case-insensitive exact match
     }
     if (toCity) {
-      filter.toCity = new RegExp(`^${toCity}$`, 'i');
+      filter.$or = [
+        { toCity: new RegExp(`^${toCity}$`, 'i') },
+        { stops: new RegExp(`^${toCity}$`, 'i') }
+      ];
     }
     if (date) {
       filter.departureDate = date;

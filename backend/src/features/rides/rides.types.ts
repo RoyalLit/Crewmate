@@ -6,6 +6,8 @@ export interface CreateRideRequestDTO {
   toCity: string;
   departureDate: string; // YYYY-MM-DD
   departureTime: string; // HH:mm
+  arrivalTime: string; // HH:mm
+  stops?: string[];
   totalSeats: number;
   farePerSeat: number;
   cabType: 'Uber Go' | 'Uber XL' | 'Ola Mini' | 'Ola Prime Sedan' | 'Other';
@@ -14,6 +16,8 @@ export interface CreateRideRequestDTO {
 export interface UpdateRideRequestDTO {
   departureDate?: string;
   departureTime?: string;
+  arrivalTime?: string;
+  stops?: string[];
   totalSeats?: number;
   farePerSeat?: number;
   cabType?: 'Uber Go' | 'Uber XL' | 'Ola Mini' | 'Ola Prime Sedan' | 'Other';
@@ -34,6 +38,8 @@ export interface RideResponseDTO {
   toCity: string;
   departureDate: string;
   departureTime: string;
+  arrivalTime: string;
+  stops: string[];
   totalSeats: number;
   availableSeats: number;
   farePerSeat: number;

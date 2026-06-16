@@ -23,8 +23,7 @@ import authRoutes from '../features/auth/auth.routes';
 import usersRoutes from '../features/users/users.routes';
 import ridesRoutes from '../features/rides/rides.routes';
 import requestsRoutes from '../features/requests/requests.routes';
-
-// TODO(feature/chats): mount chatRoutes when chats feature is implemented (HTTP routes if any, sockets are attached in server.ts)
+import chatsRoutes from '../features/chats/chats.routes';
 
 const router = Router();
 
@@ -32,6 +31,7 @@ router.use('/auth', authRoutes);
 router.use('/users', usersRoutes);
 router.use('/rides', ridesRoutes);
 router.use('/requests', requestsRoutes);
+router.use('/chats', chatsRoutes);
 
 // ── Liveness probe ────────────────────────────────────────────────────────────
 // Returns 200 as long as the Node.js process is running.

@@ -12,7 +12,8 @@ import { SeatsBadge } from '../../src/components/SeatsBadge';
 import { StatusChip } from '../../src/components/StatusChip';
 
 import { useRideDetailsQuery, useCancelRideMutation } from '../../src/api/ridesHooks';
-import { useCreateRequestMutation, useWithdrawRequestMutation, useMyRequestsQuery } from '../../src/api/requestsHooks';
+import { useCreateRequestMutation, useWithdrawRequestMutation, useMyRequestsQuery, useIncomingRequestsQuery } from '../../src/api/requestsHooks';
+import { IncomingRequestItem } from '../../src/components/IncomingRequestItem';
 
 export default function RideDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -22,6 +23,7 @@ export default function RideDetailScreen() {
 
   const { data: rideData, isLoading, isError } = useRideDetailsQuery(id as string);
   const { data: myRequestsData } = useMyRequestsQuery();
+  const { data: incomingRequestsData } = useIncomingRequestsQuery();
   
   const createRequestMutation = useCreateRequestMutation();
   const withdrawRequestMutation = useWithdrawRequestMutation();
@@ -53,12 +55,19 @@ export default function RideDetailScreen() {
   }
 
   const ride = rideData.data;
-  const isPoster = ride.poster?._id === currentUser?.id || ride.poster === currentUser?.id;
+  const isPoster = ride.posterId === currentUser?.id || ride.poster?.id === currentUser?.id;
   
   // Find if current user has a pending or accepted request for this ride
   const myRequests = Array.isArray(myRequestsData?.data) ? myRequestsData.data : [];
   const existingRequest = myRequests.find((req: any) => 
     (req.rideId === ride.id || req.ride === ride.id) && 
+    (req.status === 'pending' || req.status === 'accepted')
+  );
+
+  // If I am the poster, find incoming requests for this ride
+  const allIncoming = Array.isArray(incomingRequestsData?.data) ? incomingRequestsData.data : [];
+  const rideIncomingRequests = allIncoming.filter((req: any) => 
+    (req.rideId === ride.id || req.ride?._id === ride.id || req.ride?.id === ride.id) &&
     (req.status === 'pending' || req.status === 'accepted')
   );
 
@@ -140,12 +149,37 @@ export default function RideDetailScreen() {
             <View style={styles.routeLocations}>
               <View style={styles.locationRow}>
                 <Text style={[styles.timeText, { color: colors.text.primary }]}>{ride.departureTime}</Text>
-                <Text style={[styles.cityText, { color: colors.text.primary }]} numberOfLines={2}>{ride.fromCity}</Text>
+                <Text 
+                  style={[styles.cityText, { color: colors.text.primary }]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  {ride.fromCity}
+                </Text>
               </View>
               
+              {ride.stops && ride.stops.length > 0 && ride.stops.map((stop: string, index: number) => (
+                <View key={`stop-${index}`} style={[styles.locationRow, { marginTop: spacing.md }]}>
+                  <Text style={[styles.timeText, { color: colors.text.placeholder, fontSize: 14 }]}>Stop</Text>
+                  <Text 
+                    style={[styles.cityText, { color: colors.text.secondary }]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                  >
+                    {stop}
+                  </Text>
+                </View>
+              ))}
+              
               <View style={[styles.locationRow, { marginTop: spacing.md }]}>
-                <Text style={[styles.timeText, { color: colors.text.primary }]}>--:--</Text>
-                <Text style={[styles.cityText, { color: colors.text.primary }]} numberOfLines={2}>{ride.toCity}</Text>
+                <Text style={[styles.timeText, { color: colors.text.primary }]}>{ride.arrivalTime}</Text>
+                <Text 
+                  style={[styles.cityText, { color: colors.text.primary }]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  {ride.toCity}
+                </Text>
               </View>
             </View>
           </View>
@@ -154,12 +188,14 @@ export default function RideDetailScreen() {
 
           <View style={styles.infoGrid}>
             <View style={styles.infoBlock}>
-              <Text style={[styles.infoLabel, { color: colors.text.secondary }]}>Cab Type</Text>
-              <Text style={[styles.infoValue, { color: colors.text.primary }]}>{ride.cabType || 'Any'}</Text>
+              <Text style={[styles.infoLabel, { color: colors.text.secondary }]}>Vehicle Type</Text>
+              <Text style={[styles.infoValue, { color: colors.text.primary }]}>
+                {ride.cabType === 'Other' ? 'Any' : (ride.cabType || 'Any')}
+              </Text>
             </View>
-            <View style={styles.infoBlock}>
+            <View style={[styles.infoBlock, { alignItems: 'center' }]}>
               <Text style={[styles.infoLabel, { color: colors.text.secondary }]}>Seats Left</Text>
-              <SeatsBadge seatsLeft={ride.availableSeats} />
+              <SeatsBadge seatsLeft={ride.availableSeats} style={{ alignSelf: 'center' }} />
             </View>
             <View style={[styles.infoBlock, { alignItems: 'flex-end' }]}>
               <Text style={[styles.infoLabel, { color: colors.text.secondary }]}>Total Fare / Seat</Text>
@@ -169,7 +205,7 @@ export default function RideDetailScreen() {
         </View>
 
         {/* Poster Card */}
-        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Posted by</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text.primary, marginTop: spacing.md }]}>Posted by</Text>
         <View style={[styles.posterCard, { backgroundColor: colors.background.subtle }]}>
           <Avatar 
             name={ride.poster.name} 
@@ -186,6 +222,18 @@ export default function RideDetailScreen() {
             </Text>
           </View>
         </View>
+
+        {/* Incoming Requests for Poster */}
+        {isPoster && rideIncomingRequests.length > 0 && (
+          <View style={{ marginTop: spacing.xl }}>
+            <Text style={[styles.sectionTitle, { color: colors.text.primary, marginBottom: spacing.md }]}>
+              Passenger Requests ({rideIncomingRequests.length})
+            </Text>
+            {rideIncomingRequests.map((req: any) => (
+              <IncomingRequestItem key={req._id || req.id} request={req} />
+            ))}
+          </View>
+        )}
       </ScrollView>
 
       {/* Sticky Bottom CTA */}

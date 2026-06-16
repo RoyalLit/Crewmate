@@ -11,10 +11,11 @@ interface ChatRowProps {
   lastMessage: string;
   time: string;
   unreadCount?: number;
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onPress?: () => void;
 }
 
-export function ChatRow({ id, name, lastMessage, time, unreadCount = 0, onDelete }: ChatRowProps) {
+export function ChatRow({ id, name, lastMessage, time, unreadCount = 0, onDelete, onPress }: ChatRowProps) {
   const { colors } = useTheme();
 
   const renderRightActions = (
@@ -30,7 +31,7 @@ export function ChatRow({ id, name, lastMessage, time, unreadCount = 0, onDelete
     return (
       <View style={styles.deleteActionContainer}>
         <Animated.View style={[styles.deleteAction, { transform: [{ scale }] }]}>
-          <Pressable style={styles.deleteButton} onPress={() => onDelete(id)}>
+          <Pressable style={styles.deleteButton} onPress={() => onDelete?.(id)}>
             <Ionicons name="trash" size={24} color="#FFFFFF" />
           </Pressable>
         </Animated.View>
@@ -39,8 +40,8 @@ export function ChatRow({ id, name, lastMessage, time, unreadCount = 0, onDelete
   };
 
   return (
-    <Swipeable renderRightActions={renderRightActions} rightThreshold={40}>
-      <Pressable style={[styles.container, { backgroundColor: colors.background.primary }]}>
+    <Swipeable renderRightActions={onDelete ? renderRightActions : undefined} rightThreshold={40}>
+      <Pressable style={[styles.container, { backgroundColor: colors.background.primary }]} onPress={onPress}>
         <View style={styles.avatarContainer}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{name.charAt(0)}</Text>
