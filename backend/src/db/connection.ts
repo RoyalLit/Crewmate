@@ -16,6 +16,26 @@ import mongoose from 'mongoose';
 import env from '../config/env';
 import logger from '../shared/logger';
 
+const SLOW_QUERY_THRESHOLD = 100;
+
+mongoose.plugin(function slowQueryPlugin(schema: any) {
+  const operations = ['find', 'findOne', 'countDocuments', 'updateOne', 'deleteOne', 'findOneAndUpdate', 'findOneAndDelete'];
+  operations.forEach((op) => {
+    schema.pre(op, function (this: any) {
+      this._startTime = Date.now();
+    });
+    schema.post(op, function (this: any) {
+      const duration = Date.now() - this._startTime;
+      if (duration > SLOW_QUERY_THRESHOLD) {
+        logger.warn(
+          { collection: this.mongooseCollection?.name, operation: op, duration, query: this.getQuery() },
+          'Slow database query'
+        );
+      }
+    });
+  });
+});
+
 let isConnected = false;
 
 export async function connectDB(): Promise<void> {
@@ -61,12 +81,30 @@ export function isDatabaseConnected(): boolean {
 // Register once. Guards against duplicate handler registration in hot-reload.
 let shutdownHandlersRegistered = false;
 
+let httpServerRef: { close: (cb?: (err?: Error) => void) => void } | null = null;
+
+export function setHttpServer(server: { close: (cb?: (err?: Error) => void) => void }): void {
+  httpServerRef = server;
+}
+
 export function registerShutdownHandlers(): void {
   if (shutdownHandlersRegistered) return;
   shutdownHandlersRegistered = true;
 
   async function shutdown(signal: string): Promise<void> {
-    logger.info({ signal }, 'Shutdown signal received — closing MongoDB connection');
+    logger.info({ signal }, 'Shutdown signal received — draining HTTP connections');
+
+    if (httpServerRef) {
+      await new Promise<void>((resolve) => {
+        httpServerRef!.close((err) => {
+          if (err) {
+            logger.error({ err }, 'Error closing HTTP server');
+          }
+          resolve();
+        });
+      });
+    }
+
     await disconnectDB();
     process.exit(0);
   }

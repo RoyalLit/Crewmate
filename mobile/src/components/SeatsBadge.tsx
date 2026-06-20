@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { brandColors } from '../design/tokens';
+import { typography } from '../design/typography';
 
 function hexToRGBA(hex: string, alpha: number) {
   if (!hex || hex.length < 7) return 'rgba(0,0,0,0.1)';
@@ -27,7 +28,7 @@ export function SeatsBadge({ seatsLeft, style }: SeatsBadgeProps) {
   const bg = hexToRGBA(color, 0.15);
 
   return (
-    <View style={[styles.container, { backgroundColor: bg }, style]}>
+    <View style={[styles.container, { backgroundColor: bg }, style]} accessible accessibilityRole="text" accessibilityLabel={seatsLeft === 0 ? 'No seats available' : `${seatsLeft} seats available`}>
       <Text style={[styles.text, { color }]}>
         {seatsLeft === 0 ? 'Full' : `${seatsLeft} left`}
       </Text>
@@ -44,6 +45,6 @@ const styles = StyleSheet.create({
   },
   text: {
     fontFamily: 'PlusJakartaSans-600SemiBold',
-    fontSize: 12,
+    fontSize: typography.label.fontSize,
   },
 });

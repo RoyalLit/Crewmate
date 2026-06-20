@@ -77,7 +77,7 @@ export function BootScreen({ onAnimationDone, isReady }: { onAnimationDone: () =
   }));
 
   return (
-    <View style={styles.container} pointerEvents="none">
+    <View style={styles.container} pointerEvents="none" accessibilityElementsHidden>
       {/* The GPU Accelerated Expanding Hole */}
       <Animated.View style={[styles.expandingHole, holeStyle]} />
 

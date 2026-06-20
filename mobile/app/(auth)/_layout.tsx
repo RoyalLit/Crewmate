@@ -14,15 +14,17 @@
 
 import { Stack } from 'expo-router';
 import React from 'react';
+import { ErrorBoundary } from '../../src/components/ErrorBoundary';
 
 export default function AuthLayout(): React.JSX.Element {
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        // Slide in from the right on iOS, fade on Android
-        animation: 'slide_from_right',
-      }}
-    />
+    <ErrorBoundary>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      />
+    </ErrorBoundary>
   );
 }

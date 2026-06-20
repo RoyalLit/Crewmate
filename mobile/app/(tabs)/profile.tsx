@@ -10,7 +10,12 @@ import { TAB_BAR_HEIGHT, spacing, brandColors } from '../../src/design/tokens';
 
 import { useAuthStore } from '../../src/store/authStore';
 import { useLogoutMutation } from '../../src/api/authHooks';
+import { useMyRidesQuery } from '../../src/api/ridesHooks';
+import { useMyRequestsQuery } from '../../src/api/requestsHooks';
 import { Avatar } from '../../src/components/Avatar';
+import { Alert } from '../../src/components/GlobalAlert';
+import * as Linking from 'expo-linking';
+import { useRouter } from 'expo-router';
 
 export default function ProfileScreen(): React.JSX.Element {
   const { colors, isDark } = useTheme();
@@ -22,6 +27,15 @@ export default function ProfileScreen(): React.JSX.Element {
   const insets = useSafeAreaInsets();
 
   const isLight = preference === 'light';
+  const router = useRouter();
+
+  const { data: myRidesData } = useMyRidesQuery();
+  const { data: myRequestsData } = useMyRequestsQuery();
+
+  const postedCount = Array.isArray(myRidesData?.data) ? myRidesData.data.length : (myRidesData?.data?.data?.length || 0);
+  const myReqsArray = Array.isArray(myRequestsData?.data) ? myRequestsData.data : (myRequestsData?.data?.data || []);
+  const joinedCount = myReqsArray.filter((req: any) => req.status === 'accepted').length;
+
   const handleLogout = async () => {
     try {
       await logoutMutation.mutateAsync();
@@ -62,7 +76,7 @@ export default function ProfileScreen(): React.JSX.Element {
         {/* Hero Card */}
         <View style={[bentoBox, styles.heroCard]}>
           <LinearGradient
-            colors={isDark ? ['#2E2E4A', '#1C1C2E'] : ['#F7F7FC', '#FFFFFF']}
+            colors={isDark ? [colors.background.card, colors.background.primary] : [colors.background.subtle, colors.background.card]}
             style={[StyleSheet.absoluteFillObject, { borderRadius: 24 }]}
           />
           <View style={styles.avatarContainer}>
@@ -85,11 +99,11 @@ export default function ProfileScreen(): React.JSX.Element {
         {/* Stats Bento Tiles */}
         <View style={styles.statsRow}>
           <View style={[bentoBox, styles.statBox]}>
-            <Text style={[styles.statNumber, { color: brandColors.electricViolet }]}>12</Text>
+            <Text style={[styles.statNumber, { color: brandColors.electricViolet }]}>{postedCount}</Text>
             <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Posted</Text>
           </View>
           <View style={[bentoBox, styles.statBox]}>
-            <Text style={[styles.statNumber, { color: brandColors.coralPink }]}>8</Text>
+            <Text style={[styles.statNumber, { color: brandColors.coralPink }]}>{joinedCount}</Text>
             <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Joined</Text>
           </View>
         </View>
@@ -100,13 +114,22 @@ export default function ProfileScreen(): React.JSX.Element {
             <Ionicons name="shield-checkmark" size={24} color={brandColors.mintGreen} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.verifiedTitle, { color: isDark ? '#FFFFFF' : '#0F0F1A' }]}>Verified Student</Text>
-            <Text style={[styles.verifiedSub, { color: isDark ? 'rgba(255,255,255,0.7)' : '#4B5563' }]}>Active university email</Text>
+            <Text style={[styles.verifiedTitle, { color: isDark ? colors.background.card : brandColors.brandNavy }]}>Verified Student</Text>
+            <Text style={[styles.verifiedSub, { color: isDark ? 'rgba(255,255,255,0.7)' : colors.text.secondary }]}>Active university email</Text>
           </View>
         </View>
 
         {/* Settings Bento */}
         <View style={[bentoBox, styles.settingsContainer, { padding: 0 }]}>
+          <Pressable style={styles.settingRow} onPress={() => router.push('/edit-profile')}>
+            <View style={styles.settingIcon}>
+              <Ionicons name="person-outline" size={20} color={colors.text.primary} />
+            </View>
+            <Text style={[styles.settingLabel, { color: colors.text.primary }]}>Edit Profile</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.text.placeholder} />
+          </Pressable>
+          <View style={[styles.divider, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} />
+
           <View style={styles.settingRow}>
             <View style={styles.settingIcon}>
               <Ionicons name={isLight ? "sunny" : "moon"} size={20} color={colors.text.primary} />
@@ -146,11 +169,41 @@ export default function ProfileScreen(): React.JSX.Element {
           </View>
           <View style={[styles.divider, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} />
           
-          <Pressable style={styles.settingRow}>
+          <Pressable style={styles.settingRow} onPress={async () => {
+            await handleLogout();
+            router.replace('/(auth)/forgot-password');
+          }}>
             <View style={styles.settingIcon}>
-              <Ionicons name="notifications" size={20} color={colors.text.primary} />
+              <Ionicons name="lock-closed-outline" size={20} color={colors.text.primary} />
             </View>
-            <Text style={[styles.settingLabel, { color: colors.text.primary }]}>Notifications</Text>
+            <Text style={[styles.settingLabel, { color: colors.text.primary }]}>Security & Password</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.text.placeholder} />
+          </Pressable>
+          <View style={[styles.divider, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} />
+
+          <Pressable style={styles.settingRow} onPress={() => Linking.openURL('mailto:support@crewmute.com')}>
+            <View style={styles.settingIcon}>
+              <Ionicons name="help-buoy-outline" size={20} color={colors.text.primary} />
+            </View>
+            <Text style={[styles.settingLabel, { color: colors.text.primary }]}>Help & Support</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.text.placeholder} />
+          </Pressable>
+          <View style={[styles.divider, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} />
+
+          <Pressable style={styles.settingRow} onPress={() => Alert.alert('Privacy Policy', 'This is a mock Privacy Policy for Crewmute MVP.')}>
+            <View style={styles.settingIcon}>
+              <Ionicons name="document-text-outline" size={20} color={colors.text.primary} />
+            </View>
+            <Text style={[styles.settingLabel, { color: colors.text.primary }]}>Privacy Policy</Text>
+            <Ionicons name="chevron-forward" size={20} color={colors.text.placeholder} />
+          </Pressable>
+          <View style={[styles.divider, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} />
+
+          <Pressable style={styles.settingRow} onPress={() => Alert.alert('Terms of Service', 'This is a mock Terms of Service for Crewmute MVP.')}>
+            <View style={styles.settingIcon}>
+              <Ionicons name="information-circle-outline" size={20} color={colors.text.primary} />
+            </View>
+            <Text style={[styles.settingLabel, { color: colors.text.primary }]}>Terms of Service</Text>
             <Ionicons name="chevron-forward" size={20} color={colors.text.placeholder} />
           </Pressable>
           <View style={[styles.divider, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} />
@@ -209,7 +262,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#FFFFFF', // This will blend with dark mode because of the LinearGradient background.
   },
   name: {
     fontFamily: 'PlusJakartaSans-700Bold',
@@ -281,6 +333,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.lg,
+    minHeight: 44,
   },
   settingIcon: {
     width: 32,
@@ -312,6 +365,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 44,
+    minWidth: 44,
   },
   segmentText: {
     fontFamily: 'PlusJakartaSans-600SemiBold',

@@ -35,6 +35,7 @@ import { AuthProvider } from '../src/context/AuthContext';
 import { SocketProvider } from '../src/context/SocketContext';
 import { ActionSheetProvider } from '@expo/react-native-action-sheet';
 import { GlobalAlert } from '../src/components/GlobalAlert';
+import { ErrorBoundary } from '../src/components/ErrorBoundary';
 
 import { BootScreen } from '../src/components/BootScreen';
 
@@ -62,11 +63,10 @@ export default function RootLayout(): React.JSX.Element | null {
   // Actually we CAN use hooks if we move logic to an inner component, but for simplicity we'll just use the raw apiClient here
   const checkToken = async () => {
     try {
-      // The interceptor automatically attaches the token
       const { apiClient } = require('../src/api/client');
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      
-      const token = await AsyncStorage.getItem('crewmute_token');
+      const { storage } = require('../src/lib/storage');
+
+      const token = await storage.getAccessToken();
       if (token) {
         const response = await apiClient.get('/auth/me');
         if (response.data?.data?.user) {
@@ -75,17 +75,18 @@ export default function RootLayout(): React.JSX.Element | null {
       }
 
       const { Asset } = require('expo-asset');
+      const { preloadChatAssets } = require('../src/utils/imageAssets');
       await Asset.loadAsync([
         require('../assets/images/onboarding/scene1.png'),
         require('../assets/images/onboarding/scene2.png'),
         require('../assets/images/onboarding/scene3.png'),
         require('../assets/images/onboarding/scene4.png'),
       ]);
+      await preloadChatAssets();
     } catch (e) {
       console.log('Auto-login failed', e);
     } finally {
       setIsAuthChecked(true);
-      // Hide the native splash screen once fonts are ready AND we checked token
       if (fontsLoaded || fontError) {
         SplashScreen.hideAsync();
       }
@@ -118,6 +119,7 @@ export default function RootLayout(): React.JSX.Element | null {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <AuthProvider>
@@ -137,6 +139,7 @@ export default function RootLayout(): React.JSX.Element | null {
           </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>
+      </ErrorBoundary>
     </GestureHandlerRootView>
   );
 }

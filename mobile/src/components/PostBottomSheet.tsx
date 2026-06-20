@@ -170,16 +170,22 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
                     newStops.splice(index, 1);
                     setStops(newStops);
                   }}
-                  style={{ padding: spacing.sm, marginLeft: spacing.xs }}
+                  style={{ padding: spacing.sm, marginLeft: spacing.xs, minWidth: 44, minHeight: 44, justifyContent: 'center', alignItems: 'center' }}
+                  accessible
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remove stop ${index + 1}`}
                 >
                   <Ionicons name="close-circle" size={24} color={colors.text.placeholder} />
                 </Pressable>
               </View>
             ))}
 
-            <Pressable 
-              onPress={() => setStops([...stops, ''])} 
-              style={{ marginTop: spacing.md, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingVertical: spacing.xs }}
+              <Pressable 
+                onPress={() => setStops([...stops, ''])} 
+                style={{ marginTop: spacing.md, flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingVertical: spacing.xs, minHeight: 44 }}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel="Add intermediate stop"
             >
                <Ionicons name="add-circle-outline" size={20} color={brandColors.electricViolet} style={{ marginRight: 6 }} />
                <Text style={{ color: brandColors.electricViolet, fontFamily: 'PlusJakartaSans-600SemiBold' }}>Add intermediate stop</Text>
@@ -242,11 +248,11 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
             <View style={styles.stepperContainer}>
               <Text style={[styles.stepperLabel, { color: colors.text.secondary }]}>Available Seats</Text>
               <View style={styles.stepperControls}>
-                <Pressable onPress={() => setSeats(Math.max(1, seats - 1))} style={[styles.stepperBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+                <Pressable onPress={() => setSeats(Math.max(1, seats - 1))} style={[styles.stepperBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]} accessible accessibilityRole="button" accessibilityLabel="Decrease seats">
                   <Ionicons name="remove" size={20} color={colors.text.primary} />
                 </Pressable>
                 <Text style={[styles.stepperValue, { color: colors.text.primary }]}>{seats}</Text>
-                <Pressable onPress={() => setSeats(Math.min(6, seats + 1))} style={[styles.stepperBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+                <Pressable onPress={() => setSeats(Math.min(6, seats + 1))} style={[styles.stepperBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]} accessible accessibilityRole="button" accessibilityLabel="Increase seats">
                   <Ionicons name="add" size={20} color={colors.text.primary} />
                 </Pressable>
               </View>
@@ -271,6 +277,9 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
                 <Pressable
                   key={type}
                   onPress={() => setCabType(type)}
+                  accessible
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select ${type}`}
                   style={[
                     styles.cabChip,
                     cabType === type ? { backgroundColor: brandColors.electricViolet, borderColor: brandColors.electricViolet } : { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }
@@ -319,6 +328,9 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
             <Pressable 
               style={[styles.backButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} 
               onPress={() => setStep(step - 1)}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
             >
               <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
             </Pressable>
@@ -327,9 +339,12 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
             style={[styles.nextButton, { flex: 1, backgroundColor: brandColors.electricViolet }]} 
             onPress={handleNext}
             disabled={createRideMutation.isPending}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel={step === 3 ? "Post ride" : "Continue to next step"}
           >
             {createRideMutation.isPending && step === 3 ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={colors.background.card} />
             ) : (
               <Text style={styles.nextText}>{step === 3 ? 'Post Ride' : 'Continue'}</Text>
             )}
@@ -392,9 +407,9 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
   },
   stepperBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -451,6 +466,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 100,
     borderWidth: 1,
+    minHeight: 44,
   },
   cabChipText: {
     fontFamily: 'PlusJakartaSans-600SemiBold',

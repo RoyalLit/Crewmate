@@ -5,7 +5,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTheme } from '../../src/design/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useVerifyOtpMutation, useResendOtpMutation } from '../../src/api/authHooks';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storage } from '../../src/lib/storage';
 import { brandColors } from '../../src/design/tokens';
 
 export default function VerifyScreen() {
@@ -51,8 +51,12 @@ export default function VerifyScreen() {
 
     try {
       const response = await verifyMutation.mutateAsync({ email, otp: fullOtp });
-      if (response?.data?.tokens?.accessToken) {
-        await AsyncStorage.setItem('crewmute_token', response.data.tokens.accessToken);
+      const tokens = response?.data?.tokens;
+      if (tokens?.accessToken) {
+        await storage.setAccessToken(tokens.accessToken);
+        if (tokens?.refreshToken) {
+          await storage.setRefreshToken(tokens.refreshToken);
+        }
       }
       
       router.replace({ 

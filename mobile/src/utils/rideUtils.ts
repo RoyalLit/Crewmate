@@ -1,4 +1,10 @@
-export const getDerivedRideStatus = (ride: any): 'active' | 'completed' | 'cancelled' | 'expired' => {
+interface Ride {
+  departureDate?: string;
+  departureTime?: string;
+  status?: string;
+}
+
+export const getDerivedRideStatus = (ride: Ride): 'active' | 'completed' | 'cancelled' | 'expired' => {
   if (!ride) return 'active';
   
   if (ride.status === 'cancelled') return 'cancelled';
@@ -14,7 +20,7 @@ export const getDerivedRideStatus = (ride: any): 'active' | 'completed' | 'cance
     }
   }
 
-  return ride.status || 'active';
+  return (ride.status || 'active') as 'active' | 'completed' | 'cancelled' | 'expired';
 };
 
 export const formatDate = (dateString: string): string => {

@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { authService } from './auth.service';
 import { successResponse } from '../../shared/response';
+import { ValidationError, UnauthorizedError } from '../../shared/errors';
+import { usersService } from '../users/users.service';
 
 export class AuthController {
   async register(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -61,8 +63,7 @@ export class AuthController {
     try {
       const { refreshToken } = req.body;
       if (!refreshToken) {
-        res.status(400).json({ success: false, error: { message: 'Refresh token is required' } });
-        return;
+        throw new ValidationError('Refresh token is required');
       }
 
       const tokens = await authService.refreshToken(refreshToken);
@@ -77,8 +78,7 @@ export class AuthController {
       // The user is attached to req by the auth middleware
       const userId = req.user?.userId;
       if (!userId) {
-        res.status(401).json({ success: false, error: { message: 'Unauthorized' } });
-        return;
+        throw new UnauthorizedError();
       }
 
       await authService.logoutGlobal(userId);
@@ -92,12 +92,28 @@ export class AuthController {
     try {
       const userId = req.user?.userId;
       if (!userId) {
-        res.status(401).json({ success: false, error: { message: 'Unauthorized' } });
-        return;
+        throw new UnauthorizedError();
       }
 
       const user = await authService.getMe(userId);
       res.status(200).json(successResponse({ user }));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async uploadStudentId(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user!.userId;
+      const file = req.file;
+      if (!file) {
+        res.status(400).json({ success: false, error: { message: 'No image file provided' } });
+        return;
+      }
+
+      const photoUrl = file.path;
+      const user = await usersService.updateStudentIdPhoto(userId, photoUrl);
+      res.status(200).json(successResponse(user));
     } catch (error) {
       next(error);
     }

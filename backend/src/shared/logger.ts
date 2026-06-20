@@ -17,6 +17,7 @@
 import pino from 'pino';
 
 import env from '../config/env';
+import { getRequestContext } from '../middleware/requestContext';
 
 const logger = pino({
   level: env.nodeEnv === 'production' ? 'info' : 'debug',
@@ -42,6 +43,12 @@ const logger = pino({
   redact: {
     paths: ['password', 'token', 'accessToken', 'refreshToken', 'otp', 'secret'],
     censor: '[REDACTED]',
+  },
+  // Automatically attach requestId from AsyncLocalStorage to every log entry
+  mixin() {
+    const ctx = getRequestContext();
+    if (!ctx) return {};
+    return { requestId: ctx.requestId };
   },
 });
 

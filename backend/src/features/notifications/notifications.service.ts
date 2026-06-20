@@ -60,6 +60,15 @@ class NotificationsService {
       { type: 'NEW_MESSAGE' }
     );
   }
+
+  async notifyRideCancelled(pushToken: string, rideDestination: string, posterName: string) {
+    await this.sendPushNotification(
+      pushToken,
+      'Ride Cancelled',
+      `${posterName} cancelled the ride to ${rideDestination}.`,
+      { type: 'RIDE_CANCELLED' }
+    );
+  }
 }
 
 export const notificationsService = new NotificationsService();

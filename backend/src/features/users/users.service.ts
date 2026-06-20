@@ -18,7 +18,7 @@ export class UsersService {
     };
   }
 
-  private formatPublicProfile(user: any): PublicProfileResponseDTO {
+  formatPublicProfile(user: any): PublicProfileResponseDTO {
     return {
       id: user._id.toString(),
       name: user.name,
@@ -64,6 +64,17 @@ export class UsersService {
     const updatedUser = await usersRepository.updateProfile(userId, { expoPushToken: pushToken } as any);
     if (!updatedUser) {
       throw new AppError('INTERNAL_ERROR', 'Failed to update push token', 500);
+    }
+    return this.formatUser(updatedUser);
+  }
+
+  async updateStudentIdPhoto(userId: string, photoUrl: string): Promise<UserResponseDTO> {
+    const updatedUser = await usersRepository.updateProfile(userId, {
+      studentIdPhotoUrl: photoUrl,
+      status: 'pending_id',
+    } as any);
+    if (!updatedUser) {
+      throw new AppError('INTERNAL_ERROR', 'Failed to upload student ID', 500);
     }
     return this.formatUser(updatedUser);
   }

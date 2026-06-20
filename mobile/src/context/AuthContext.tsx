@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../store/authStore';
+import { storage } from '../lib/storage';
 import { useUpdatePushTokenMutation } from '../api/authHooks';
 import { registerForPushNotificationsAsync } from '../utils/notifications';
 
@@ -26,7 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { mutate: updatePushToken } = useUpdatePushTokenMutation();
 
   useEffect(() => {
-    AsyncStorage.getItem('crewmute_token').then(setAccessToken).catch(() => setAccessToken(null));
+    storage.getAccessToken().then(setAccessToken).catch(() => setAccessToken(null));
 
     // Register push token when user is logged in
     if (user) {

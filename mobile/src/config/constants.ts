@@ -19,10 +19,10 @@ export const API = {
 } as const;
 
 export const STORAGE_KEYS = {
-  ACCESS_TOKEN:  'crewmute:access_token',
-  REFRESH_TOKEN: 'crewmute:refresh_token',
-  USER_ID:       'crewmute:user_id',
-  THEME:         'crewmute:theme', // Must match themeStore persist key
+  ACCESS_TOKEN:  'crewmute_access_token',
+  REFRESH_TOKEN: 'crewmute_refresh_token',
+  USER_ID:       'crewmute_user_id',
+  THEME:         'crewmute_theme', // Must match themeStore persist key
 } as const;
 
 export const ANIMATION = {

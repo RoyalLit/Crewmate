@@ -15,10 +15,11 @@ import 'dotenv/config';
 
 import { createApp } from './app';
 import env from './config/env';
-import { connectDB, registerShutdownHandlers } from './db/connection';
+import { connectDB, registerShutdownHandlers, setHttpServer } from './db/connection';
 import logger from './shared/logger';
 
 import { initializeSockets } from './features/chats/socket';
+import { startRideExpiryCron } from './features/rides/rides.cron';
 
 async function start(): Promise<void> {
   // Log startup configuration (no secrets) per AGENT_RULES.md §21.1
@@ -42,13 +43,24 @@ async function start(): Promise<void> {
   // Attach socket.io
   initializeSockets(server);
 
+  // Start ride expiry cron job per ARCHITECTURE.md §7.3
+  startRideExpiryCron();
+
+  // Register HTTP server for graceful shutdown
+  setHttpServer(server);
+
   // Register SIGTERM/SIGINT handlers for graceful shutdown
   registerShutdownHandlers();
 
   // Handle unhandled promise rejections — log and exit
-  // Allows Railway to detect and restart the process
   process.on('unhandledRejection', (reason) => {
     logger.error({ err: reason }, 'Unhandled promise rejection — shutting down');
+    server.close(() => process.exit(1));
+  });
+
+  // Handle uncaught exceptions — log, attempt graceful close, then exit
+  process.on('uncaughtException', (error) => {
+    logger.error({ err: error }, 'Uncaught exception — shutting down');
     server.close(() => process.exit(1));
   });
 }

@@ -1,13 +1,43 @@
 /**
  * Environment variable validation and typed configuration.
  *
- * This module reads process.env at startup and throws a plain Error
- * (not an AppError) if any required variable is missing. The server
- * will refuse to start with an incomplete configuration.
+ * This module reads process.env at startup and validates it against a Zod
+ * schema. The server will refuse to start with an incomplete or invalid
+ * configuration.
  *
  * All application code must import config from this module — never
  * access process.env directly elsewhere.
  */
+
+import { z } from 'zod';
+
+const rawEnvSchema = z.object({
+  PORT: z.coerce.number().default(5000),
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  MONGO_URI: z
+    .string()
+    .url()
+    .refine(
+      (val) => val.startsWith('mongodb://') || val.startsWith('mongodb+srv://'),
+      { message: 'MONGO_URI must start with mongodb:// or mongodb+srv://' },
+    ),
+  ACCESS_TOKEN_SECRET: z.string().min(32),
+  REFRESH_TOKEN_SECRET: z.string().min(32),
+  EMAIL_HOST: z.string().default('smtp.gmail.com'),
+  EMAIL_PORT: z.coerce.number().default(587),
+  EMAIL_USER: z.string().default(''),
+  EMAIL_PASS: z.string().default(''),
+  CLOUDINARY_CLOUD_NAME: z.string().optional().default(''),
+  CLOUDINARY_API_KEY: z.string().optional().default(''),
+  CLOUDINARY_API_SECRET: z.string().optional().default(''),
+  CLIENT_URL: z.string().default('*'),
+});
+
+type RawEnv = z.infer<typeof rawEnvSchema>;
+
+// Validate and build config on module load. Zod throws a comprehensive error
+// listing every invalid/missing field — fail fast before the server starts.
+const parsed: RawEnv = rawEnvSchema.parse(process.env);
 
 interface Config {
   readonly port: number;
@@ -29,45 +59,24 @@ interface Config {
   readonly clientUrl: string;
 }
 
-function requireEnv(key: string): string {
-  const value = process.env[key];
-  if (!value) {
-    throw new Error(`[config] Missing required environment variable: ${key}`);
-  }
-  return value;
-}
-
-function optionalEnv(key: string, defaultValue: string): string {
-  return process.env[key] ?? defaultValue;
-}
-
-function parseNodeEnv(value: string): 'development' | 'production' | 'test' {
-  if (value === 'production' || value === 'test' || value === 'development') {
-    return value;
-  }
-  return 'development';
-}
-
-// Validate and build config on module load. Fail fast on missing required vars.
-// This is intentionally a plain Error — it fires before AppError is useful.
 const env: Config = Object.freeze({
-  port: parseInt(optionalEnv('PORT', '5000'), 10),
-  nodeEnv: parseNodeEnv(optionalEnv('NODE_ENV', 'development')),
-  mongoUri: requireEnv('MONGO_URI'),
-  accessTokenSecret: requireEnv('ACCESS_TOKEN_SECRET'),
-  refreshTokenSecret: requireEnv('REFRESH_TOKEN_SECRET'),
+  port: parsed.PORT,
+  nodeEnv: parsed.NODE_ENV,
+  mongoUri: parsed.MONGO_URI,
+  accessTokenSecret: parsed.ACCESS_TOKEN_SECRET,
+  refreshTokenSecret: parsed.REFRESH_TOKEN_SECRET,
   email: {
-    host: optionalEnv('EMAIL_HOST', 'smtp.gmail.com'),
-    port: parseInt(optionalEnv('EMAIL_PORT', '587'), 10),
-    user: optionalEnv('EMAIL_USER', ''),
-    pass: optionalEnv('EMAIL_PASS', ''),
+    host: parsed.EMAIL_HOST,
+    port: parsed.EMAIL_PORT,
+    user: parsed.EMAIL_USER,
+    pass: parsed.EMAIL_PASS,
   },
   cloudinary: {
-    cloudName: optionalEnv('CLOUDINARY_CLOUD_NAME', ''),
-    apiKey: optionalEnv('CLOUDINARY_API_KEY', ''),
-    apiSecret: optionalEnv('CLOUDINARY_API_SECRET', ''),
+    cloudName: parsed.CLOUDINARY_CLOUD_NAME,
+    apiKey: parsed.CLOUDINARY_API_KEY,
+    apiSecret: parsed.CLOUDINARY_API_SECRET,
   },
-  clientUrl: optionalEnv('CLIENT_URL', '*'),
+  clientUrl: parsed.CLIENT_URL,
 });
 
 export default env;

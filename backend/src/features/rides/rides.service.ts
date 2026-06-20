@@ -3,6 +3,11 @@ import { usersService } from '../users/users.service';
 import { CreateRideRequestDTO, UpdateRideRequestDTO, RideFilterQuery, RideResponseDTO } from './rides.types';
 import { PaginatedResult } from '../../shared/types';
 import { NotFoundError, ForbiddenError, AppError } from '../../shared/errors';
+import { requestsRepository } from '../requests/requests.repository';
+import { RideRequestModel } from '../../db/models/RideRequest';
+import { usersRepository } from '../users/users.repository';
+import { notificationsService } from '../notifications/notifications.service';
+import logger from '../../shared/logger';
 
 export class RidesService {
   private formatRide(ride: any): RideResponseDTO {
@@ -42,7 +47,7 @@ export class RidesService {
       const poster = await usersService.getPublicProfile(formattedRide.posterId);
       formattedRide.poster = poster;
     } catch (error) {
-      // If poster doesn't exist anymore, just ignore or handle accordingly
+      logger.warn({ error }, 'Failed to fetch poster profile for ride details');
     }
 
     return formattedRide;
@@ -50,35 +55,38 @@ export class RidesService {
 
   async browseRides(query: RideFilterQuery): Promise<PaginatedResult<RideResponseDTO>> {
     const result = await ridesRepository.findRides(query);
-    
-    // Format all rides and populate poster
-    const formattedData = await Promise.all(result.data.map(async ride => {
+
+    // Batch-fetch all unique poster profiles (fixes N+1)
+    const uniquePosterIds = [...new Set(result.data.map(r => r.posterId.toString()))];
+    const posters = await usersRepository.findByIds(uniquePosterIds);
+    const posterMap = new Map(posters.map(p => [p._id.toString(), usersService.formatPublicProfile(p)]));
+
+    const formattedData = result.data.map(ride => {
       const formattedRide = this.formatRide(ride);
-      try {
-        formattedRide.poster = await usersService.getPublicProfile(formattedRide.posterId);
-      } catch {
-        // poster profile fetch is non-critical
-      }
+      formattedRide.poster = posterMap.get(formattedRide.posterId);
       return formattedRide;
-    }));
-    
+    });
+
     return {
       ...result,
       data: formattedData,
     };
   }
 
-  async getMyRides(userId: string): Promise<RideResponseDTO[]> {
-    const rides = await ridesRepository.findRidesByPoster(userId);
-    return Promise.all(rides.map(async ride => {
+  async getMyRides(userId: string, page = 1, pageSize = 20): Promise<PaginatedResult<RideResponseDTO>> {
+    const result = await ridesRepository.findRidesByPoster(userId, page, pageSize);
+
+    const uniquePosterIds = [...new Set(result.data.map(r => r.posterId.toString()))];
+    const posters = await usersRepository.findByIds(uniquePosterIds);
+    const posterMap = new Map(posters.map(p => [p._id.toString(), usersService.formatPublicProfile(p)]));
+
+    const formattedData = result.data.map(ride => {
       const formattedRide = this.formatRide(ride);
-      try {
-        formattedRide.poster = await usersService.getPublicProfile(formattedRide.posterId);
-      } catch {
-        // poster profile fetch is non-critical
-      }
+      formattedRide.poster = posterMap.get(formattedRide.posterId);
       return formattedRide;
-    }));
+    });
+
+    return { ...result, data: formattedData };
   }
 
   async updateRide(id: string, userId: string, data: UpdateRideRequestDTO): Promise<RideResponseDTO> {
@@ -91,10 +99,17 @@ export class RidesService {
       throw new ForbiddenError('edit this ride');
     }
 
-    // TODO: Verify if there are accepted requests. If so, restrict editing certain fields.
+    const hasRequests = await RideRequestModel.exists({ rideId: id });
 
-    // If totalSeats changes, ensure it doesn't drop below requested/accepted seats.
-    // For MVP, we'll just apply the update and availableSeats adjustment.
+    const restrictedFields = ['totalSeats', 'farePerSeat'];
+    if (hasRequests) {
+      for (const field of restrictedFields) {
+        if (field in data) {
+          throw new AppError('FORBIDDEN', `Cannot edit ${field} after requests have been made.`, 403);
+        }
+      }
+    }
+
     const updates: any = { ...data };
     
     if (data.totalSeats !== undefined) {
@@ -125,8 +140,20 @@ export class RidesService {
     }
 
     await ridesRepository.updateRide(id, { status: 'cancelled' });
-    
-    // TODO: Notify accepted requesters
+
+    // Notify accepted requesters
+    try {
+      const acceptedRequests = await requestsRepository.findByRideIdAndStatus(id, 'accepted');
+      const poster = await usersService.getPublicProfile(userId);
+      for (const req of acceptedRequests) {
+        const requester = await usersRepository.findById(req.requesterId.toString());
+        if (requester?.expoPushToken) {
+          notificationsService.notifyRideCancelled(requester.expoPushToken, ride.toCity, poster.name);
+        }
+      }
+    } catch (error) {
+      // Non-critical — notification failure shouldn't block cancellation
+    }
   }
 }
 

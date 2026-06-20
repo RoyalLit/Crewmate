@@ -4,10 +4,17 @@ import * as jwt from 'jsonwebtoken';
 import env from '../../config/env';
 import { JwtPayload } from '../auth/auth.types';
 import { MessageModel } from '../../db/models/Message';
+import { MESSAGE } from '../../config/constants';
 import logger from '../../shared/logger';
 
+let io: SocketIOServer;
+
+export function getIO(): SocketIOServer {
+  return io;
+}
+
 export function initializeSockets(server: HttpServer): void {
-  const io = new SocketIOServer(server, {
+  io = new SocketIOServer(server, {
     cors: {
       origin: env.clientUrl,
       methods: ['GET', 'POST'],
@@ -38,14 +45,44 @@ export function initializeSockets(server: HttpServer): void {
     // Users join a room representing their own ID to receive direct messages
     void socket.join(user.userId);
 
-    // Join a specific ride chat room
-    socket.on('join_ride', (rideId: string) => {
-      void socket.join(`ride_${rideId}`);
-      logger.info(`User ${user.userId} joined ride room ride_${rideId}`);
+    // Join a specific ride chat room — only poster or accepted passenger may join
+    socket.on('join_ride', async (rideId: string) => {
+      try {
+        if (!rideId || typeof rideId !== 'string') {
+          socket.emit('error', { message: 'Invalid rideId.' });
+          return;
+        }
+
+        const { ridesRepository } = await import('../rides/rides.repository');
+        const { requestsRepository } = await import('../requests/requests.repository');
+
+        const [ride, isPassenger] = await Promise.all([
+          ridesRepository.findById(rideId),
+          requestsRepository.isAcceptedPassenger(rideId, user.userId),
+        ]);
+
+        const isPoster = ride?.posterId?.toString() === user.userId;
+
+        if (!isPoster && !isPassenger) {
+          socket.emit('error', { message: 'Not authorized to join this ride room.' });
+          logger.warn(`Unauthorized join_ride attempt by ${user.userId} for ride ${rideId}`);
+          return;
+        }
+
+        void socket.join(`ride_${rideId}`);
+        logger.info(`User ${user.userId} joined ride room ride_${rideId}`);
+      } catch (err) {
+        logger.error(`Error in join_ride handler: ${String(err)}`);
+      }
     });
 
     socket.on('send_message', async (data: { rideId: string, receiverId: string, content: string }) => {
       try {
+        if (!data.content || data.content.length > MESSAGE.CONTENT_MAX_LENGTH) {
+          socket.emit('message_error', { message: `Message must be between 1 and ${MESSAGE.CONTENT_MAX_LENGTH} characters.` });
+          return;
+        }
+
         // Check if either user has blocked the other
         const { safetyService } = await import('../safety/safety.service');
         const [isSenderBlocked, isReceiverBlocked] = await Promise.all([

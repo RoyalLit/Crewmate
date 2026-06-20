@@ -1,29 +1,39 @@
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import { authRepository } from './auth.repository';
 import { RegisterRequestDTO, LoginRequestDTO, VerifyOTPRequestDTO, ResendOTPRequestDTO, AuthTokens, UserResponseDTO, JwtPayload } from './auth.types';
 import { ConflictError, UnauthorizedError, AppError } from '../../shared/errors';
 import env from '../../config/env';
 import logger from '../../shared/logger';
+import { TOKEN, AUTH as AUTH_CONST } from '../../config/constants';
 
 // Node's native jsonwebtoken library is typically used for JWTs
 import * as jwt from 'jsonwebtoken';
 
 import { mailerService } from '../../shared/mailer';
 
+function hashToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
 export class AuthService {
   /**
-   * Generates Access and Refresh Tokens
+   * Generates Access and Refresh Tokens, stores refresh token hash.
    */
-  private generateTokens(userId: string, tokenVersion: number): AuthTokens {
+  private async generateTokens(userId: string, tokenVersion: number): Promise<AuthTokens> {
     const payload: JwtPayload = { userId, tokenVersion };
 
     const accessToken = jwt.sign(payload, env.accessTokenSecret, {
-      expiresIn: '30d',
+      expiresIn: TOKEN.ACCESS_EXPIRY,
     });
 
     const refreshToken = jwt.sign(payload, env.refreshTokenSecret, {
-      expiresIn: '30d',
+      expiresIn: TOKEN.REFRESH_EXPIRY,
     });
+
+    // Store SHA-256 hash of refresh token for rotation validation
+    const tokenHash = hashToken(refreshToken);
+    await authRepository.pushRefreshTokenHash(userId, tokenHash);
 
     return { accessToken, refreshToken };
   }
@@ -63,8 +73,9 @@ export class AuthService {
 
     const hashedPassword = data.password ? await bcrypt.hash(data.password, 12) : undefined;
     
-    // Generate a 6-digit OTP
+    // Generate a 6-digit OTP and hash it before storing
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOtp = await bcrypt.hash(otpCode, AUTH_CONST.BCRYPT_SALT_ROUNDS);
     const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins validity
 
     const newUser = await authRepository.createUser({
@@ -72,7 +83,7 @@ export class AuthService {
       password: hashedPassword,
       isEmailVerified: false,
       status: 'active',
-      otpCode,
+      otpCode: hashedOtp,
       otpExpiresAt,
       tokenVersion: 0,
     });
@@ -106,10 +117,11 @@ export class AuthService {
     }
 
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOtp = await bcrypt.hash(otpCode, AUTH_CONST.BCRYPT_SALT_ROUNDS);
     const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
     await authRepository.updateUser((user as any)._id.toString(), {
-      otpCode,
+      otpCode: hashedOtp,
       otpExpiresAt,
     });
 
@@ -136,10 +148,11 @@ export class AuthService {
     }
 
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOtp = await bcrypt.hash(otpCode, AUTH_CONST.BCRYPT_SALT_ROUNDS);
     const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
     await authRepository.updateUser((user as any)._id.toString(), {
-      otpCode,
+      otpCode: hashedOtp,
       otpExpiresAt,
     });
 
@@ -166,7 +179,11 @@ export class AuthService {
 
     const isMagicOtp = env.nodeEnv === 'development' && data.otp === '123456';
 
-    if (!isMagicOtp && (user.otpCode !== data.otp || !user.otpExpiresAt || user.otpExpiresAt < new Date())) {
+    const isOtpValid = user.otpCode
+      ? await bcrypt.compare(data.otp, user.otpCode)
+      : false;
+
+    if (!isMagicOtp && (!isOtpValid || !user.otpExpiresAt || user.otpExpiresAt < new Date())) {
       throw new UnauthorizedError('Invalid or expired OTP.');
     }
 
@@ -205,7 +222,11 @@ export class AuthService {
 
     const isMagicOtp = env.nodeEnv === 'development' && data.otp === '123456';
 
-    if (!isMagicOtp && (user.otpCode !== data.otp || !user.otpExpiresAt || user.otpExpiresAt < new Date())) {
+    const isOtpValid = user.otpCode
+      ? await bcrypt.compare(data.otp, user.otpCode)
+      : false;
+
+    if (!isMagicOtp && (!isOtpValid || !user.otpExpiresAt || user.otpExpiresAt < new Date())) {
       throw new UnauthorizedError('Invalid or expired OTP.');
     }
 
@@ -220,7 +241,7 @@ export class AuthService {
       throw new AppError('INTERNAL_ERROR', 'Failed to update user after OTP verification', 500);
     }
 
-    const tokens = this.generateTokens((updatedUser as any)._id.toString(), updatedUser.tokenVersion);
+    const tokens = await this.generateTokens((updatedUser as any)._id.toString(), updatedUser.tokenVersion);
 
     return {
       user: this.formatUser(updatedUser),
@@ -252,7 +273,7 @@ export class AuthService {
       throw new UnauthorizedError('Your account has been suspended.');
     }
 
-    const tokens = this.generateTokens((user as any)._id.toString(), user.tokenVersion);
+    const tokens = await this.generateTokens((user as any)._id.toString(), user.tokenVersion);
 
     return {
       user: this.formatUser(user),
@@ -261,11 +282,12 @@ export class AuthService {
   }
 
   /**
-   * Refreshes the access token using a valid refresh token.
+   * Refreshes the access token using a valid refresh token with rotation.
+   * The old refresh token is invalidated and a new pair is issued.
    */
-  async refreshToken(refreshToken: string): Promise<AuthTokens> {
+  async refreshToken(oldRefreshToken: string): Promise<AuthTokens> {
     try {
-      const decoded = jwt.verify(refreshToken, env.refreshTokenSecret) as JwtPayload;
+      const decoded = jwt.verify(oldRefreshToken, env.refreshTokenSecret) as JwtPayload;
       
       const user = await authRepository.findById(decoded.userId);
       
@@ -273,7 +295,6 @@ export class AuthService {
         throw new UnauthorizedError('User not found.');
       }
 
-      // Token version check (allows global invalidation/logout)
       if (user.tokenVersion !== decoded.tokenVersion) {
         throw new UnauthorizedError('Refresh token has been invalidated.');
       }
@@ -282,17 +303,32 @@ export class AuthService {
         throw new UnauthorizedError('Your account has been suspended.');
       }
 
-      return this.generateTokens((user as any)._id.toString(), user.tokenVersion);
+      // Verify this specific refresh token against stored hashes (rotation check)
+      const tokenHash = hashToken(oldRefreshToken);
+      const hashIndex = (user.refreshTokenHashes || []).findIndex(h => h === tokenHash);
+
+      if (hashIndex === -1) {
+        throw new UnauthorizedError('Refresh token has already been used or is invalid.');
+      }
+
+      // Remove the used token hash and generate a new pair
+      await authRepository.removeRefreshTokenHash(decoded.userId, hashIndex);
+      
+      return this.generateTokens(decoded.userId, user.tokenVersion);
     } catch (error) {
+      if (error instanceof UnauthorizedError) {
+        throw error;
+      }
       throw new UnauthorizedError('Invalid or expired refresh token.');
     }
   }
 
   /**
-   * Logs out a user globally by incrementing the token version.
+   * Logs out a user globally by incrementing the token version and clearing all refresh token hashes.
    */
   async logoutGlobal(userId: string): Promise<void> {
     await authRepository.incrementTokenVersion(userId);
+    await authRepository.clearRefreshTokenHashes(userId);
   }
 
   /**

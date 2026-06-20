@@ -15,6 +15,7 @@ import { useWithdrawRequestMutation, useRemovePassengerMutation, useIncomingRequ
 import { useBlockUserMutation, useCheckBlockQuery } from '../../../src/api/safetyHooks';
 import { getDerivedRideStatus } from '../../../src/utils/rideUtils';
 import { CustomActionSheet } from '../../../src/components/CustomActionSheet';
+import { CHAT_BG_LIGHT, CHAT_BG_DARK } from '../../../src/utils/imageAssets';
 
 export default function ChatScreen(): React.JSX.Element {
   const { colors, isDark } = useTheme();
@@ -42,10 +43,14 @@ export default function ChatScreen(): React.JSX.Element {
   const isPoster = session?.user?.id === rideData?.data?.posterId;
 
   // Find request ID
-  const incomingReq = incomingRequests?.data?.find((req: any) => 
+  // Handle both paginated (data.data) and non-paginated (data) responses
+  const incomingReqsArray = Array.isArray(incomingRequests?.data) ? incomingRequests.data : (incomingRequests?.data?.data || []);
+  const incomingReq = incomingReqsArray.find((req: any) => 
     (req.rideId === rideId || req.ride?._id === rideId) && req.requester?._id === otherUserId
   );
-  const myReq = myRequests?.data?.find((req: any) => 
+  
+  const myReqsArray = Array.isArray(myRequests?.data) ? myRequests.data : (myRequests?.data?.data || []);
+  const myReq = myReqsArray.find((req: any) => 
     req.rideId === rideId || req.ride?._id === rideId
   );
   const requestId = incomingReq?._id || incomingReq?.id || myReq?._id || myReq?.id;
@@ -188,9 +193,10 @@ export default function ChatScreen(): React.JSX.Element {
         </View>
       ) : (
         <ImageBackground
-          source={isDark ? require('../../../assets/images/chat_bg_dark.png') : require('../../../assets/images/chat_bg_light.png')}
+          source={isDark ? CHAT_BG_DARK : CHAT_BG_LIGHT}
           style={styles.chatBackground}
           imageStyle={styles.chatBackgroundImage}
+          accessibilityElementsHidden
         >
           <FlatList
             ref={flatListRef}

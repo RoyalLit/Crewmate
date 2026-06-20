@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTheme } from '../design/theme';
 import { brandColors } from '../design/tokens';
+import { typography } from '../design/typography';
 
 export type RideStatus = 'Active' | 'Pending' | 'Accepted' | 'Rejected' | 'Full' | 'Expired' | 'Cancelled' | 'active' | 'completed' | 'cancelled' | 'expired';
 
@@ -17,6 +19,7 @@ interface StatusChipProps {
 }
 
 export function StatusChip({ status }: StatusChipProps) {
+  const { colors } = useTheme();
   const displayStatus = status.charAt(0).toUpperCase() + status.slice(1) as RideStatus;
   let textColor = '';
 
@@ -37,14 +40,14 @@ export function StatusChip({ status }: StatusChipProps) {
     case 'Expired':
     case 'Cancelled':
     default:
-      textColor = '#8B8FA8';
+      textColor = colors.text.placeholder;
       break;
   }
 
   const backgroundColor = hexToRGBA(textColor, 0.15);
 
   return (
-    <View style={[styles.container, { backgroundColor }]}>
+    <View style={[styles.container, { backgroundColor }]} accessible accessibilityRole="text" accessibilityLabel={displayStatus}>
       <Text style={[styles.text, { color: textColor }]}>{displayStatus}</Text>
     </View>
   );
@@ -59,6 +62,6 @@ const styles = StyleSheet.create({
   },
   text: {
     fontFamily: 'PlusJakartaSans-600SemiBold',
-    fontSize: 12,
+    fontSize: typography.label.fontSize,
   },
 });

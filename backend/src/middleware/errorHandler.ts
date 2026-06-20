@@ -12,7 +12,9 @@
  */
 
 import type { ErrorRequestHandler, Request, Response, NextFunction } from 'express';
+import { ZodError } from 'zod';
 import { StatusCodes } from 'http-status-codes';
+import multer from 'multer';
 import { Error as MongooseError } from 'mongoose';
 
 import env from '../config/env';
@@ -63,12 +65,39 @@ const errorHandler: ErrorRequestHandler = (err: unknown, req: Request, res: Resp
     return;
   }
 
+  // ── ZodError → 400 ───────────────────────────────────────────────────────
+  if (err instanceof ZodError) {
+    const details: Record<string, unknown> = {};
+    for (const issue of err.issues) {
+      const path = issue.path.join('.');
+      details[path] = issue.message;
+    }
+    logger.warn({ requestId: req.headers['x-request-id'], err }, 'Zod validation error');
+    res
+      .status(StatusCodes.BAD_REQUEST)
+      .json(formatErrorResponse('VALIDATION_ERROR', 'One or more fields are invalid.', details));
+    return;
+  }
+
   // ── Mongoose CastError (invalid ObjectId) → 404 ─────────────────────────
   if (err instanceof MongooseError.CastError) {
     logger.warn({ requestId: req.headers['x-request-id'], err }, 'Mongoose cast error');
     res
       .status(StatusCodes.NOT_FOUND)
       .json(formatErrorResponse('NOT_FOUND', 'The requested resource was not found.'));
+    return;
+  }
+
+  // ── MulterError (file upload) → 400 or 413 ──────────────────────────────
+  if (err instanceof multer.MulterError) {
+    const statusCode = err.code === 'LIMIT_FILE_SIZE' ? StatusCodes.REQUEST_TOO_LONG : StatusCodes.BAD_REQUEST;
+    const message = err.code === 'LIMIT_FILE_SIZE'
+      ? 'File size exceeds the 5MB limit.'
+      : err.code === 'LIMIT_UNEXPECTED_FILE'
+        ? 'Only JPEG, PNG, and WebP images are allowed.'
+        : 'File upload error.';
+    logger.warn({ requestId: req.headers['x-request-id'], err }, 'Multer upload error');
+    res.status(statusCode).json(formatErrorResponse('UPLOAD_ERROR', message));
     return;
   }
 

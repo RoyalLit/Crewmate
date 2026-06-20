@@ -13,7 +13,7 @@ interface IncomingRequestItemProps {
   request: any;
 }
 
-export function IncomingRequestItem({ request }: IncomingRequestItemProps) {
+export const IncomingRequestItem = React.memo(function IncomingRequestItem({ request }: IncomingRequestItemProps) {
   const { colors, isDark } = useTheme();
   const router = useRouter();
   
@@ -61,6 +61,9 @@ export function IncomingRequestItem({ request }: IncomingRequestItemProps) {
             style={[styles.btn, styles.btnReject, { borderColor: colors.border.default }]} 
             onPress={handleReject}
             disabled={rejectMutation.isPending || acceptMutation.isPending}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel={`Decline request from ${request.requester.name}`}
           >
             {rejectMutation.isPending ? (
               <ActivityIndicator size="small" color={colors.text.primary} />
@@ -73,11 +76,14 @@ export function IncomingRequestItem({ request }: IncomingRequestItemProps) {
             style={[styles.btn, styles.btnAccept]} 
             onPress={handleAccept}
             disabled={rejectMutation.isPending || acceptMutation.isPending}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel={`Accept request from ${request.requester.name}`}
           >
             {acceptMutation.isPending ? (
-              <ActivityIndicator size="small" color="#FFF" />
+              <ActivityIndicator size="small" color={colors.background.card} />
             ) : (
-              <Text style={[styles.btnText, { color: '#FFF' }]}>Accept</Text>
+              <Text style={[styles.btnText, { color: colors.background.card }]}>Accept</Text>
             )}
           </Pressable>
         </View>
@@ -92,15 +98,18 @@ export function IncomingRequestItem({ request }: IncomingRequestItemProps) {
               const rInfo = request.rideId?.fromCity ? `${request.rideId.fromCity} to ${request.rideId.toCity}` : '';
               router.push(`/chat/${rId}/${request.requester.id || request.requester._id}?name=${encodeURIComponent(request.requester.name)}&rideInfo=${encodeURIComponent(rInfo)}`);
             }}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel={`Send message to ${request.requester.name}`}
           >
-            <Ionicons name="chatbubbles" size={16} color="#FFF" style={{ marginRight: 6 }} />
-            <Text style={[styles.btnText, { color: '#FFF' }]}>Message</Text>
+            <Ionicons name="chatbubbles" size={16} color={colors.background.card} style={{ marginRight: 6 }} />
+            <Text style={[styles.btnText, { color: colors.background.card }]}>Message</Text>
           </Pressable>
         </View>
       )}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -140,6 +149,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
+    minHeight: 44,
   },
   btnReject: {
     borderWidth: 1,

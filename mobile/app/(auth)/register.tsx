@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/design/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { brandColors } from '../../src/design/tokens';
+import { CityAutocomplete } from '../../src/components/CityAutocomplete';
 
 import { useRegisterMutation } from '../../src/api/authHooks';
 
@@ -16,6 +17,7 @@ export default function RegisterScreen() {
     name: '',
     email: '',
     college: '',
+    homeCity: '',
     password: '',
   });
   
@@ -25,12 +27,12 @@ export default function RegisterScreen() {
   const registerMutation = useRegisterMutation();
   const loading = registerMutation.isPending;
 
-  const isFormValid = !!(form.name && form.email && form.college && form.password.length >= 8 && /[A-Z]/.test(form.password) && /[a-z]/.test(form.password) && /[0-9]/.test(form.password));
+  const isFormValid = !!(form.name && form.email && form.college && form.homeCity && form.password.length >= 8 && /[A-Z]/.test(form.password) && /[a-z]/.test(form.password) && /[0-9]/.test(form.password));
 
   const handleRegister = async () => {
     setError('');
     
-    if (!form.name || !form.email || !form.college || !form.password) {
+    if (!form.name || !form.email || !form.college || !form.homeCity || !form.password) {
       setError('Please fill in all fields');
       return;
     }
@@ -111,6 +113,16 @@ export default function RegisterScreen() {
               onChangeText={(t) => setForm({ ...form, college: t })}
               textContentType="organizationName"
               autoComplete="off"
+            />
+          </View>
+
+          <View style={[styles.inputGroup, { zIndex: 10 }]}>
+            <Text style={[styles.label, { color: colors.text.secondary }]}>Home City</Text>
+            <CityAutocomplete
+              value={form.homeCity}
+              onChange={(t) => setForm({ ...form, homeCity: t })}
+              placeholder="E.g., Delhi, Mumbai"
+              iconName="location-outline"
             />
           </View>
 
@@ -207,6 +219,10 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginRight: 16,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontFamily: 'PlusJakartaSans-Bold',
@@ -245,6 +261,10 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     padding: 12,
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   errorText: {
     fontFamily: 'PlusJakartaSans-Regular',

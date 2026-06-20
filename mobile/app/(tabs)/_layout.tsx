@@ -15,10 +15,17 @@ import Animated, {
   withTiming,
   interpolateColor,
 } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
+let BlurView: any;
+try {
+  BlurView = require('expo-blur').BlurView;
+} catch {
+  // expo-blur may not be available on all targets
+}
 
 import { useTheme } from '../../src/design/theme';
+import { useReducedMotion } from '../../src/design/useReducedMotion';
 import { brandColors } from '../../src/design/tokens';
+import { ErrorBoundary } from '../../src/components/ErrorBoundary';
 import { Ionicons } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
@@ -89,15 +96,18 @@ function AnimatedTabItem({
   onPostPress?: () => void;
 }) {
   const progress = useSharedValue(isFocused ? 1 : 0);
+  const reducedMotion = useReducedMotion();
 
   React.useEffect(() => {
-    // withTiming guarantees perfect linear synchronization between the shrinking and growing tabs.
-    // Springs overshoot and cause the total width to fluctuate, causing flexbox jiggle.
+    if (reducedMotion) {
+      progress.value = isFocused ? 1 : 0;
+      return;
+    }
     progress.value = withTiming(isFocused ? 1 : 0, {
       duration: 250,
       easing: Easing.out(Easing.cubic),
     });
-  }, [isFocused]);
+  }, [isFocused, reducedMotion]);
 
   const animatedContainerStyle = useAnimatedStyle(() => {
     // 44px fixed width for icons only
@@ -153,16 +163,19 @@ function AnimatedTabItem({
 // ─── Active Tab Glow ────────────────────────────────────────────
 
 function ActiveTabGlow({ activeIndex }: { activeIndex: number }) {
-  // Center of first icon is padding (12) + half icon width (22) = 34
-  // Gap is 8, icon width is 44 -> 52 offset per index
+  const reducedMotion = useReducedMotion();
   const translateX = useSharedValue(34 + activeIndex * 52);
 
   React.useEffect(() => {
+    if (reducedMotion) {
+      translateX.value = 34 + activeIndex * 52;
+      return;
+    }
     translateX.value = withTiming(34 + activeIndex * 52, { 
       duration: 250, 
       easing: Easing.out(Easing.cubic) 
     });
-  }, [activeIndex]);
+  }, [activeIndex, reducedMotion]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -204,7 +217,7 @@ function CustomTabBar(props: BottomTabBarProps & { onPostPress?: () => void }) {
       style={[
         tabStyles.floatingPill,
         Platform.OS !== 'ios' && {
-          backgroundColor: isDark ? '#1C1C2E' : '#FFFFFF',
+          backgroundColor: colors.background.card,
           elevation: 10,
           borderWidth: 1,
           borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
@@ -271,10 +284,8 @@ export default function TabsLayout(): React.JSX.Element {
   const bottomSheetRef = useRef<PostBottomSheetRef>(null);
 
   return (
-    <>
+    <ErrorBoundary>
       <Tabs
-        // NEVER pass tabBar={CustomTabBar} directly, as it causes Invalid Hook Call errors
-        // if React Navigation invokes it as a plain function instead of a component.
         tabBar={(props) => <CustomTabBar {...props} onPostPress={() => bottomSheetRef.current?.expand()} />}
         screenOptions={{ headerShown: false }}
       >
@@ -285,7 +296,7 @@ export default function TabsLayout(): React.JSX.Element {
         <Tabs.Screen name="profile" />
       </Tabs>
       <PostBottomSheet ref={bottomSheetRef} />
-    </>
+    </ErrorBoundary>
   );
 }
 

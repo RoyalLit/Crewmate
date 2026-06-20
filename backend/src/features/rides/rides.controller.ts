@@ -27,7 +27,9 @@ export class RidesController {
 
   async getMyRides(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const rides = await ridesService.getMyRides(req.user!.userId);
+      const page = parseInt(req.query.page as string, 10) || 1;
+      const pageSize = parseInt(req.query.pageSize as string, 10) || 20;
+      const rides = await ridesService.getMyRides(req.user!.userId, page, pageSize);
       res.status(200).json(successResponse(rides));
     } catch (error) {
       next(error);

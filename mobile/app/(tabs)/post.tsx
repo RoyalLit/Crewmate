@@ -118,7 +118,7 @@ export default function PostScreen(): React.JSX.Element {
               />
             </View>
 
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: colors.background.card }]} />
 
             {/* Date & Time */}
             <View style={styles.row}>
@@ -188,7 +188,7 @@ export default function PostScreen(): React.JSX.Element {
               </View>
             </View>
 
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: colors.background.card }]} />
 
             {/* Cab Type Selection */}
             <Text style={[styles.label, { color: colors.text.primary, marginBottom: spacing.sm }]}>Cab Type</Text>
@@ -313,7 +313,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(150, 150, 150, 0.2)',
     marginVertical: spacing.md,
   },
   cabTypeContainer: {
@@ -326,6 +325,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
+    minHeight: 44,
   },
   cabTypeText: {
     fontFamily: 'PlusJakartaSans-600SemiBold',

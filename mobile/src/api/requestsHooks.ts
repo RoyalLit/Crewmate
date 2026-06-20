@@ -28,7 +28,8 @@ export function useMyRequestsQuery() {
       const response = await apiClient.get('/requests/my-requests');
       return response.data;
     },
-    refetchInterval: 10000,
+    refetchInterval: 30000,
+    staleTime: 20000,
   });
 }
 
@@ -39,7 +40,8 @@ export function useIncomingRequestsQuery() {
       const response = await apiClient.get('/requests/incoming');
       return response.data;
     },
-    refetchInterval: 10000,
+    refetchInterval: 30000,
+    staleTime: 20000,
   });
 }
 

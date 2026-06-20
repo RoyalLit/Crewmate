@@ -90,7 +90,7 @@ export default function ForgotPasswordScreen() {
             disabled={!isFormValid || loading}
           >
             {loading ? (
-              <ActivityIndicator color="#FFF" />
+              <ActivityIndicator color={colors.background.card} />
             ) : (
               <Text style={styles.primaryButtonText}>Send OTP</Text>
             )}

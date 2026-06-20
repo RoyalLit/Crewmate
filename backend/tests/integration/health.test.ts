@@ -20,9 +20,9 @@ import { createApp } from '../../src/app';
 
 const app = createApp();
 
-describe('GET /api/v1/health', () => {
+describe('GET /health', () => {
   it('returns 200 with status ok and uptime', async () => {
-    const res = await request(app).get('/api/v1/health');
+    const res = await request(app).get('/health');
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
@@ -33,11 +33,11 @@ describe('GET /api/v1/health', () => {
   });
 });
 
-describe('GET /api/v1/health/ready', () => {
+describe('GET /health/ready', () => {
   it('returns 503 when the database is not connected', async () => {
     // In this test environment no real MongoDB is connected,
     // so the readiness probe should return 503.
-    const res = await request(app).get('/api/v1/health/ready');
+    const res = await request(app).get('/health/ready');
 
     expect(res.status).toBe(503);
     expect(res.body).toMatchObject({

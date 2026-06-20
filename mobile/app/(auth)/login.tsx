@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/design/theme';
@@ -8,7 +8,7 @@ import { spacing, brandColors } from '../../src/design/tokens';
 import { useAuthStore } from '../../src/store/authStore';
 
 import { useLoginMutation } from '../../src/api/authHooks';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storage } from '../../src/lib/storage';
 
 export default function LoginScreen() {
   const { colors, isDark } = useTheme();
@@ -33,9 +33,14 @@ export default function LoginScreen() {
       
       const { user, tokens } = response.data.data || response.data;
       
-      // Save token
       if (tokens?.accessToken) {
-        await AsyncStorage.setItem('crewmute_token', tokens.accessToken);
+        await storage.setAccessToken(tokens.accessToken);
+        if (tokens?.refreshToken) {
+          await storage.setRefreshToken(tokens.refreshToken);
+        }
+        if (user?.id) {
+          await storage.setUserId(user.id);
+        }
       }
       
       // Update store and the Auth Guard in _layout.tsx will redirect us
@@ -53,108 +58,106 @@ export default function LoginScreen() {
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Pressable 
-            onPress={() => {
-              if (router.canGoBack()) {
-                router.back();
-              } else {
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Pressable 
+              onPress={() => {
                 router.replace('/(auth)');
-              }
-            }} 
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
-          </Pressable>
-          <Text style={[styles.title, { color: colors.text.primary }]}>Welcome back</Text>
-        </View>
-
-        {/* Form Fields */}
-        <View style={styles.formContainer}>
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: colors.text.secondary }]}>College Email</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: colors.background.subtle, borderColor: colors.border.default }]}>
-              <Ionicons name="mail-outline" size={20} color={colors.text.placeholder} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, { color: colors.text.primary }]}
-                placeholder="you@college.edu"
-                placeholderTextColor={colors.text.placeholder}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                keyboardAppearance={isDark ? 'dark' : 'light'}
-                value={email}
-                onChangeText={setEmail}
-                textContentType="username"
-                autoComplete="email"
-              />
-            </View>
+              }} 
+              style={styles.backButton}
+            >
+              <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            </Pressable>
+            <Text style={[styles.title, { color: colors.text.primary }]}>Welcome back</Text>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: colors.text.secondary }]}>Password</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: colors.background.subtle, borderColor: colors.border.default }]}>
-              <Ionicons name="lock-closed-outline" size={20} color={colors.text.placeholder} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, { color: colors.text.primary }]}
-                placeholder="Enter your password"
-                placeholderTextColor={colors.text.placeholder}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                keyboardAppearance={isDark ? 'dark' : 'light'}
-                value={password}
-                onChangeText={setPassword}
-                textContentType="password"
-                autoComplete="password"
-              />
-              <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                <Ionicons 
-                  name={showPassword ? "eye-off-outline" : "eye-outline"} 
-                  size={20} 
-                  color={colors.text.placeholder} 
+          {/* Form Fields */}
+          <View style={styles.formContainer}>
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text.secondary }]}>College Email</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: colors.background.subtle, borderColor: colors.border.default }]}>
+                <Ionicons name="mail-outline" size={20} color={colors.text.placeholder} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: colors.text.primary }]}
+                  placeholder="you@college.edu"
+                  placeholderTextColor={colors.text.placeholder}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  keyboardAppearance={isDark ? 'dark' : 'light'}
+                  value={email}
+                  onChangeText={setEmail}
+                  textContentType="username"
+                  autoComplete="email"
                 />
-              </Pressable>
+              </View>
             </View>
-            <View style={styles.forgotPasswordContainer}>
-              <Pressable onPress={() => router.push('/(auth)/forgot-password')}>
-                <Text style={[styles.forgotPasswordText, { color: colors.interactive.primary }]}>Forgot Password?</Text>
-              </Pressable>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text.secondary }]}>Password</Text>
+              <View style={[styles.inputWrapper, { backgroundColor: colors.background.subtle, borderColor: colors.border.default }]}>
+                <Ionicons name="lock-closed-outline" size={20} color={colors.text.placeholder} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.input, { color: colors.text.primary }]}
+                  placeholder="Enter your password"
+                  placeholderTextColor={colors.text.placeholder}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  keyboardAppearance={isDark ? 'dark' : 'light'}
+                  value={password}
+                  onChangeText={setPassword}
+                  textContentType="password"
+                  autoComplete="password"
+                />
+                <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                  <Ionicons 
+                    name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                    size={20} 
+                    color={colors.text.placeholder} 
+                  />
+                </Pressable>
+              </View>
+              <View style={styles.forgotPasswordContainer}>
+                <Pressable onPress={() => router.push('/(auth)/forgot-password')} style={{ minHeight: 44, justifyContent: 'center' }}>
+                  <Text style={[styles.forgotPasswordText, { color: colors.interactive.primary }]}>Forgot Password?</Text>
+                </Pressable>
+              </View>
             </View>
+            {error ? <Text style={[styles.errorText, { color: brandColors.coralPink }]}>{error}</Text> : null}
           </View>
-          {error ? <Text style={[styles.errorText, { color: brandColors.coralPink }]}>{error}</Text> : null}
-        </View>
 
-        {/* Footer CTAs */}
-        <View style={styles.footer}>
-          <Pressable 
-            style={[
-              styles.primaryButton, 
-              { backgroundColor: isFormValid ? colors.interactive.primary : colors.border.default }
-            ]}
-            disabled={!isFormValid || loading}
-            onPress={handleLogin}
-          >
-            {loading ? (
-              <ActivityIndicator color={isFormValid ? colors.interactive.primaryText : colors.text.placeholder} />
-            ) : (
-              <Text style={[
-                styles.primaryButtonText, 
-                { color: isFormValid ? colors.interactive.primaryText : colors.text.placeholder }
-              ]}>
-                Log In
+          {/* Footer CTAs */}
+          <View style={styles.footer}>
+            <Pressable 
+              style={[
+                styles.primaryButton, 
+                { backgroundColor: isFormValid ? colors.interactive.primary : colors.border.default }
+              ]}
+              disabled={!isFormValid || loading}
+              onPress={handleLogin}
+            >
+              {loading ? (
+                <ActivityIndicator color={isFormValid ? colors.interactive.primaryText : colors.text.placeholder} />
+              ) : (
+                <Text style={[
+                  styles.primaryButtonText, 
+                  { color: isFormValid ? colors.interactive.primaryText : colors.text.placeholder }
+                ]}>
+                  Log In
+                </Text>
+              )}
+            </Pressable>
+
+            <Pressable 
+              style={styles.ghostButton}
+              onPress={() => router.replace('/(auth)/register')}
+            >
+              <Text style={[styles.ghostButtonText, { color: colors.text.secondary }]}>
+                Don't have an account? <Text style={{ color: colors.interactive.primary, fontFamily: 'PlusJakartaSans-700Bold' }}>Sign up</Text>
               </Text>
-            )}
-          </Pressable>
-
-          <Pressable 
-            style={styles.ghostButton}
-            onPress={() => router.replace('/(auth)/register')}
-          >
-            <Text style={[styles.ghostButtonText, { color: colors.text.secondary }]}>
-              Don't have an account? <Text style={{ color: colors.interactive.primary, fontFamily: 'PlusJakartaSans-700Bold' }}>Sign up</Text>
-            </Text>
-          </Pressable>
-        </View>
+            </Pressable>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -173,8 +176,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    minWidth: 44,
+    minHeight: 44,
     justifyContent: 'center',
     marginBottom: spacing.sm,
     marginLeft: -8,
@@ -215,6 +218,10 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     padding: spacing.sm,
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   forgotPasswordContainer: {
     alignItems: 'flex-end',

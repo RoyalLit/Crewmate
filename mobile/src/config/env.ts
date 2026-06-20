@@ -13,9 +13,11 @@ import Constants from 'expo-constants';
 function requirePublicEnv(key: string): string {
   const value = process.env[key];
   if (!value) {
-    // In development, log a warning; in production the app will fail gracefully
-    console.warn(`[config] Missing public environment variable: ${key}`);
-    return '';
+    if (__DEV__) {
+      console.warn(`[config] Missing public environment variable: ${key}`);
+      return '';
+    }
+    throw new Error(`Missing required environment variable: ${key}`);
   }
   return value;
 }

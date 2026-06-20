@@ -75,7 +75,7 @@ export function CityAutocomplete({ value, onChange, placeholder, iconName }: Cit
   };
 
   const handleSelect = (cityItem: any) => {
-    const cityName = cityItem.canonicalName || cityItem.name;
+    const cityName = cityItem.displayStr || cityItem.canonicalName || cityItem.name;
     setQuery(cityName);
     onChange(cityName);
     setShowDropdown(false);
@@ -114,6 +114,7 @@ export function CityAutocomplete({ value, onChange, placeholder, iconName }: Cit
                 {({ pressed }) => (
                   <View style={[
                     styles.dropdownItem,
+                    { borderBottomColor: colors.border.default },
                     pressed && { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' },
                     index === results.length - 1 && { borderBottomWidth: 0 }
                   ]}>
@@ -181,7 +182,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(150, 150, 150, 0.2)',
+
   },
   itemTitle: {
     fontFamily: 'PlusJakartaSans-600SemiBold',

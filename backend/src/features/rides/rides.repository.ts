@@ -1,7 +1,7 @@
 import { RideModel, IRide } from '../../db/models/Ride';
 import { CreateRideRequestDTO, RideFilterQuery } from './rides.types';
 import { PaginatedResult } from '../../shared/types';
-import { FilterQuery } from 'mongoose';
+import { FilterQuery, ClientSession } from 'mongoose';
 
 export class RidesRepository {
   async createRide(posterId: string, data: CreateRideRequestDTO): Promise<IRide> {
@@ -31,39 +31,48 @@ export class RidesRepository {
     const thresholdDateStr = istTime.toISOString().split('T')[0];
     const thresholdTimeStr = istTime.toISOString().split('T')[1].slice(0, 5);
 
+    const conditions: FilterQuery<IRide>[] = [];
+
     if (date) {
       filter.departureDate = date;
-      // If searching for today, also filter by time
       if (date === thresholdDateStr) {
         filter.departureTime = { $gte: thresholdTimeStr };
       }
     } else {
-      filter.$or = [
-        { departureDate: { $gt: thresholdDateStr } },
-        { 
-          departureDate: thresholdDateStr,
-          departureTime: { $gte: thresholdTimeStr }
-        }
-      ];
+      conditions.push({
+        $or: [
+          { departureDate: { $gt: thresholdDateStr } },
+          { departureDate: thresholdDateStr, departureTime: { $gte: thresholdTimeStr } },
+        ],
+      });
     }
 
     if (query.excludePosterId) {
       filter.posterId = { $ne: query.excludePosterId };
     }
 
+    const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     if (fromCity) {
-      filter.fromCity = new RegExp(`^${fromCity}$`, 'i'); // Case-insensitive exact match
+      filter.fromCity = new RegExp(`^${escapeRegex(fromCity)}$`, 'i');
     }
     if (toCity) {
-      filter.$or = [
-        { toCity: new RegExp(`^${toCity}$`, 'i') },
-        { stops: new RegExp(`^${toCity}$`, 'i') }
-      ];
+      conditions.push({
+        $or: [
+          { toCity: new RegExp(`^${escapeRegex(toCity)}$`, 'i') },
+          { stops: new RegExp(`^${escapeRegex(toCity)}$`, 'i') },
+        ],
+      });
     }
-    // date logic is handled above
+
+    if (conditions.length > 0) {
+      filter.$and = conditions;
+    }
 
     const [data, total] = await Promise.all([
-      RideModel.find(filter).sort({ departureDate: 1, departureTime: 1 }).skip(skip).limit(pageSize).lean(),
+      RideModel.find(filter)
+        .select('posterId fromCity toCity departureDate departureTime arrivalTime stops totalSeats availableSeats farePerSeat cabType status')
+        .sort({ departureDate: 1, departureTime: 1 }).skip(skip).limit(pageSize).lean(),
       RideModel.countDocuments(filter),
     ]);
 
@@ -75,13 +84,20 @@ export class RidesRepository {
     };
   }
 
-  async findRidesByPoster(posterId: string): Promise<IRide[]> {
-    const rides = await RideModel.find({ posterId }).sort({ departureDate: -1 }).lean();
-    return rides as unknown as IRide[];
+  async findRidesByPoster(posterId: string, page = 1, pageSize = 20): Promise<PaginatedResult<IRide>> {
+    const skip = (page - 1) * pageSize;
+    const filter = { posterId };
+    const [data, total] = await Promise.all([
+      RideModel.find(filter)
+        .select('posterId fromCity toCity departureDate departureTime arrivalTime stops totalSeats availableSeats farePerSeat cabType status createdAt')
+        .sort({ departureDate: -1 }).skip(skip).limit(pageSize).lean(),
+      RideModel.countDocuments(filter),
+    ]);
+    return { data: data as unknown as IRide[], total, page, pageSize };
   }
 
-  async updateRide(id: string, updates: Partial<IRide>): Promise<IRide | null> {
-    const ride = await RideModel.findByIdAndUpdate(id, updates, { new: true }).lean();
+  async updateRide(id: string, updates: Partial<IRide>, options?: { session?: ClientSession }): Promise<IRide | null> {
+    const ride = await RideModel.findByIdAndUpdate(id, updates, { new: true, session: options?.session }).lean();
     return ride ? (ride as unknown as IRide) : null;
   }
 

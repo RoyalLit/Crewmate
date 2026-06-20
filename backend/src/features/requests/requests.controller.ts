@@ -14,7 +14,9 @@ export class RequestsController {
 
   async getMyRequests(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const requests = await requestsService.getMyRequests(req.user!.userId);
+      const page = parseInt(req.query.page as string, 10) || 1;
+      const pageSize = parseInt(req.query.pageSize as string, 10) || 20;
+      const requests = await requestsService.getMyRequests(req.user!.userId, page, pageSize);
       res.status(200).json(successResponse(requests));
     } catch (error) {
       next(error);
@@ -23,7 +25,9 @@ export class RequestsController {
 
   async getIncomingRequests(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const requests = await requestsService.getIncomingRequests(req.user!.userId);
+      const page = parseInt(req.query.page as string, 10) || 1;
+      const pageSize = parseInt(req.query.pageSize as string, 10) || 20;
+      const requests = await requestsService.getIncomingRequests(req.user!.userId, page, pageSize);
       res.status(200).json(successResponse(requests));
     } catch (error) {
       next(error);

@@ -8,7 +8,8 @@ export const requireAuth = (req: Request, _res: Response, next: NextFunction): v
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new UnauthorizedError('Authentication token is missing or invalid.');
+    next(new UnauthorizedError('Authentication token is missing or invalid.'));
+    return;
   }
 
   const token = authHeader.split(' ')[1];
@@ -21,6 +22,6 @@ export const requireAuth = (req: Request, _res: Response, next: NextFunction): v
     
     next();
   } catch (error) {
-    throw new UnauthorizedError('Token is invalid or expired.');
+    next(new UnauthorizedError('Token is invalid or expired.'));
   }
 };

@@ -73,7 +73,7 @@ export default function ReportScreen() {
           disabled={reportMutation.isPending}
         >
           {reportMutation.isPending ? (
-            <ActivityIndicator color="#FFF" />
+            <ActivityIndicator color={colors.background.card} />
           ) : (
             <Text style={styles.submitButtonText}>Submit Report</Text>
           )}

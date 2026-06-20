@@ -1,4 +1,5 @@
 import { UserModel, IUser } from '../../db/models/User';
+import { AUTH as AUTH_CONST } from '../../config/constants';
 
 export class AuthRepository {
   /**
@@ -51,6 +52,38 @@ export class AuthRepository {
    */
   async deleteUser(id: string): Promise<void> {
     await UserModel.findByIdAndDelete(id);
+  }
+
+  /**
+   * Pushes a refresh token hash to the user's stored hashes array.
+   * Used for refresh token rotation validation.
+   */
+  async pushRefreshTokenHash(userId: string, hash: string): Promise<void> {
+    await UserModel.findByIdAndUpdate(userId, {
+      $push: { refreshTokenHashes: { $each: [hash], $slice: -AUTH_CONST.REFRESH_TOKEN_ARRAY_MAX } },
+    });
+  }
+
+  /**
+   * Removes a refresh token hash by index (used during rotation).
+   */
+  async removeRefreshTokenHash(userId: string, index: number): Promise<void> {
+    await UserModel.findByIdAndUpdate(userId, {
+      $unset: { [`refreshTokenHashes.${index}`]: 1 },
+    });
+    // Clean up null entries after removal
+    await UserModel.findByIdAndUpdate(userId, {
+      $pull: { refreshTokenHashes: null },
+    });
+  }
+
+  /**
+   * Clears all refresh token hashes (used on global logout).
+   */
+  async clearRefreshTokenHashes(userId: string): Promise<void> {
+    await UserModel.findByIdAndUpdate(userId, {
+      $set: { refreshTokenHashes: [] },
+    });
   }
 }
 

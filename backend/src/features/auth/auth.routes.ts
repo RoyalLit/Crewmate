@@ -11,6 +11,7 @@ import {
 import validate from '../../middleware/validate';
 import { requireAuth } from '../../middleware/auth';
 import { asyncHandler } from '../../shared/asyncHandler';
+import { uploadMiddleware } from '../users/upload.middleware';
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.post('/refresh', asyncHandler(authController.refreshToken.bind(authContro
 // Protected routes
 router.get('/me', requireAuth, asyncHandler(authController.getMe.bind(authController)));
 router.post('/logout', requireAuth, asyncHandler(authController.logoutGlobal.bind(authController)));
+router.post('/upload-student-id', requireAuth, uploadMiddleware.single('photo'), asyncHandler(authController.uploadStudentId.bind(authController)));
 
 export default router;

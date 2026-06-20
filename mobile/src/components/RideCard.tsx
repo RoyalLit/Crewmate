@@ -4,6 +4,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from '
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../design/theme';
 import { spacing, brandColors } from '../design/tokens';
+import { typography } from '../design/typography';
 import { formatDate } from '../utils/rideUtils';
 import { Avatar } from './Avatar';
 import { StatusChip } from './StatusChip';
@@ -16,7 +17,7 @@ interface RideCardProps {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export function RideCard({ ride, onPress }: RideCardProps) {
+export const RideCard = React.memo(function RideCard({ ride, onPress }: RideCardProps) {
   const { colors, isDark } = useTheme();
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
@@ -60,6 +61,7 @@ export function RideCard({ ride, onPress }: RideCardProps) {
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       onPress={onPress}
+      accessible
       accessibilityRole="button"
       accessibilityLabel={`Ride from ${ride.fromCity} to ${ride.toCity} on ${ride.date}`}
     >
@@ -142,7 +144,7 @@ export function RideCard({ ride, onPress }: RideCardProps) {
       </View>
     </AnimatedPressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {
@@ -162,7 +164,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontFamily: 'PlusJakartaSans-500Medium',
-    fontSize: 14,
+    fontSize: typography.body.fontSize,
     marginLeft: spacing.xs,
   },
   routeContainer: {
@@ -208,13 +210,13 @@ const styles = StyleSheet.create({
   },
   cityText: {
     fontFamily: 'PlusJakartaSans-700Bold',
-    fontSize: 16,
+    fontSize: typography.bodyLarge.fontSize,
     flex: 1,
     paddingRight: 8,
   },
   timeText: {
     fontFamily: 'PlusJakartaSans-500Medium',
-    fontSize: 14,
+    fontSize: typography.body.fontSize,
   },
   divider: {
     height: 1,
@@ -238,11 +240,11 @@ const styles = StyleSheet.create({
   },
   posterName: {
     fontFamily: 'PlusJakartaSans-600SemiBold',
-    fontSize: 14,
+    fontSize: typography.body.fontSize,
   },
   posterCollege: {
     fontFamily: 'PlusJakartaSans-400Regular',
-    fontSize: 13,
+    fontSize: typography.bodySmall.fontSize,
   },
   fareContainer: {
     alignItems: 'flex-end',

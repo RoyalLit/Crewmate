@@ -1,7 +1,7 @@
 /**
  * Explore tab — Home feed screen.
  */
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { StyleSheet, Text, View, FlatList, Pressable, Platform, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +12,7 @@ import { RideCard } from '../../src/components/RideCard';
 import { useThemeStore } from '../../src/store/themeStore';
 import { useBrowseRidesQuery } from '../../src/api/ridesHooks';
 import { CityAutocomplete } from '../../src/components/CityAutocomplete';
+import { EmptyState } from '../../src/components/EmptyState';
 import { useRouter } from 'expo-router';
 
 export default function ExploreScreen(): React.JSX.Element {
@@ -33,6 +34,19 @@ export default function ExploreScreen(): React.JSX.Element {
   });
 
   const rides = data?.data?.data || [];
+
+  const renderItem = useCallback(({ item }: { item: any }) => (
+    <RideCard 
+      ride={item} 
+      onPress={() => {
+        const id = item._id || item.id;
+        if (id) {
+          // @ts-ignore - expo router dynamic routes typed loosely
+          router.push(`/ride/${id}`);
+        }
+      }}
+    />
+  ), [router]);
 
   const handleRefresh = async () => {
     setIsPulling(true);
@@ -115,26 +129,12 @@ export default function ExploreScreen(): React.JSX.Element {
           <ActivityIndicator size="large" color={colors.interactive.primary} style={{ marginTop: 40 }} />
         ) : isError ? (
           <Text style={{ textAlign: 'center', marginTop: 40, color: colors.text.secondary }}>Failed to load rides.</Text>
-        ) : rides.length === 0 ? (
-          <Text style={{ textAlign: 'center', marginTop: 40, color: colors.text.secondary }}>
-            No rides found for this route.
-          </Text>
         ) : (
           <FlatList
             data={rides}
             keyExtractor={(item: any) => item.id || item._id}
-            renderItem={({ item }) => (
-              <RideCard 
-                ride={item} 
-                onPress={() => {
-                  const id = item._id || item.id;
-                  if (id) {
-                    // @ts-ignore - expo router dynamic routes typed loosely
-                    router.push(`/ride/${id}`);
-                  }
-                }}
-              />
-            )}
+            renderItem={renderItem}
+            ListEmptyComponent={<EmptyState icon="car-outline" title="No rides found" subtitle="Check back later for new rides near you" />}
             style={[styles.container, { backgroundColor: 'transparent' }]}
             contentContainerStyle={{ 
               paddingBottom: TAB_BAR_HEIGHT + spacing.md, 

@@ -16,8 +16,8 @@ export const registerValidator = [
     .normalizeEmail(),
   body('password')
     .optional()
-    .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters long')
+    .isLength({ min: 8, max: 72 })
+    .withMessage('Password must be between 8 and 72 characters long')
     .matches(/[A-Z]/)
     .withMessage('Password must contain at least one uppercase letter')
     .matches(/[a-z]/)
@@ -29,6 +29,11 @@ export const registerValidator = [
     .trim()
     .isLength({ max: 100 })
     .withMessage('College name must be less than 100 characters'),
+  body('homeCity')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Home City must be less than 100 characters'),
 ];
 
 export const verifyOtpValidator = [
@@ -69,28 +74,9 @@ export const loginValidator = [
     .normalizeEmail(),
   body('password')
     .notEmpty()
-    .withMessage('Password is required'),
-];
-
-export const setPasswordValidator = [
-  body('email')
-    .trim()
-    .notEmpty()
-    .withMessage('Email is required')
-    .isEmail()
-    .withMessage('Must be a valid email address')
-    .normalizeEmail(),
-  body('password')
-    .notEmpty()
     .withMessage('Password is required')
-    .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters long')
-    .matches(/[A-Z]/)
-    .withMessage('Password must contain at least one uppercase letter')
-    .matches(/[a-z]/)
-    .withMessage('Password must contain at least one lowercase letter')
-    .matches(/[0-9]/)
-    .withMessage('Password must contain at least one number'),
+    .isLength({ max: 72 })
+    .withMessage('Password must be at most 72 characters long'),
 ];
 
 export const resetPasswordValidator = [
@@ -112,8 +98,8 @@ export const resetPasswordValidator = [
   body('newPassword')
     .notEmpty()
     .withMessage('New password is required')
-    .isLength({ min: 8 })
-    .withMessage('New password must be at least 8 characters long')
+    .isLength({ min: 8, max: 72 })
+    .withMessage('New password must be between 8 and 72 characters long')
     .matches(/[A-Z]/)
     .withMessage('Password must contain at least one uppercase letter')
     .matches(/[a-z]/)

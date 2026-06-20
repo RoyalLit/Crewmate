@@ -1,11 +1,12 @@
-import React from 'react';
-import { StyleSheet, Text, View, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import React, { useCallback } from 'react';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 import { useTheme } from '../../src/design/theme';
 import { TAB_BAR_HEIGHT, spacing, brandColors } from '../../src/design/tokens';
 import { ChatRow } from '../../src/components/ChatRow';
+import { EmptyState } from '../../src/components/EmptyState';
 import { useChatsList } from '../../src/api/chatsHooks';
 
 export default function ChatsScreen(): React.JSX.Element {
@@ -14,6 +15,18 @@ export default function ChatsScreen(): React.JSX.Element {
   const router = useRouter();
 
   const { data: chats, isLoading, refetch, isRefetching } = useChatsList();
+
+  const renderItem = useCallback(({ item: chat }: { item: any }) => (
+    <ChatRow 
+      key={chat.id} 
+      id={chat.id}
+      name={chat.otherUser.name}
+      lastMessage={chat.lastMessage}
+      time={new Date(chat.time).toLocaleDateString()}
+      unreadCount={chat.unreadCount}
+      onPress={() => router.push(`/chat/${chat.rideId}/${chat.otherUser.id}?name=${encodeURIComponent(chat.otherUser.name)}&rideInfo=${encodeURIComponent(chat.rideDetails.fromCity + ' to ' + chat.rideDetails.toCity)}`)}
+    />
+  ), [router]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
@@ -26,32 +39,18 @@ export default function ChatsScreen(): React.JSX.Element {
           <ActivityIndicator size="large" color={brandColors.electricViolet} />
         </View>
       ) : (
-        <ScrollView
+        <FlatList
+          data={chats}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          ListEmptyComponent={<EmptyState icon="chatbubbles-outline" title="No messages yet" subtitle="When you accept a ride request, you can chat here" />}
           contentContainerStyle={{
             paddingBottom: TAB_BAR_HEIGHT + spacing['2xl'],
             flexGrow: 1,
           }}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
-        >
-          {chats?.map((chat) => (
-            <ChatRow 
-              key={chat.id} 
-              id={chat.id}
-              name={chat.otherUser.name}
-              lastMessage={chat.lastMessage}
-              time={new Date(chat.time).toLocaleDateString()}
-              unreadCount={chat.unreadCount}
-              onPress={() => router.push(`/chat/${chat.rideId}/${chat.otherUser.id}?name=${encodeURIComponent(chat.otherUser.name)}&rideInfo=${encodeURIComponent(chat.rideDetails.fromCity + ' to ' + chat.rideDetails.toCity)}`)}
-            />
-          ))}
-
-          {(!chats || chats.length === 0) && (
-            <View style={styles.emptyState}>
-              <Text style={[styles.emptyText, { color: colors.text.secondary }]}>No conversations yet.</Text>
-            </View>
-          )}
-        </ScrollView>
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.interactive.primary} colors={[colors.interactive.primary]} />}
+        />
       )}
     </View>
   );
@@ -74,12 +73,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  emptyState: {
-    paddingVertical: 60,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontFamily: 'PlusJakartaSans-500Medium',
-    fontSize: 16,
-  },
+
 });

@@ -15,6 +15,52 @@
  * Source: DESIGN.md §2 (colors), §4 (spacing/layout), §4.3 (radii)
  */
 
+// ── Colors Interface ──────────────────────────────────────────────────────────
+export interface Colors {
+  background: {
+    primary: string;
+    card: string;
+    subtle: string;
+  };
+  text: {
+    primary: string;
+    secondary: string;
+    placeholder: string;
+  };
+  border: {
+    default: string;
+  };
+  interactive: {
+    primary: string;
+    primaryText: string;
+  };
+  status: {
+    activeBackground: string;
+    activeText: string;
+    pendingBackground: string;
+    pendingText: string;
+    acceptedBackground: string;
+    acceptedText: string;
+    rejectedBackground: string;
+    rejectedText: string;
+    fullBackground: string;
+    fullText: string;
+    expiredBackground: string;
+    expiredText: string;
+    cancelledBackground: string;
+    cancelledText: string;
+  };
+  overlay: {
+    subtle: string;
+    medium: string;
+    heavy: string;
+  };
+  pressed: {
+    default: string;
+    primary: string;
+  };
+}
+
 // ── Brand Colors (raw swatches) ───────────────────────────────────────────────
 // Use semantic tokens (lightColors / darkColors) in components.
 // Use brand colors only for illustrations or one-off brand moments.
@@ -46,6 +92,15 @@ export const lightColors = {
   interactive: {
     primary:     '#6C63FF',
     primaryText: '#FFFFFF',
+  },
+  overlay: {
+    subtle: 'rgba(0,0,0,0.05)',
+    medium: 'rgba(0,0,0,0.4)',
+    heavy:  'rgba(0,0,0,0.6)',
+  },
+  pressed: {
+    default: 'rgba(0,0,0,0.08)',
+    primary: 'rgba(90,80,230,1)',
   },
   // Status chip backgrounds (DESIGN.md §5.2)
   status: {
@@ -87,6 +142,15 @@ export const darkColors = {
     // Slightly lighter for dark bg contrast (DESIGN.md §2.3)
     primary:     '#7C74FF',
     primaryText: '#FFFFFF',
+  },
+  overlay: {
+    subtle: 'rgba(255,255,255,0.05)',
+    medium: 'rgba(0,0,0,0.6)',
+    heavy:  'rgba(0,0,0,0.8)',
+  },
+  pressed: {
+    default: 'rgba(255,255,255,0.1)',
+    primary: 'rgba(90,80,230,1)',
   },
   status: {
     activeBackground:   '#0D2B22',

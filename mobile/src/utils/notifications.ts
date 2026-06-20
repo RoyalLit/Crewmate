@@ -1,6 +1,7 @@
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import logger from './logger';
 
 let Notifications: any = null;
 
@@ -19,14 +20,14 @@ try {
     });
   }
 } catch (e) {
-  console.log('expo-notifications not available', e);
+  logger.log('expo-notifications not available', e);
 }
 
 export async function registerForPushNotificationsAsync() {
   let token;
 
   if (!Notifications) {
-    console.log('Notifications module not loaded, skipping push registration.');
+    logger.log('Notifications module not loaded, skipping push registration.');
     return undefined;
   }
 
@@ -47,7 +48,7 @@ export async function registerForPushNotificationsAsync() {
       finalStatus = status;
     }
     if (finalStatus !== 'granted') {
-      console.log('Failed to get push token for push notification!');
+      logger.log('Failed to get push token for push notification!');
       return undefined;
     }
     let projectId =
@@ -58,7 +59,7 @@ export async function registerForPushNotificationsAsync() {
     }
 
     if (!projectId) {
-      console.log('Project ID not found, attempting to fetch token without it.');
+      logger.log('Project ID not found, attempting to fetch token without it.');
     }
     try {
       token = (
@@ -66,12 +67,12 @@ export async function registerForPushNotificationsAsync() {
           projectId ? { projectId } : undefined
         )
       ).data;
-      console.log('Expo Push Token:', token);
+      logger.log('Expo Push Token:', token);
     } catch (e) {
-      console.error('Error getting expo push token', e);
+      logger.error('Error getting expo push token', e);
     }
   } else {
-    console.log('Must use physical device for Push Notifications');
+    logger.log('Must use physical device for Push Notifications');
   }
 
   return token;

@@ -1,11 +1,15 @@
+import mongoose from 'mongoose';
 import { requestsRepository } from './requests.repository';
 import { ridesRepository } from '../rides/rides.repository';
 import { usersService } from '../users/users.service';
 import { usersRepository } from '../users/users.repository';
 import { ridesService } from '../rides/rides.service';
 import { notificationsService } from '../notifications/notifications.service';
+import { getIO } from '../chats/socket';
 import { CreateRequestDTO, RideRequestResponseDTO } from './requests.types';
+import { PaginatedResult } from '../../shared/types';
 import { NotFoundError, ForbiddenError, AppError, ConflictError } from '../../shared/errors';
+import logger from '../../shared/logger';
 
 export class RequestsService {
   private formatRequest(req: any): RideRequestResponseDTO {
@@ -44,7 +48,7 @@ export class RequestsService {
         if (poster?.expoPushToken && requester) {
           notificationsService.notifyRequestReceived(poster.expoPushToken, requester.name, ride.toCity);
         }
-      }).catch(err => console.error('Failed to send push notification', err));
+      }).catch(err => logger.error({ err }, 'Failed to send push notification'));
 
       return this.formatRequest(request);
     } catch (error: any) {
@@ -55,37 +59,41 @@ export class RequestsService {
     }
   }
 
-  async getMyRequests(userId: string): Promise<RideRequestResponseDTO[]> {
-    const requests = await requestsRepository.findByRequester(userId);
-    
-    return Promise.all(
-      requests.map(async (req) => {
+  async getMyRequests(userId: string, page = 1, pageSize = 20): Promise<PaginatedResult<RideRequestResponseDTO>> {
+    const result = await requestsRepository.findByRequester(userId, page, pageSize);
+
+    const formattedData = await Promise.all(
+      result.data.map(async (req) => {
         const formatted = this.formatRequest(req);
         try {
           formatted.ride = await ridesService.getRideDetails(formatted.rideId);
         } catch {
-          // ride details fetch is non-critical
+          logger.warn('Failed to fetch ride details for request');
         }
         return formatted;
       })
     );
+
+    return { ...result, data: formattedData };
   }
 
-  async getIncomingRequests(userId: string): Promise<RideRequestResponseDTO[]> {
-    const requests = await requestsRepository.findByPoster(userId);
-    
-    return Promise.all(
-      requests.map(async (req) => {
+  async getIncomingRequests(userId: string, page = 1, pageSize = 20): Promise<PaginatedResult<RideRequestResponseDTO>> {
+    const result = await requestsRepository.findByPoster(userId, page, pageSize);
+
+    const formattedData = await Promise.all(
+      result.data.map(async (req) => {
         const formatted = this.formatRequest(req);
         try {
           formatted.requester = await usersService.getPublicProfile(formatted.requesterId);
           formatted.ride = await ridesService.getRideDetails(formatted.rideId);
         } catch {
-          // requester/ride fetch is non-critical
+          logger.warn('Failed to fetch requester or ride details for incoming request');
         }
         return formatted;
       })
     );
+
+    return { ...result, data: formattedData };
   }
 
   async acceptRequest(id: string, userId: string): Promise<RideRequestResponseDTO> {
@@ -99,22 +107,47 @@ export class RequestsService {
       throw new ConflictError('No available seats left on this ride.');
     }
 
-    const updatedRide = await ridesRepository.updateRide((ride as any)._id.toString(), { availableSeats: ride.availableSeats - 1 });
-    if (!updatedRide) throw new AppError('INTERNAL_ERROR', 'Failed to update ride seats', 500);
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
 
-    const updatedRequest = await requestsRepository.updateStatus(id, 'accepted');
+      const updatedRide = await ridesRepository.updateRide((ride as any)._id.toString(), { availableSeats: ride.availableSeats - 1 }, { session });
+      if (!updatedRide) throw new AppError('INTERNAL_ERROR', 'Failed to update ride seats', 500);
 
-    // Notify requester
-    Promise.all([
-      usersRepository.findById(request.requesterId.toString()),
-      usersRepository.findById(userId)
-    ]).then(([requester, poster]) => {
-      if (requester?.expoPushToken && poster) {
-        notificationsService.notifyRequestAccepted(requester.expoPushToken, poster.name, ride.toCity);
+      const updatedRequest = await requestsRepository.updateStatus(id, 'accepted', { session });
+
+      if (updatedRide.availableSeats === 0) {
+        await ridesRepository.updateRide((ride as any)._id.toString(), { status: 'full' }, { session });
       }
-    }).catch(err => console.error('Failed to send push notification', err));
 
-    return this.formatRequest(updatedRequest);
+      await session.commitTransaction();
+
+      // Emit seat counter update to ride room
+      getIO().to(`ride_${request.rideId}`).emit('seats:updated', {
+        rideId: request.rideId.toString(),
+        availableSeats: updatedRide.availableSeats - 1,
+      });
+
+      // Notify requester (outside transaction — non-critical)
+      Promise.all([
+        usersRepository.findById(request.requesterId.toString()),
+        usersRepository.findById(userId)
+      ]).then(([requester, poster]) => {
+        if (requester?.expoPushToken && poster) {
+          notificationsService.notifyRequestAccepted(requester.expoPushToken, poster.name, ride.toCity);
+        }
+      }).catch(err => logger.error({ err }, 'Failed to send push notification'));
+
+      return this.formatRequest(updatedRequest);
+    } catch (error) {
+      await session.abortTransaction();
+      if (error instanceof AppError || error instanceof ConflictError || error instanceof NotFoundError || error instanceof ForbiddenError) {
+        throw error;
+      }
+      throw new AppError('INTERNAL_ERROR', 'Failed to accept request', 500);
+    } finally {
+      session.endSession();
+    }
   }
 
   async rejectRequest(id: string, userId: string): Promise<RideRequestResponseDTO> {
@@ -133,10 +166,15 @@ export class RequestsService {
     if (request.requesterId.toString() !== userId) throw new ForbiddenError('withdraw this request');
     
     if (request.status === 'accepted') {
-      // Re-increment ride available seats
       const ride = await ridesRepository.findById(request.rideId.toString());
       if (ride) {
-        await ridesRepository.updateRide((ride as any)._id.toString(), { availableSeats: ride.availableSeats + 1 });
+        const updatedRide = await ridesRepository.updateRide((ride as any)._id.toString(), { availableSeats: ride.availableSeats + 1 });
+        if (updatedRide) {
+          getIO().to(`ride_${request.rideId}`).emit('seats:updated', {
+            rideId: request.rideId.toString(),
+            availableSeats: updatedRide.availableSeats,
+          });
+        }
       }
     }
 
@@ -150,16 +188,21 @@ export class RequestsService {
     if (request.posterId.toString() !== userId) throw new ForbiddenError('remove a passenger from this ride');
     
     if (request.status === 'accepted') {
-      // Re-increment ride available seats
       const ride = await ridesRepository.findById(request.rideId.toString());
       if (ride) {
-        await ridesRepository.updateRide((ride as any)._id.toString(), { availableSeats: ride.availableSeats + 1 });
+        const updatedRide = await ridesRepository.updateRide((ride as any)._id.toString(), { availableSeats: ride.availableSeats + 1 });
+        if (updatedRide) {
+          getIO().to(`ride_${request.rideId}`).emit('seats:updated', {
+            rideId: request.rideId.toString(),
+            availableSeats: updatedRide.availableSeats,
+          });
+        }
       }
     } else {
       throw new ConflictError('Cannot remove a passenger whose request is not accepted');
     }
 
-    const updatedRequest = await requestsRepository.updateStatus(id, 'rejected'); // or 'canceled', we use 'rejected'
+    const updatedRequest = await requestsRepository.updateStatus(id, 'rejected');
     return this.formatRequest(updatedRequest);
   }
 }

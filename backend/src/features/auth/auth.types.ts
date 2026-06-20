@@ -3,6 +3,7 @@ export interface RegisterRequestDTO {
   email: string;
   password?: string;
   college?: string;
+  homeCity?: string;
 }
 
 export interface VerifyOTPRequestDTO {

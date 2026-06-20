@@ -32,7 +32,7 @@ export const updateRideValidator = [
 export const rideFilterValidator = [
   query('page').optional().isInt({ min: 1 }).toInt(),
   query('pageSize').optional().isInt({ min: 1, max: 50 }).toInt(),
-  query('fromCity').optional().isString().trim(),
-  query('toCity').optional().isString().trim(),
+  query('fromCity').optional().isString().trim().isLength({ max: 100 }).withMessage('fromCity must be at most 100 characters'),
+  query('toCity').optional().isString().trim().isLength({ max: 100 }).withMessage('toCity must be at most 100 characters'),
   query('date').optional().isISO8601(),
 ];

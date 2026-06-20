@@ -15,9 +15,9 @@
  * per AGENT_RULES.md §21.2.
  */
 
-import { Router, type Request, type Response } from 'express';
+import { Router } from 'express';
 
-import { isDatabaseConnected } from '../db/connection';
+import { authLimiter, generalLimiter } from '../middleware/rateLimiter';
 
 import authRoutes from '../features/auth/auth.routes';
 import usersRoutes from '../features/users/users.routes';
@@ -28,40 +28,12 @@ import { safetyRoutes } from '../features/safety/safety.routes';
 
 const router = Router();
 
-// Mount feature routes
-router.use('/auth', authRoutes);
-router.use('/users', usersRoutes);
-router.use('/rides', ridesRoutes);
-router.use('/requests', requestsRoutes);
-router.use('/chats', chatsRoutes);
-router.use('/safety', safetyRoutes);
-
-// ── Liveness probe ────────────────────────────────────────────────────────────
-// Returns 200 as long as the Node.js process is running.
-// Used by Railway keep-alive and UptimeRobot (ARCHITECTURE.md §9.3).
-router.get('/health', (_req: Request, res: Response): void => {
-  res.status(200).json({
-    status: 'ok',
-    uptime: Math.floor(process.uptime()),
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// ── Readiness probe ───────────────────────────────────────────────────────────
-// Returns 200 only when the database connection is healthy.
-// Kubernetes / Railway can use this to gate traffic.
-router.get('/health/ready', (_req: Request, res: Response): void => {
-  if (isDatabaseConnected()) {
-    res.status(200).json({
-      status: 'ready',
-      database: 'connected',
-    });
-  } else {
-    res.status(503).json({
-      status: 'not_ready',
-      database: 'disconnected',
-    });
-  }
-});
+// Apply rate limiters to all feature routes
+router.use('/auth', authLimiter, authRoutes);
+router.use('/users', generalLimiter, usersRoutes);
+router.use('/rides', generalLimiter, ridesRoutes);
+router.use('/requests', generalLimiter, requestsRoutes);
+router.use('/chats', generalLimiter, chatsRoutes);
+router.use('/safety', generalLimiter, safetyRoutes);
 
 export default router;

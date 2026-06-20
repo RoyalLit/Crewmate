@@ -12,7 +12,7 @@ export interface IRide extends Document {
   availableSeats: number;
   farePerSeat: number;
   cabType: 'Hatchback' | 'Sedan' | 'SUV' | 'MUV' | 'Any' | 'Other';
-  status: 'active' | 'cancelled' | 'expired';
+  status: 'active' | 'cancelled' | 'expired' | 'full';
   createdAt: Date;
   updatedAt: Date;
 }

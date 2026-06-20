@@ -12,6 +12,7 @@ const config: Config = {
     '^@middleware/(.*)$': '<rootDir>/src/middleware/$1',
     '^@features/(.*)$': '<rootDir>/src/features/$1',
     '^@db/(.*)$': '<rootDir>/src/db/$1',
+    '^expo-server-sdk$': '<rootDir>/tests/__mocks__/expo-server-sdk.ts',
   },
   collectCoverageFrom: [
     'src/**/*.ts',

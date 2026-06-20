@@ -16,6 +16,7 @@ export interface IUser extends Document {
   otpExpiresAt?: Date;
   
   tokenVersion: number;
+  refreshTokenHashes: string[];
   expoPushToken?: string;
   blockedUsers?: string[];
   
@@ -75,6 +76,10 @@ const UserSchema = new Schema<IUser>(
       type: Number,
       required: true,
       default: 0
+    },
+    refreshTokenHashes: {
+      type: [String],
+      default: [],
     },
     blockedUsers: [{
       type: Schema.Types.ObjectId,

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storage } from '../lib/storage';
+import logger from '../utils/logger';
 
 interface User {
   id: string;
@@ -29,8 +30,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: (user) => set({ isAuthenticated: true, user }),
   logout: () => {
-    AsyncStorage.removeItem('crewmute_token').catch((e) => {
-      console.error('Failed to clear auth token', e);
+    storage.clearAll().catch((e) => {
+      logger.error('Failed to clear auth tokens', e);
     });
     set({ isAuthenticated: false, user: null });
   },

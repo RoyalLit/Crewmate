@@ -4,6 +4,7 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../design/theme';
 import { spacing, brandColors } from '../design/tokens';
+import { typography } from '../design/typography';
 
 interface ChatRowProps {
   id: string;
@@ -15,7 +16,7 @@ interface ChatRowProps {
   onPress?: () => void;
 }
 
-export function ChatRow({ id, name, lastMessage, time, unreadCount = 0, onDelete, onPress }: ChatRowProps) {
+export const ChatRow = React.memo(function ChatRow({ id, name, lastMessage, time, unreadCount = 0, onDelete, onPress }: ChatRowProps) {
   const { colors } = useTheme();
 
   const renderRightActions = (
@@ -31,8 +32,8 @@ export function ChatRow({ id, name, lastMessage, time, unreadCount = 0, onDelete
     return (
       <View style={styles.deleteActionContainer}>
         <Animated.View style={[styles.deleteAction, { transform: [{ scale }] }]}>
-          <Pressable style={styles.deleteButton} onPress={() => onDelete?.(id)}>
-            <Ionicons name="trash" size={24} color="#FFFFFF" />
+          <Pressable style={styles.deleteButton} onPress={() => onDelete?.(id)} accessible accessibilityRole="button" accessibilityLabel={`Delete chat with ${name}`}>
+            <Ionicons name="trash" size={24} color={colors.background.card} />
           </Pressable>
         </Animated.View>
       </View>
@@ -41,14 +42,14 @@ export function ChatRow({ id, name, lastMessage, time, unreadCount = 0, onDelete
 
   return (
     <Swipeable renderRightActions={onDelete ? renderRightActions : undefined} rightThreshold={40}>
-      <Pressable style={[styles.container, { backgroundColor: colors.background.primary }]} onPress={onPress}>
+      <Pressable style={[styles.container, { backgroundColor: colors.background.primary }]} onPress={onPress} accessible accessibilityRole="button" accessibilityLabel={`Chat with ${name}`}>
         <View style={styles.avatarContainer}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{name.charAt(0)}</Text>
           </View>
           {unreadCount > 0 && (
             <View style={styles.unreadDotContainer}>
-              <View style={styles.unreadDot} />
+              <View style={[styles.unreadDot, { borderColor: colors.background.card }]} />
             </View>
           )}
         </View>
@@ -65,7 +66,7 @@ export function ChatRow({ id, name, lastMessage, time, unreadCount = 0, onDelete
       </Pressable>
     </Swipeable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -88,8 +89,8 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontFamily: 'PlusJakartaSans-800ExtraBold',
-    fontSize: 20,
-    color: '#8B8FA8',
+    fontSize: typography.h2.fontSize,
+    color: brandColors.coolGray,
   },
   unreadDotContainer: {
     position: 'absolute',
@@ -105,7 +106,6 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     backgroundColor: brandColors.electricViolet,
     borderWidth: 2,
-    borderColor: '#FFFFFF', // We can't know background dynamically easily without context, but since it's on primary, we could pass it or just make it solid.
   },
   contentContainer: {
     flex: 1,
@@ -119,16 +119,16 @@ const styles = StyleSheet.create({
   },
   nameText: {
     fontFamily: 'PlusJakartaSans-700Bold',
-    fontSize: 16,
+    fontSize: typography.bodyLarge.fontSize,
     flex: 1,
     marginRight: spacing.sm,
   },
   timeText: {
     fontFamily: 'PlusJakartaSans-600SemiBold',
-    fontSize: 12,
+    fontSize: typography.label.fontSize,
   },
   messageText: {
-    fontSize: 14,
+    fontSize: typography.body.fontSize,
     lineHeight: 20,
   },
   deleteActionContainer: {
