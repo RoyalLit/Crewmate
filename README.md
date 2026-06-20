@@ -8,6 +8,7 @@
     <a href="backend/package.json"><img src="https://img.shields.io/badge/Node-20-339933?logo=node.js" alt="Node 20"></a>
     <a href="https://github.com/RoyalLit/Crewmute/blob/main/docs/DECISIONS.md"><img src="https://img.shields.io/badge/ADR-8%20records-6C63FF" alt="ADRs"></a>
     <a href="https://github.com/RoyalLit/Crewmute/blob/main/AGENT_RULES.md"><img src="https://img.shields.io/badge/constitution-AGENT_RULES-FF6584" alt="Engineering Constitution"></a>
+    <a href="https://github.com/RoyalLit/Crewmute"><img src="https://img.shields.io/github/repo-size/RoyalLit/Crewmute?label=size&logo=GitHub" alt="Repo Size"></a>
   </p>
 </div>
 
@@ -31,12 +32,11 @@ Built with React Native + Expo (mobile) and Node.js + Express + MongoDB (backend
 
 ## 📱 Screenshots
 
+> Screenshots will be added pre-launch. Drop PNGs into `mobile/assets/screenshots/` and update the table below.
+
 | | | |
 |:---:|:---:|:---:|
-| *Screen 1* | *Screen 2* | *Screen 3* |
-| *(add screenshots to `mobile/assets/screenshots/`)* | | |
-
-*(Drop PNGs into `mobile/assets/screenshots/` and update this table.)*
+| *Onboarding* | *Ride Feed* | *Chat* |
 
 ## 🛠 Built With
 
@@ -185,5 +185,10 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 ---
 
 <div align="center">
-  <sub>Built with ❤️ by Pahul · Amity University Punjab</sub>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=RoyalLit/Crewmute&type=Date&theme=dark">
+    <img width="600" alt="Star History Chart" src="https://api.star-history.com/svg?repos=RoyalLit/Crewmute&type=Date">
+  </picture>
+  <br><br>
+  <sub>Built with ❤️ by <a href="https://github.com/RoyalLit">Pahul</a> · Amity University Punjab</sub>
 </div>

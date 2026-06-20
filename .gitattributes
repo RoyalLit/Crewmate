@@ -1,0 +1,30 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Source code
+*.ts text diff=typescript
+*.tsx text diff=typescript
+*.js text
+*.jsx text
+*.json text
+*.yaml text
+*.yml text
+*.md text diff=markdown
+
+# Shell
+*.sh text eol=lf
+
+# Environment files — must stay LF
+*.env text eol=lf
+.env.example text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
