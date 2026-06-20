@@ -1,6 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
-import { usersService } from './users.service';
+import type { Request, Response, NextFunction } from 'express';
+
 import { successResponse } from '../../shared/response';
+
+import { usersService } from './users.service';
 
 export class UsersController {
   async getCurrentUser(req: Request, res: Response, next: NextFunction): Promise<void> {

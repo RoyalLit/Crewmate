@@ -1,4 +1,10 @@
 import { Router } from 'express';
+
+import { requireAuth } from '../../middleware/auth';
+import validate from '../../middleware/validate';
+import { asyncHandler } from '../../shared/asyncHandler';
+import { uploadMiddleware } from '../users/upload.middleware';
+
 import { authController } from './auth.controller';
 import { 
   registerValidator, 
@@ -8,10 +14,6 @@ import {
   forgotPasswordValidator,
   resetPasswordValidator
 } from './auth.validators';
-import validate from '../../middleware/validate';
-import { requireAuth } from '../../middleware/auth';
-import { asyncHandler } from '../../shared/asyncHandler';
-import { uploadMiddleware } from '../users/upload.middleware';
 
 const router = Router();
 

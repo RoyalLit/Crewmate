@@ -16,10 +16,9 @@ import 'dotenv/config';
 import { createApp } from './app';
 import env from './config/env';
 import { connectDB, registerShutdownHandlers, setHttpServer } from './db/connection';
-import logger from './shared/logger';
-
 import { initializeSockets } from './features/chats/socket';
 import { startRideExpiryCron } from './features/rides/rides.cron';
+import logger from './shared/logger';
 
 async function start(): Promise<void> {
   // Log startup configuration (no secrets) per AGENT_RULES.md §21.1

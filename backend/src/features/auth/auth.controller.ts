@@ -1,8 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
-import { authService } from './auth.service';
-import { successResponse } from '../../shared/response';
+import type { Request, Response, NextFunction } from 'express';
+
 import { ValidationError, UnauthorizedError } from '../../shared/errors';
+import { successResponse } from '../../shared/response';
 import { usersService } from '../users/users.service';
+
+import { authService } from './auth.service';
 
 export class AuthController {
   async register(req: Request, res: Response, next: NextFunction): Promise<void> {

@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import promClient from 'prom-client';
 
 const collectDefaultMetrics = promClient.collectDefaultMetrics;

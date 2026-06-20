@@ -1,8 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+
+import { UnauthorizedError } from '../../shared/errors';
+import { successResponse } from '../../shared/response';
+
 import { safetyService } from './safety.service';
 import { validateReportRequest, validateBlockRequest } from './safety.validators';
-import { successResponse } from '../../shared/response';
-import { UnauthorizedError } from '../../shared/errors';
 
 export class SafetyController {
   async reportUser(req: Request, res: Response, next: NextFunction): Promise<void> {

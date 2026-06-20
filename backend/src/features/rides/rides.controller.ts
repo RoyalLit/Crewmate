@@ -1,6 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
-import { ridesService } from './rides.service';
+import type { Request, Response, NextFunction } from 'express';
+
 import { successResponse } from '../../shared/response';
+
+import { ridesService } from './rides.service';
 
 export class RidesController {
   async createRide(req: Request, res: Response, next: NextFunction): Promise<void> {

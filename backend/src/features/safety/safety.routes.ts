@@ -1,7 +1,9 @@
 import { Router } from 'express';
-import { safetyController } from './safety.controller';
+
 import { requireAuth } from '../../middleware/auth';
 import { asyncHandler } from '../../shared/asyncHandler';
+
+import { safetyController } from './safety.controller';
 
 const router = Router();
 

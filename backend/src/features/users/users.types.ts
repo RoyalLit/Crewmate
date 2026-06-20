@@ -1,4 +1,4 @@
-import { UserResponseDTO } from '../auth/auth.types';
+import type { UserResponseDTO } from '../auth/auth.types';
 
 export interface UpdateProfileRequestDTO {
   name?: string;

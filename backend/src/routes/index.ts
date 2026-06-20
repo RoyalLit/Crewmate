@@ -17,14 +17,14 @@
 
 import { Router } from 'express';
 
-import { authLimiter, generalLimiter } from '../middleware/rateLimiter';
 
 import authRoutes from '../features/auth/auth.routes';
-import usersRoutes from '../features/users/users.routes';
-import ridesRoutes from '../features/rides/rides.routes';
-import { requestsRoutes } from '../features/requests/requests.routes';
 import chatsRoutes from '../features/chats/chats.routes';
+import { requestsRoutes } from '../features/requests/requests.routes';
+import ridesRoutes from '../features/rides/rides.routes';
 import { safetyRoutes } from '../features/safety/safety.routes';
+import usersRoutes from '../features/users/users.routes';
+import { authLimiter, generalLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 

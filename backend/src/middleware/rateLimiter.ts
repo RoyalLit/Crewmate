@@ -1,4 +1,5 @@
 import rateLimit from 'express-rate-limit';
+
 import { RATE_LIMIT } from '../config/constants';
 
 export const authLimiter = rateLimit({

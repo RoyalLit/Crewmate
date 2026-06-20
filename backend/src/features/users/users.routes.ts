@@ -1,8 +1,10 @@
 import { Router } from 'express';
-import { usersController } from './users.controller';
-import { uploadMiddleware } from './upload.middleware';
+
 import { requireAuth } from '../../middleware/auth';
 import { asyncHandler } from '../../shared/asyncHandler';
+
+import { uploadMiddleware } from './upload.middleware';
+import { usersController } from './users.controller';
 import { validateUpdateProfile } from './users.validators';
 
 const router = Router();

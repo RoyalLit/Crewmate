@@ -1,28 +1,65 @@
-# Crewmute
+<div align="center">
+  <h1>Crewmute</h1>
+  <p><strong>Campus Carpool — Find your crew, split the ride.</strong></p>
+  <p>
+    <a href=".github/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/RoyalLit/Crewmute/ci.yml?branch=main&label=CI&logo=github" alt="CI Status"></a>
+    <a href="https://github.com/RoyalLit/Crewmute/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+    <a href="mobile/package.json"><img src="https://img.shields.io/badge/Expo-54-000020?logo=expo" alt="Expo SDK 54"></a>
+    <a href="backend/package.json"><img src="https://img.shields.io/badge/Node-20-339933?logo=node.js" alt="Node 20"></a>
+    <a href="https://github.com/RoyalLit/Crewmute/blob/main/docs/DECISIONS.md"><img src="https://img.shields.io/badge/ADR-8%20records-6C63FF" alt="ADRs"></a>
+    <a href="https://github.com/RoyalLit/Crewmute/blob/main/AGENT_RULES.md"><img src="https://img.shields.io/badge/constitution-AGENT_RULES-FF6584" alt="Engineering Constitution"></a>
+  </p>
+</div>
 
-A mobile-first carpool platform for Indian college students. Students post or browse intercity shared-cab rides for weekend and holiday travel, coordinate with verified co-passengers, and split costs transparently — all in one app.
+---
+
+**Crewmute** is a mobile-first carpool platform for Indian college students. Post or browse intercity shared-cab rides for weekend and holiday travel, coordinate with verified co-passengers, and split costs transparently — all in one app.
 
 Built with React Native + Expo (mobile) and Node.js + Express + MongoDB (backend).
 
----
+## ✨ Features
 
-## Prerequisites
+| Category | Capabilities |
+|----------|-------------|
+| **Auth** | Email OTP verification, student ID fallback, JWT access/refresh tokens (15m/7d), bcrypt password hashing |
+| **Rides** | Post, browse, filter by route/date, auto-expire, real-time seat counters |
+| **Requests** | Request seats, accept/reject/withdraw, atomic MongoDB transactions, push notifications |
+| **Chat** | Real-time 1:1 messaging via Socket.io, read receipts, auto-created on match |
+| **Profile** | Photo upload (Cloudinary), college identity, verification badges |
+| **Design** | Light + dark mode, WCAG 2.1 AA contrast, reduce-motion support, 44pt touch targets |
+| **Observability** | Prometheus metrics, structured logging (pino), AsyncLocalStorage request tracing, slow query logging |
 
-| Requirement | Version |
-|---|---|
+## 📱 Screenshots
+
+| | | |
+|:---:|:---:|:---:|
+| *Screen 1* | *Screen 2* | *Screen 3* |
+| *(add screenshots to `mobile/assets/screenshots/`)* | | |
+
+*(Drop PNGs into `mobile/assets/screenshots/` and update this table.)*
+
+## 🛠 Built With
+
+**Mobile** — React Native 0.81 · Expo SDK 54 · Expo Router 6 · NativeWind 4 · TanStack Query 5 · Zustand 4 · Socket.io Client · expo-image · Reanimated 4
+
+**Backend** — Node.js 20 LTS · Express 4 · TypeScript 5 · MongoDB 7 + Mongoose 8 · Socket.io 4 · JWT + bcrypt · Pino · Prometheus · Zod
+
+**Infrastructure** — Railway (deploy) · MongoDB Atlas · Cloudinary · GitHub Actions CI · Docker · Expo EAS
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+| Tool | Version |
+|------|---------|
 | Node.js | 20 LTS ([nvm](https://github.com/nvm-sh/nvm) recommended) |
-| npm | 10+ (bundled with Node 20) |
-| Expo CLI | via `npx expo` (no global install needed) |
-| MongoDB | Atlas account (free tier) or local instance |
+| npm | 10+ |
+| MongoDB | Atlas account ([free tier](https://www.mongodb.com/atlas)) or local instance |
 
----
-
-## Local Setup
-
-### 1. Clone the repository
+### 1. Clone
 
 ```bash
-git clone https://github.com/<org>/crewmute.git
+git clone https://github.com/RoyalLit/Crewmute.git
 cd crewmute
 ```
 
@@ -30,126 +67,123 @@ cd crewmute
 
 ```bash
 cd backend
-
-# Install dependencies
 npm install
-
-# Copy and configure environment variables
 cp .env.example .env
-# Edit .env — fill in MONGO_URI and token secrets at minimum (see Environment Variables below)
-
-# Start the development server
+# Edit .env — fill in MONGO_URI, ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET at minimum
 npm run dev
-# → Server starts on http://localhost:5000
-# → GET http://localhost:5000/health should return { status: 'ok' }
+# → http://localhost:5000  |  GET /health → { status: "ok" }
 ```
 
 ### 3. Mobile
 
 ```bash
 cd mobile
-
-# Install dependencies
 npm install
-
-# Start Expo development server
 npx expo start
-
-# Press 'a' for Android emulator, 'i' for iOS simulator, or scan QR code with Expo Go
+# Press 'a' (Android), 'i' (iOS), or scan QR with Expo Go
 ```
 
----
-
-## Environment Variables
+<details>
+<summary><b>Environment Variables</b></summary>
 
 ### Backend (`backend/.env`)
 
-| Variable | Example | Required | Purpose |
-|---|---|---|---|
-| `PORT` | `5000` | No (default: 5000) | Express server port |
-| `MONGO_URI` | `mongodb+srv://...` | **Yes** | MongoDB Atlas connection string |
-| `ACCESS_TOKEN_SECRET` | 64-char random string | **Yes** | JWT access token signing key |
-| `REFRESH_TOKEN_SECRET` | 64-char random string | **Yes** | JWT refresh token signing key |
-| `EMAIL_HOST` | `smtp.gmail.com` | Yes (for auth) | Nodemailer SMTP host |
-| `EMAIL_USER` | `crewmute@gmail.com` | Yes (for auth) | Sender email address |
-| `EMAIL_PASS` | Gmail app password | Yes (for auth) | Gmail app password |
-| `CLOUDINARY_CLOUD_NAME` | `crewmute` | Yes (for uploads) | Cloudinary account name |
-| `CLOUDINARY_API_KEY` | `...` | Yes (for uploads) | Cloudinary API key |
-| `CLOUDINARY_API_SECRET` | `...` | Yes (for uploads) | Cloudinary API secret |
-| `CLIENT_URL` | `exp://...` | No | Mobile app URL for CORS |
-| `NODE_ENV` | `development` | No (default: development) | Environment mode |
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `MONGO_URI` | ✅ | MongoDB connection string |
+| `ACCESS_TOKEN_SECRET` | ✅ | JWT signing key (min 64 chars) |
+| `REFRESH_TOKEN_SECRET` | ✅ | JWT refresh key (min 64 chars) |
+| `EMAIL_HOST` | For OTP | SMTP host |
+| `EMAIL_USER` | For OTP | Sender email |
+| `EMAIL_PASS` | For OTP | SMTP app password |
+| `CLOUDINARY_CLOUD_NAME` | For uploads | Cloudinary account |
+| `CLOUDINARY_API_KEY` | For uploads | Cloudinary API key |
+| `CLOUDINARY_API_SECRET` | For uploads | Cloudinary API secret |
+| `PORT` | No (default: 5000) | Server port |
+| `CLIENT_URL` | No (default: *) | CORS origin |
+| `NODE_ENV` | No (default: development) | `development` or `production` |
 
-Copy `backend/.env.example` to `backend/.env` and fill in values. **Never commit `.env`.**
-
-### Mobile (`mobile/.env` / `app.config.js`)
+### Mobile (`mobile/.env`)
 
 | Variable | Purpose |
-|---|---|
+|----------|---------|
 | `EXPO_PUBLIC_API_URL` | Backend base URL (e.g. `http://localhost:5000/api/v1`) |
-| `EXPO_PUBLIC_GOOGLE_PLACES_KEY` | Google Places API key for city autocomplete |
+| `EXPO_PUBLIC_GOOGLE_PLACES_KEY` | Google Places API key (optional — falls back to Nominatim) |
 
----
+</details>
 
-## Running Tests
+## 🧪 Running Tests
 
 ### Backend
 
 ```bash
 cd backend
-npm test                  # Run all tests
-npm run test:coverage     # Run tests with coverage report
-npm run typecheck         # TypeScript type check (no emit)
-npm run lint              # ESLint
+npm test              # 13 E2E tests across 3 suites
+npm run test:coverage # With coverage report
+npm run typecheck     # tsc --noEmit (0 errors)
+npm run lint          # ESLint
 ```
 
 ### Mobile
 
 ```bash
 cd mobile
-npm test                  # Run all tests
-npm run typecheck         # TypeScript type check
-npm run lint              # ESLint
+npm test
+npm run typecheck     # tsc --noEmit (0 errors)
+npm run lint
 ```
 
----
-
-## Project Structure
+## 📁 Project Structure
 
 ```
-/
-├── mobile/          # React Native + Expo application
-├── backend/         # Node.js + Express API server
-├── docs/            # All project documentation
-│   ├── PRD.md
-│   ├── ARCHITECTURE.md
-│   ├── DESIGN.md
-│   ├── DECISIONS.md
-│   └── api/
-├── tests/           # Cross-cutting integration and E2E tests
-├── scripts/         # Build, seed, and migration scripts
-├── AGENT_RULES.md   # Engineering constitution — read before contributing
+crewmute/
+├── mobile/              # React Native + Expo app
+│   ├── app/             # Expo Router file-based routes
+│   ├── src/             # Components, hooks, stores, API, design tokens
+│   └── assets/          # Images, fonts
+├── backend/             # Node.js + Express API
+│   ├── src/
+│   │   ├── features/    # Feature-first modules (auth, rides, etc.)
+│   │   ├── middleware/   # Auth, error handler, rate limiter, metrics
+│   │   ├── config/      # Env validation, constants
+│   │   ├── db/          # Mongoose models, connection
+│   │   └── shared/      # Logger, errors, response helpers
+│   └── tests/           # Integration + E2E tests
+├── docs/                # PRD, ARCHITECTURE, DESIGN, ADRs, API docs
+├── scripts/             # Seed, migration scripts
+├── .github/             # CI workflows, issue/PR templates
+├── AGENT_RULES.md       # Engineering constitution
 └── README.md
 ```
 
----
-
-## Key Documentation
+## 📚 Documentation
 
 | Document | Purpose |
-|---|---|
-| [AGENT_RULES.md](./AGENT_RULES.md) | Engineering constitution — all contributors must read |
-| [docs/PRD.md](./PRD.md) | Product requirements |
-| [docs/ARCHITECTURE.md](./ARCHITECTURE.md) | Technical architecture |
-| [docs/DESIGN.md](./DESIGN.md) | Design system and UI spec |
-| [docs/DECISIONS.md](./docs/DECISIONS.md) | Architectural decision records |
-| [docs/api/](./docs/api/) | API reference documentation |
+|----------|---------|
+| [AGENT_RULES.md](AGENT_RULES.md) | Engineering constitution — all contributors must read |
+| [PRD.md](docs/PRD.md) | Product requirements and scope |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design and API reference |
+| [DESIGN.md](docs/DESIGN.md) | Design system and UI specification |
+| [DECISIONS.md](docs/DECISIONS.md) | Architectural decision records (8 ADRs) |
+| [SECURITY.md](SECURITY.md) | Security policy and vulnerability reporting |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
+
+## 🤝 Contributing
+
+All contributors (human and AI) **must read** [AGENT_RULES.md](AGENT_RULES.md) before making any change. It is the source of truth for how work is done in this repository.
+
+- **Branch strategy:** `main` → `dev` → `feature/*`
+- **Commits:** Conventional Commits (`feat:`, `fix:`, `chore:`, `refactor:`, `test:`, `docs:`)
+- **Code review:** All changes go through PRs. CI must pass before merge.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
+
+## 📄 License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## Contributing
-
-All contributors (human and AI) must read [AGENT_RULES.md](./AGENT_RULES.md) before making any change. It is the source of truth for how work is done in this repository.
-
-Branch strategy: `main` (production) → `dev` (integration) → `feature/*` (individual features).
-
-Commit convention: `feat:`, `fix:`, `chore:`, `refactor:`, `test:`, `docs:` prefixes (Conventional Commits).
+<div align="center">
+  <sub>Built with ❤️ by Pahul · Amity University Punjab</sub>
+</div>

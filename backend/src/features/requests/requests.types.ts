@@ -1,5 +1,5 @@
-import { PublicProfileResponseDTO } from '../users/users.types';
-import { RideResponseDTO } from '../rides/rides.types';
+import type { RideResponseDTO } from '../rides/rides.types';
+import type { PublicProfileResponseDTO } from '../users/users.types';
 
 export interface CreateRequestDTO {
   rideId: string;

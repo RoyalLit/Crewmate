@@ -1,13 +1,15 @@
-import { ridesRepository } from './rides.repository';
-import { usersService } from '../users/users.service';
-import { CreateRideRequestDTO, UpdateRideRequestDTO, RideFilterQuery, RideResponseDTO } from './rides.types';
-import { PaginatedResult } from '../../shared/types';
-import { NotFoundError, ForbiddenError, AppError } from '../../shared/errors';
-import { requestsRepository } from '../requests/requests.repository';
 import { RideRequestModel } from '../../db/models/RideRequest';
-import { usersRepository } from '../users/users.repository';
-import { notificationsService } from '../notifications/notifications.service';
+import { NotFoundError, ForbiddenError, AppError } from '../../shared/errors';
 import logger from '../../shared/logger';
+import type { PaginatedResult } from '../../shared/types';
+import { notificationsService } from '../notifications/notifications.service';
+import { requestsRepository } from '../requests/requests.repository';
+import { usersRepository } from '../users/users.repository';
+import { usersService } from '../users/users.service';
+
+import { ridesRepository } from './rides.repository';
+import type { CreateRideRequestDTO, UpdateRideRequestDTO, RideFilterQuery, RideResponseDTO } from './rides.types';
+
 
 export class RidesService {
   private formatRide(ride: any): RideResponseDTO {

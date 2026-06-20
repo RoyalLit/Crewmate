@@ -1,7 +1,8 @@
-import { usersRepository } from './users.repository';
-import { UpdateProfileRequestDTO, PublicProfileResponseDTO } from './users.types';
-import { UserResponseDTO } from '../auth/auth.types';
 import { NotFoundError, AppError } from '../../shared/errors';
+import type { UserResponseDTO } from '../auth/auth.types';
+
+import { usersRepository } from './users.repository';
+import type { UpdateProfileRequestDTO, PublicProfileResponseDTO } from './users.types';
 
 export class UsersService {
   private formatUser(user: any): UserResponseDTO {

@@ -1,16 +1,20 @@
-import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import { authRepository } from './auth.repository';
-import { RegisterRequestDTO, LoginRequestDTO, VerifyOTPRequestDTO, ResendOTPRequestDTO, AuthTokens, UserResponseDTO, JwtPayload } from './auth.types';
-import { ConflictError, UnauthorizedError, AppError } from '../../shared/errors';
-import env from '../../config/env';
-import logger from '../../shared/logger';
-import { TOKEN, AUTH as AUTH_CONST } from '../../config/constants';
 
-// Node's native jsonwebtoken library is typically used for JWTs
+import bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 
+import { TOKEN, AUTH as AUTH_CONST } from '../../config/constants';
+import env from '../../config/env';
+import { ConflictError, UnauthorizedError, AppError } from '../../shared/errors';
+import logger from '../../shared/logger';
 import { mailerService } from '../../shared/mailer';
+
+import { authRepository } from './auth.repository';
+import type { RegisterRequestDTO, LoginRequestDTO, VerifyOTPRequestDTO, ResendOTPRequestDTO, AuthTokens, UserResponseDTO, JwtPayload } from './auth.types';
+
+
+// Node's native jsonwebtoken library is typically used for JWTs
+
 
 function hashToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');

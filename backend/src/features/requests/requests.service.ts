@@ -1,15 +1,18 @@
 import mongoose from 'mongoose';
-import { requestsRepository } from './requests.repository';
-import { ridesRepository } from '../rides/rides.repository';
-import { usersService } from '../users/users.service';
-import { usersRepository } from '../users/users.repository';
-import { ridesService } from '../rides/rides.service';
-import { notificationsService } from '../notifications/notifications.service';
-import { getIO } from '../chats/socket';
-import { CreateRequestDTO, RideRequestResponseDTO } from './requests.types';
-import { PaginatedResult } from '../../shared/types';
+
 import { NotFoundError, ForbiddenError, AppError, ConflictError } from '../../shared/errors';
 import logger from '../../shared/logger';
+import type { PaginatedResult } from '../../shared/types';
+import { getIO } from '../chats/socket';
+import { notificationsService } from '../notifications/notifications.service';
+import { ridesRepository } from '../rides/rides.repository';
+import { ridesService } from '../rides/rides.service';
+import { usersRepository } from '../users/users.repository';
+import { usersService } from '../users/users.service';
+
+import { requestsRepository } from './requests.repository';
+import type { CreateRequestDTO, RideRequestResponseDTO } from './requests.types';
+
 
 export class RequestsService {
   private formatRequest(req: any): RideRequestResponseDTO {

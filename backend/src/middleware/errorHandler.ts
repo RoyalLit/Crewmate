@@ -12,10 +12,10 @@
  */
 
 import type { ErrorRequestHandler, Request, Response, NextFunction } from 'express';
-import { ZodError } from 'zod';
 import { StatusCodes } from 'http-status-codes';
-import multer from 'multer';
 import { Error as MongooseError } from 'mongoose';
+import multer from 'multer';
+import { ZodError } from 'zod';
 
 import env from '../config/env';
 import { AppError } from '../shared/errors';

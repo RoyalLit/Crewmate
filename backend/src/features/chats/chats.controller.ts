@@ -1,6 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
+
+import type { JwtPayload } from '../auth/auth.types';
+
 import { chatsService } from './chats.service';
-import { JwtPayload } from '../auth/auth.types';
 
 export class ChatsController {
   async getMyChats(req: Request, res: Response, next: NextFunction): Promise<void> {

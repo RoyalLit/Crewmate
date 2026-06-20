@@ -1,6 +1,9 @@
-import { ReportModel, IReport } from '../../db/models/Report';
-import { UserModel, IUser } from '../../db/models/User';
-import { ReportRequestDTO } from './safety.types';
+import type { IReport } from '../../db/models/Report';
+import { ReportModel } from '../../db/models/Report';
+import type { IUser } from '../../db/models/User';
+import { UserModel } from '../../db/models/User';
+
+import type { ReportRequestDTO } from './safety.types';
 
 export class SafetyRepository {
   async createReport(reporterId: string, dto: ReportRequestDTO): Promise<IReport> {

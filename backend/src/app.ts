@@ -21,16 +21,16 @@
 
 import cors from 'cors';
 import express from 'express';
-import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
+import helmet from 'helmet';
 
 import env from './config/env';
+import { isDatabaseConnected } from './db/connection';
 import errorHandler from './middleware/errorHandler';
+import { metricsMiddleware, metricsHandler } from './middleware/metrics';
 import notFound from './middleware/notFound';
 import { requestContextMiddleware } from './middleware/requestContext';
 import requestLogger from './middleware/requestLogger';
-import { isDatabaseConnected } from './db/connection';
-import { metricsMiddleware, metricsHandler } from './middleware/metrics';
 import router from './routes/index';
 
 export function createApp(): express.Application {

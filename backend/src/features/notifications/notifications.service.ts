@@ -1,4 +1,6 @@
-import { Expo, ExpoPushMessage } from 'expo-server-sdk';
+import type { ExpoPushMessage } from 'expo-server-sdk';
+import { Expo } from 'expo-server-sdk';
+
 import logger from '../../shared/logger';
 
 class NotificationsService {

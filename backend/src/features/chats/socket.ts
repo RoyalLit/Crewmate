@@ -1,11 +1,15 @@
-import { Server as SocketIOServer, Socket } from 'socket.io';
-import { Server as HttpServer } from 'http';
+
+import type { Server as HttpServer } from 'http';
+
 import * as jwt from 'jsonwebtoken';
-import env from '../../config/env';
-import { JwtPayload } from '../auth/auth.types';
-import { MessageModel } from '../../db/models/Message';
+import { Server as SocketIOServer } from 'socket.io';
+import type { Socket } from 'socket.io';
+
 import { MESSAGE } from '../../config/constants';
+import env from '../../config/env';
+import { MessageModel } from '../../db/models/Message';
 import logger from '../../shared/logger';
+import type { JwtPayload } from '../auth/auth.types';
 
 let io: SocketIOServer;
 

@@ -1,6 +1,7 @@
-import { safetyRepository } from './safety.repository';
-import { ReportRequestDTO, BlockRequestDTO, ReportResponseDTO } from './safety.types';
 import { ValidationError } from '../../shared/errors';
+
+import { safetyRepository } from './safety.repository';
+import type { ReportRequestDTO, BlockRequestDTO, ReportResponseDTO } from './safety.types';
 
 export class SafetyService {
   async reportUser(reporterId: string, dto: ReportRequestDTO): Promise<ReportResponseDTO> {

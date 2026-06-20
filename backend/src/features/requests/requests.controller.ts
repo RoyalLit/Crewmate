@@ -1,6 +1,8 @@
-import { Request, Response, NextFunction } from 'express';
-import { requestsService } from './requests.service';
+import type { Request, Response, NextFunction } from 'express';
+
 import { successResponse } from '../../shared/response';
+
+import { requestsService } from './requests.service';
 
 export class RequestsController {
   async createRequest(req: Request, res: Response, next: NextFunction): Promise<void> {

@@ -1,9 +1,11 @@
 import { Router } from 'express';
+
+import { requireAuth } from '../../middleware/auth';
+import validate from '../../middleware/validate';
+import { asyncHandler } from '../../shared/asyncHandler';
+
 import { requestsController } from './requests.controller';
 import { createRequestValidator } from './requests.validators';
-import validate from '../../middleware/validate';
-import { requireAuth } from '../../middleware/auth';
-import { asyncHandler } from '../../shared/asyncHandler';
 
 const router = Router();
 

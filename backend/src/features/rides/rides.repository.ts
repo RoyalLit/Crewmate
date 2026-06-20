@@ -1,7 +1,10 @@
-import { RideModel, IRide } from '../../db/models/Ride';
-import { CreateRideRequestDTO, RideFilterQuery } from './rides.types';
-import { PaginatedResult } from '../../shared/types';
-import { FilterQuery, ClientSession } from 'mongoose';
+import type { FilterQuery, ClientSession } from 'mongoose';
+
+import type { IRide } from '../../db/models/Ride';
+import { RideModel } from '../../db/models/Ride';
+import type { PaginatedResult } from '../../shared/types';
+
+import type { CreateRideRequestDTO, RideFilterQuery } from './rides.types';
 
 export class RidesRepository {
   async createRide(posterId: string, data: CreateRideRequestDTO): Promise<IRide> {

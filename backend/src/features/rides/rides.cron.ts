@@ -1,4 +1,5 @@
 import cron from 'node-cron';
+
 import { RIDE } from '../../config/constants';
 import { RideModel } from '../../db/models/Ride';
 import logger from '../../shared/logger';

@@ -1,6 +1,7 @@
-import request from 'supertest';
-import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+import mongoose from 'mongoose';
+import request from 'supertest';
+
 import { createApp } from '../../src/app';
 
 const app = createApp();

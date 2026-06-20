@@ -1,5 +1,5 @@
+import type { Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
-import { Request, Response, NextFunction } from 'express';
 
 const ALLOWED_UPDATE_FIELDS = [
   'name',

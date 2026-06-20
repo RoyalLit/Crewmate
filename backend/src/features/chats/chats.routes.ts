@@ -1,7 +1,9 @@
 import { Router } from 'express';
-import { chatsController } from './chats.controller';
+
 import { requireAuth } from '../../middleware/auth';
 import { asyncHandler } from '../../shared/asyncHandler';
+
+import { chatsController } from './chats.controller';
 
 const router = Router();
 

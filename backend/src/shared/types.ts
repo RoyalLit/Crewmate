@@ -11,7 +11,7 @@
  * Authenticated user payload attached to the request by auth middleware.
  * Services and controllers reference req.user as this type.
  */
-import { JwtPayload } from '../features/auth/auth.types';
+import type { JwtPayload } from '../features/auth/auth.types';
 
 import 'express';
 

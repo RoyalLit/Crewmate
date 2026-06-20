@@ -1,5 +1,5 @@
-import { PaginationQuery } from '../../shared/types';
-import { PublicProfileResponseDTO } from '../users/users.types';
+import type { PaginationQuery } from '../../shared/types';
+import type { PublicProfileResponseDTO } from '../users/users.types';
 
 export interface CreateRideRequestDTO {
   fromCity: string;

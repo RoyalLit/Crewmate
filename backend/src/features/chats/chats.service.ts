@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
+
 import { MessageModel } from '../../db/models/Message';
-import { ChatListResponseDTO, MessageResponseDTO } from './chats.types';
+
+import type { ChatListResponseDTO, MessageResponseDTO } from './chats.types';
 
 export class ChatsService {
   async getUserChats(userId: string): Promise<ChatListResponseDTO[]> {

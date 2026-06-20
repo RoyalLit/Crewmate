@@ -1,4 +1,5 @@
-import { Schema, model, Document, Types } from 'mongoose';
+import type { Document, Types } from 'mongoose';
+import { Schema, model } from 'mongoose';
 
 export interface IRideRequest extends Document {
   rideId: Types.ObjectId;

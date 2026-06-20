@@ -1,5 +1,6 @@
-import { UserModel, IUser } from '../../db/models/User';
 import { AUTH as AUTH_CONST } from '../../config/constants';
+import type { IUser } from '../../db/models/User';
+import { UserModel } from '../../db/models/User';
 
 export class AuthRepository {
   /**

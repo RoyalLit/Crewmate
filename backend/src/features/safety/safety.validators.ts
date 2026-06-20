@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { ReportRequestDTO, BlockRequestDTO } from './safety.types';
+
+import type { ReportRequestDTO, BlockRequestDTO } from './safety.types';
 
 const reportSchema = z.object({
   reportedUserId: z.string().min(1, "Reported user ID is required"),

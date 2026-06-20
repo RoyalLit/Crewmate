@@ -1,8 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import * as jsonwebtoken from 'jsonwebtoken';
-import { UnauthorizedError } from '../shared/errors';
+
 import env from '../config/env';
-import { JwtPayload } from '../features/auth/auth.types';
+import type { JwtPayload } from '../features/auth/auth.types';
+import { UnauthorizedError } from '../shared/errors';
 
 export const requireAuth = (req: Request, _res: Response, next: NextFunction): void => {
   const authHeader = req.headers.authorization;

@@ -1,4 +1,5 @@
-import { Schema, model, Document } from 'mongoose';
+import type { Document } from 'mongoose';
+import { Schema, model } from 'mongoose';
 
 export interface IReport extends Document {
   reporterId: string;

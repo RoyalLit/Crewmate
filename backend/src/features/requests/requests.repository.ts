@@ -1,6 +1,9 @@
-import { RideRequestModel, IRideRequest } from '../../db/models/RideRequest';
-import { PaginatedResult } from '../../shared/types';
-import { ClientSession } from 'mongoose';
+import type { ClientSession } from 'mongoose';
+
+import type { IRideRequest } from '../../db/models/RideRequest';
+import { RideRequestModel } from '../../db/models/RideRequest';
+import type { PaginatedResult } from '../../shared/types';
+
 
 export class RequestsRepository {
   async createRequest(rideId: string, requesterId: string, posterId: string): Promise<IRideRequest> {
