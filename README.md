@@ -1,194 +1,162 @@
 <div align="center">
-  <h1>Crewmute</h1>
-  <p><strong>Campus Carpool — Find your crew, split the ride.</strong></p>
-  <p>
-    <a href=".github/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/RoyalLit/Crewmute/ci.yml?branch=main&label=CI&logo=github" alt="CI Status"></a>
-    <a href="https://github.com/RoyalLit/Crewmute/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
-    <a href="mobile/package.json"><img src="https://img.shields.io/badge/Expo-54-000020?logo=expo" alt="Expo SDK 54"></a>
-    <a href="backend/package.json"><img src="https://img.shields.io/badge/Node-20-339933?logo=node.js" alt="Node 20"></a>
-    <a href="https://github.com/RoyalLit/Crewmute/blob/main/docs/DECISIONS.md"><img src="https://img.shields.io/badge/ADR-8%20records-6C63FF" alt="ADRs"></a>
-    <a href="https://github.com/RoyalLit/Crewmute/blob/main/AGENT_RULES.md"><img src="https://img.shields.io/badge/constitution-AGENT_RULES-FF6584" alt="Engineering Constitution"></a>
-    <a href="https://github.com/RoyalLit/Crewmute"><img src="https://img.shields.io/github/repo-size/RoyalLit/Crewmute?label=size&logo=GitHub" alt="Repo Size"></a>
-  </p>
+
+# Crewmute
+
+**The campus carpool app for Indian college students.**  
+Post a ride. Find your crew. Split the fare.
+
+<br>
+
+[![CI](https://img.shields.io/github/actions/workflow/status/RoyalLit/Crewmute/ci.yml?branch=main&label=CI&logo=github&style=flat-square)](https://github.com/RoyalLit/Crewmute/actions)
+[![Node](https://img.shields.io/badge/Node-20_LTS-339933?logo=node.js&style=flat-square)](backend/package.json)
+[![Expo](https://img.shields.io/badge/Expo-SDK_54-000020?logo=expo&style=flat-square)](mobile/package.json)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&style=flat-square)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
+
 </div>
 
 ---
 
-**Crewmute** is a mobile-first carpool platform for Indian college students. Post or browse intercity shared-cab rides for weekend and holiday travel, coordinate with verified co-passengers, and split costs transparently — all in one app.
+## What is Crewmute?
 
-Built with React Native + Expo (mobile) and Node.js + Express + MongoDB (backend).
+Every weekend, thousands of Indian college students travel home via shared cabs and spend hours coordinating through fragmented WhatsApp groups. Crewmute replaces that chaos with a dedicated platform — verified students can post or browse intercity rides, request seats, and coordinate through in-app chat, all from a single mobile app.
 
-## ✨ Features
+## Features
 
-| Category | Capabilities |
-|----------|-------------|
-| **Auth** | Email OTP verification, student ID fallback, JWT access/refresh tokens (15m/7d), bcrypt password hashing |
-| **Rides** | Post, browse, filter by route/date, auto-expire, real-time seat counters |
-| **Requests** | Request seats, accept/reject/withdraw, atomic MongoDB transactions, push notifications |
-| **Chat** | Real-time 1:1 messaging via Socket.io, read receipts, auto-created on match |
-| **Profile** | Photo upload (Cloudinary), college identity, verification badges |
-| **Design** | Light + dark mode, WCAG 2.1 AA contrast, reduce-motion support, 44pt touch targets |
-| **Observability** | Prometheus metrics, structured logging (pino), AsyncLocalStorage request tracing, slow query logging |
+| | |
+|---|---|
+| 🔐 **Auth** | College email OTP, student ID fallback, JWT (15m access / 7d refresh), bcrypt (12 rounds) |
+| 🚗 **Rides** | Post, browse, filter by route & date, auto-expire after departure, real-time seat counters |
+| ✉️ **Requests** | Request seats, accept/reject/withdraw, push notifications on every state change |
+| 💬 **Chat** | Real-time 1:1 messaging via Socket.io, read receipts, unlocked automatically on match |
+| 👤 **Profile** | Photo upload via Cloudinary, college identity, verification badges |
+| 🎨 **Design** | Full light + dark mode, WCAG 2.1 AA contrast, 44pt touch targets, reduce-motion support |
+| 📊 **Observability** | Prometheus metrics, Pino structured logging, AsyncLocalStorage request tracing |
 
-## 📱 Screenshots
+## Tech Stack
 
-> Screenshots will be added pre-launch. Drop PNGs into `mobile/assets/screenshots/` and update the table below.
+**Mobile** — React Native 0.81 · Expo SDK 54 · Expo Router v6 · NativeWind 4 · TanStack Query 5 · Zustand 4 · Socket.io Client · Reanimated 4
 
-| | | |
-|:---:|:---:|:---:|
-| *Onboarding* | *Ride Feed* | *Chat* |
+**Backend** — Node.js 20 LTS · Express 4 · TypeScript 5 · MongoDB 7 + Mongoose 8 · Socket.io 4 · Zod · Pino · Prometheus
 
-## 🛠 Built With
+**Infrastructure** — Railway · MongoDB Atlas · Cloudinary · GitHub Actions CI · Docker · Expo EAS
 
-**Mobile** — React Native 0.81 · Expo SDK 54 · Expo Router 6 · NativeWind 4 · TanStack Query 5 · Zustand 4 · Socket.io Client · expo-image · Reanimated 4
+## Quick Start
 
-**Backend** — Node.js 20 LTS · Express 4 · TypeScript 5 · MongoDB 7 + Mongoose 8 · Socket.io 4 · JWT + bcrypt · Pino · Prometheus · Zod
-
-**Infrastructure** — Railway (deploy) · MongoDB Atlas · Cloudinary · GitHub Actions CI · Docker · Expo EAS
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-| Tool | Version |
-|------|---------|
-| Node.js | 20 LTS ([nvm](https://github.com/nvm-sh/nvm) recommended) |
-| npm | 10+ |
-| MongoDB | Atlas account ([free tier](https://www.mongodb.com/atlas)) or local instance |
-
-### 1. Clone
+**Prerequisites:** Node.js 20 LTS, npm 10+, a MongoDB connection string (free [Atlas](https://www.mongodb.com/atlas) tier works).
 
 ```bash
-git clone https://github.com/RoyalLit/Crewmute.git
-cd crewmute
+git clone https://github.com/RoyalLit/Crewmute.git && cd Crewmute
 ```
 
-### 2. Backend
-
+**Backend**
 ```bash
 cd backend
 npm install
-cp .env.example .env
-# Edit .env — fill in MONGO_URI, ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET at minimum
-npm run dev
-# → http://localhost:5000  |  GET /health → { status: "ok" }
+cp .env.example .env   # fill in MONGO_URI, ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET
+npm run dev            # → http://localhost:5000  |  GET /health → { status: "ok" }
 ```
 
-### 3. Mobile
-
+**Mobile**
 ```bash
 cd mobile
 npm install
-npx expo start
-# Press 'a' (Android), 'i' (iOS), or scan QR with Expo Go
+npx expo start         # press 'a' for Android, 'i' for iOS, or scan QR with Expo Go
 ```
 
 <details>
-<summary><b>Environment Variables</b></summary>
+<summary><b>Environment variables</b></summary>
 
 ### Backend (`backend/.env`)
 
 | Variable | Required | Purpose |
-|----------|----------|---------|
+|---|---|---|
 | `MONGO_URI` | ✅ | MongoDB connection string |
 | `ACCESS_TOKEN_SECRET` | ✅ | JWT signing key (min 64 chars) |
-| `REFRESH_TOKEN_SECRET` | ✅ | JWT refresh key (min 64 chars) |
+| `REFRESH_TOKEN_SECRET` | ✅ | JWT refresh signing key (min 64 chars) |
 | `EMAIL_HOST` | For OTP | SMTP host |
-| `EMAIL_USER` | For OTP | Sender email |
+| `EMAIL_USER` | For OTP | Sender email address |
 | `EMAIL_PASS` | For OTP | SMTP app password |
-| `CLOUDINARY_CLOUD_NAME` | For uploads | Cloudinary account |
+| `CLOUDINARY_CLOUD_NAME` | For uploads | Cloudinary cloud name |
 | `CLOUDINARY_API_KEY` | For uploads | Cloudinary API key |
 | `CLOUDINARY_API_SECRET` | For uploads | Cloudinary API secret |
-| `PORT` | No (default: 5000) | Server port |
-| `CLIENT_URL` | No (default: *) | CORS origin |
-| `NODE_ENV` | No (default: development) | `development` or `production` |
+| `PORT` | No (5000) | Server port |
+| `CLIENT_URL` | No (*) | CORS allowed origin |
+| `NODE_ENV` | No (development) | `development` or `production` |
 
 ### Mobile (`mobile/.env`)
 
 | Variable | Purpose |
-|----------|---------|
+|---|---|
 | `EXPO_PUBLIC_API_URL` | Backend base URL (e.g. `http://localhost:5000/api/v1`) |
 | `EXPO_PUBLIC_GOOGLE_PLACES_KEY` | Google Places API key (optional — falls back to Nominatim) |
 
 </details>
 
-## 🧪 Running Tests
-
-### Backend
+## Testing
 
 ```bash
+# Backend
 cd backend
 npm test              # 13 E2E tests across 3 suites
-npm run test:coverage # With coverage report
-npm run typecheck     # tsc --noEmit (0 errors)
+npm run typecheck     # tsc --noEmit
 npm run lint          # ESLint
-```
 
-### Mobile
-
-```bash
+# Mobile
 cd mobile
 npm test
-npm run typecheck     # tsc --noEmit (0 errors)
-npm run lint
+npm run typecheck
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-crewmute/
+Crewmute/
 ├── mobile/              # React Native + Expo app
 │   ├── app/             # Expo Router file-based routes
 │   ├── src/             # Components, hooks, stores, API, design tokens
 │   └── assets/          # Images, fonts
 ├── backend/             # Node.js + Express API
 │   ├── src/
-│   │   ├── features/    # Feature-first modules (auth, rides, etc.)
+│   │   ├── features/    # Feature modules (auth, rides, requests, chats, users)
 │   │   ├── middleware/   # Auth, error handler, rate limiter, metrics
 │   │   ├── config/      # Env validation, constants
 │   │   ├── db/          # Mongoose models, connection
 │   │   └── shared/      # Logger, errors, response helpers
-│   └── tests/           # Integration + E2E tests
-├── docs/                # PRD, ARCHITECTURE, DESIGN, ADRs, API docs
-├── scripts/             # Seed, migration scripts
-├── .github/             # CI workflows, issue/PR templates
-├── AGENT_RULES.md       # Engineering constitution
-└── README.md
+│   └── tests/           # Integration + E2E tests (13 tests)
+├── docs/                # Architecture, ADRs, API reference
+├── scripts/             # Seed and migration scripts
+└── .github/             # CI workflow, issue/PR templates
 ```
 
-## 📚 Documentation
+## Documentation
 
-| Document | Purpose |
-|----------|---------|
-| [AGENT_RULES.md](AGENT_RULES.md) | Engineering constitution — all contributors must read |
-| [PRD.md](docs/PRD.md) | Product requirements and scope |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design and API reference |
-| [DESIGN.md](docs/DESIGN.md) | Design system and UI specification |
-| [DECISIONS.md](docs/DECISIONS.md) | Architectural decision records (8 ADRs) |
+| Document | Description |
+|---|---|
+| [AGENT_RULES.md](AGENT_RULES.md) | Engineering constitution — all contributors must read first |
+| [PRD.md](PRD.md) | Product requirements, personas, and feature scope |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | System design, layer responsibilities, API reference |
+| [DESIGN.md](DESIGN.md) | Design system — tokens, components, patterns |
+| [docs/DECISIONS.md](docs/DECISIONS.md) | Architectural Decision Records |
 | [SECURITY.md](SECURITY.md) | Security policy and vulnerability reporting |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guidelines |
 
-## 🤝 Contributing
+## Contributing
 
-All contributors (human and AI) **must read** [AGENT_RULES.md](AGENT_RULES.md) before making any change. It is the source of truth for how work is done in this repository.
+Read [AGENT_RULES.md](AGENT_RULES.md) first — it is the engineering constitution for this repository and governs every change, human or AI.
 
-- **Branch strategy:** `main` → `dev` → `feature/*`
-- **Commits:** Conventional Commits (`feat:`, `fix:`, `chore:`, `refactor:`, `test:`, `docs:`)
-- **Code review:** All changes go through PRs. CI must pass before merge.
+- **Branches:** `main` (stable) ← `dev` ← `feature/*`  
+- **Commits:** [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`, `docs:`, …)  
+- **PRs:** CI must pass, TypeScript must compile clean, all new logic must have tests.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
 
-## 📄 License
+## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE).
 
 ---
 
 <div align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=RoyalLit/Crewmute&type=Date&theme=dark">
-    <img width="600" alt="Star History Chart" src="https://api.star-history.com/svg?repos=RoyalLit/Crewmute&type=Date">
-  </picture>
-  <br><br>
-  <sub>Built with ❤️ by <a href="https://github.com/RoyalLit">Pahul</a> · Amity University Punjab</sub>
+  <sub>Built by <a href="https://github.com/RoyalLit">Pahul</a> · Amity University Punjab</sub>
 </div>
