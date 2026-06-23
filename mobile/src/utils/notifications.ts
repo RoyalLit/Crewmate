@@ -1,10 +1,11 @@
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import type { Router } from 'expo-router';
+import type { Router, Href } from 'expo-router';
+import type * as ExpoNotifications from 'expo-notifications';
 import logger from './logger';
 
-let Notifications: any = null;
+let Notifications: typeof ExpoNotifications | null = null;
 
 try {
   // expo-notifications was removed from Expo Go on Android in SDK 53+
@@ -99,7 +100,7 @@ export function navigateFromNotification(
   }
 
   try {
-    router.push(data.route as any);
+    router.push(data.route as Href);
   } catch (e) {
     logger.log('Failed to navigate from notification:', e);
   }
@@ -117,7 +118,7 @@ export function onNotificationResponse(
   }
 
   const subscription = Notifications.addNotificationResponseReceivedListener(
-    (response: any) => {
+    (response: ExpoNotifications.NotificationResponse) => {
       const data = response?.notification?.request?.content?.data as NotificationData | undefined;
       navigateFromNotification(data, router);
     }

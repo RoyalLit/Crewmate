@@ -26,14 +26,14 @@ ENV NODE_ENV=production
 
 USER node
 
-# Copy package files
-COPY package*.json ./
+# Copy package files with node user ownership
+COPY --chown=node:node package*.json ./
 
 # Install only production dependencies
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
-# Copy compiled code from builder
-COPY --from=builder /app/dist ./dist
+# Copy compiled code from builder with node user ownership
+COPY --from=builder --chown=node:node /app/dist ./dist
 
 # Expose the application port
 EXPOSE 5000

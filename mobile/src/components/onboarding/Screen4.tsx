@@ -17,6 +17,30 @@ const { height } = Dimensions.get('window');
 
 const SCENE_4 = require('../../../assets/images/onboarding/scene4.png');
 
+function AvatarBubble({ initials, i, color, currentIndex, myIndex }: { initials: string; i: number; color: string; currentIndex: SharedValue<number>; myIndex: number }) {
+  const scale = useSharedValue(0);
+
+  useAnimatedReaction(
+    () => Math.abs(currentIndex.value - myIndex) < 0.85,
+    (isActive) => {
+      if (isActive) {
+        scale.value = withDelay(150 + i * 40, withSequence(
+          withTiming(1.08, { duration: 100 }),
+          withSpring(1, { damping: 12, stiffness: 150 })
+        ));
+      } else {
+        scale.value = 0;
+      }
+    }
+  );
+
+  return (
+    <Animated.View style={[styles.avatarCircle, { backgroundColor: color, left: i * 32, zIndex: 4 - i, transform: [{ scale }] }]}>
+      <Text style={styles.avatarText}>{initials}</Text>
+    </Animated.View>
+  );
+}
+
 export function Screen4({ currentIndex, myIndex, topInset }: { currentIndex: SharedValue<number>; myIndex: number; topInset: number }) {
   const subOpacity = useSharedValue(0);
   const avatars = ['AK', 'PS', 'RV', 'KD'];
@@ -44,29 +68,9 @@ export function Screen4({ currentIndex, myIndex, topInset }: { currentIndex: Sha
         </Animated.Text>
         <View style={styles.avatarRow}>
           <View style={styles.avatarStack}>
-            {avatars.map((initials, i) => {
-              const scale = useSharedValue(0);
-
-              useAnimatedReaction(
-                () => Math.abs(currentIndex.value - myIndex) < 0.85,
-                (isActive) => {
-                  if (isActive) {
-                    scale.value = withDelay(150 + i * 40, withSequence(
-                      withTiming(1.08, { duration: 100 }),
-                      withSpring(1, { damping: 12, stiffness: 150 })
-                    ));
-                  } else {
-                    scale.value = 0;
-                  }
-                }
-              );
-
-              return (
-                <Animated.View key={i} style={[styles.avatarCircle, { backgroundColor: avatarColors[i], left: i * 32, zIndex: 4 - i, transform: [{ scale }] }]}>
-                  <Text style={styles.avatarText}>{initials}</Text>
-                </Animated.View>
-              );
-            })}
+            {avatars.map((initials, i) => (
+              <AvatarBubble key={i} initials={initials} i={i} color={avatarColors[i]} currentIndex={currentIndex} myIndex={myIndex} />
+            ))}
           </View>
           <Animated.Text style={[styles.avatarLabel, { opacity: subOpacity }]}>
             12 students going home this weekend

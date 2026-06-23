@@ -10,19 +10,18 @@
 
 import Constants from 'expo-constants';
 
-function requirePublicEnv(key: string): string {
-  const value = process.env[key];
+function requirePublicEnv(value: string | undefined, name: string): string {
   if (!value) {
     if (__DEV__) {
-      console.warn(`[config] Missing public environment variable: ${key}`);
+      console.warn(`[config] Missing public environment variable: ${name}`);
       return '';
     }
-    throw new Error(`Missing required environment variable: ${key}`);
+    throw new Error(`Missing required environment variable: ${name}`);
   }
   return value;
 }
 
-let apiUrl = requirePublicEnv('EXPO_PUBLIC_API_URL');
+let apiUrl = requirePublicEnv(process.env.EXPO_PUBLIC_API_URL, 'EXPO_PUBLIC_API_URL');
 
 // Dynamically override localhost/LAN IPs during development to match the Expo Go host
 if (__DEV__ && Constants.expoConfig?.hostUri) {
@@ -36,7 +35,7 @@ if (__DEV__ && Constants.expoConfig?.hostUri) {
 
 const mobileEnv = {
   apiUrl,
-  googlePlacesKey: requirePublicEnv('EXPO_PUBLIC_GOOGLE_PLACES_KEY'),
+  googlePlacesKey: requirePublicEnv(process.env.EXPO_PUBLIC_GOOGLE_PLACES_KEY, 'EXPO_PUBLIC_GOOGLE_PLACES_KEY'),
 } as const;
 
 export default mobileEnv;

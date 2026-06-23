@@ -23,40 +23,44 @@ export const tokens = {
   textMuted: darkColors.text.placeholder,
 };
 
+function StaggeredWord({ word, i, currentIndex, myIndex }: { word: string; i: number; currentIndex: SharedValue<number>; myIndex: number }) {
+  const translateY = useSharedValue(12);
+  const opacity = useSharedValue(0);
+
+  useAnimatedReaction(
+    () => Math.abs(currentIndex.value - myIndex) < 0.85,
+    (isActive) => {
+      if (isActive) {
+        const delay = myIndex === 0 ? 0 : i * 20;
+        translateY.value = withDelay(delay, withTiming(0, { duration: 250, easing: Easing.out(Easing.cubic) }));
+        opacity.value = withDelay(delay, withTiming(1, { duration: 250 }));
+      } else {
+        translateY.value = 12;
+        opacity.value = 0;
+      }
+    }
+  );
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <Animated.Text style={[styles.headline, animatedStyle]}>
+      {word}{' '}
+    </Animated.Text>
+  );
+}
+
 export function StaggeredText({ text, currentIndex, myIndex }: { text: string; currentIndex: SharedValue<number>; myIndex: number }) {
   const words = text.split(' ');
 
   return (
     <View style={styles.headlineWrapper}>
-      {words.map((word, i) => {
-        const translateY = useSharedValue(12);
-        const opacity = useSharedValue(0);
-
-        useAnimatedReaction(
-          () => Math.abs(currentIndex.value - myIndex) < 0.85,
-          (isActive) => {
-            if (isActive) {
-              const delay = myIndex === 0 ? 0 : i * 20;
-              translateY.value = withDelay(delay, withTiming(0, { duration: 250, easing: Easing.out(Easing.cubic) }));
-              opacity.value = withDelay(delay, withTiming(1, { duration: 250 }));
-            } else {
-              translateY.value = 12;
-              opacity.value = 0;
-            }
-          }
-        );
-
-        const animatedStyle = useAnimatedStyle(() => ({
-          transform: [{ translateY: translateY.value }],
-          opacity: opacity.value,
-        }));
-
-        return (
-          <Animated.Text key={i} style={[styles.headline, animatedStyle]}>
-            {word}{' '}
-          </Animated.Text>
-        );
-      })}
+      {words.map((word, i) => (
+        <StaggeredWord key={i} word={word} i={i} currentIndex={currentIndex} myIndex={myIndex} />
+      ))}
     </View>
   );
 }

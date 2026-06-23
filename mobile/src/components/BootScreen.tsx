@@ -22,6 +22,25 @@ const MAX_SCALE = (Math.max(width, height) * 1.5) / HOLE_START;
 
 const LETTERS = ['C', 'R', 'E', 'W', 'M', 'U', 'T', 'E'];
 
+function AnimatedLetter({ letter, index, letterProgress }: { letter: string; index: number; letterProgress: SharedValue<number> }) {
+  const animatedStyle = useAnimatedStyle(() => {
+    const progress = Math.max(0, Math.min(1, letterProgress.value * (1 + index * 0.1) - index * 0.1));
+    return {
+      opacity: interpolate(progress, [0, 1], [0, 1]),
+      transform: [
+        { translateY: interpolate(progress, [0, 1], [-50, 0]) },
+        { scale: interpolate(progress, [0, 1], [0.5, 1]) }
+      ],
+    };
+  });
+
+  return (
+    <Animated.Text style={[styles.letter, animatedStyle]}>
+      {letter}
+    </Animated.Text>
+  );
+}
+
 export function BootScreen({ onAnimationDone, isReady }: { onAnimationDone: () => void, isReady?: boolean }) {
   const letterProgress = useSharedValue(0);
   const letterOpacity = useSharedValue(1);
@@ -86,24 +105,9 @@ export function BootScreen({ onAnimationDone, isReady }: { onAnimationDone: () =
 
       {/* Staggered Text */}
       <Animated.View style={[styles.textContainer, textContainerStyle]} pointerEvents="none">
-        {LETTERS.map((letter, index) => {
-          const animatedStyle = useAnimatedStyle(() => {
-            const progress = Math.max(0, Math.min(1, letterProgress.value * (1 + index * 0.1) - index * 0.1));
-            return {
-              opacity: interpolate(progress, [0, 1], [0, 1]),
-              transform: [
-                { translateY: interpolate(progress, [0, 1], [-50, 0]) },
-                { scale: interpolate(progress, [0, 1], [0.5, 1]) }
-              ],
-            };
-          });
-
-          return (
-            <Animated.Text key={index} style={[styles.letter, animatedStyle]}>
-              {letter}
-            </Animated.Text>
-          );
-        })}
+        {LETTERS.map((letter, index) => (
+          <AnimatedLetter key={index} letter={letter} index={index} letterProgress={letterProgress} />
+        ))}
       </Animated.View>
     </View>
   );
