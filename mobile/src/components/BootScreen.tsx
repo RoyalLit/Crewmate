@@ -9,6 +9,7 @@ import Animated, {
   runOnJS,
   interpolate,
 } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
 
