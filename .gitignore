@@ -28,6 +28,8 @@ ios/
 android/
 *.orig.*
 web-build/
+google-services.json
+GoogleService-Info.plist
 
 # EAS
 .easignore
