@@ -31,26 +31,34 @@ export default function ChatsScreen(): React.JSX.Element {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
-      <View style={[styles.headerContainer, { paddingTop: Math.max(insets.top, spacing.xl) }]}>
-        <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Chats</Text>
-      </View>
-
       {isLoading && !isRefetching ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={brandColors.electricViolet} />
+        <View style={{ flex: 1 }}>
+          <View style={[styles.headerContainer, { paddingTop: insets.top + spacing.xl }]}>
+            <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Chats</Text>
+          </View>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={brandColors.electricViolet} />
+          </View>
         </View>
       ) : (
         <FlatList
           data={chats}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          ListHeaderComponent={
+            <View style={[styles.headerContainer, { paddingTop: spacing.xl }]}>
+              <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Chats</Text>
+            </View>
+          }
           ListEmptyComponent={<EmptyState icon="chatbubbles-outline" title="No messages yet" subtitle="When you accept a ride request, you can chat here" />}
           contentContainerStyle={{
             paddingBottom: TAB_BAR_HEIGHT + spacing['2xl'],
             flexGrow: 1,
           }}
+          contentInset={{ top: insets.top }}
+          contentOffset={{ x: 0, y: -insets.top }}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.interactive.primary} colors={[colors.interactive.primary]} />}
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.interactive.primary} colors={[colors.interactive.primary]} progressViewOffset={insets.top} />}
         />
       )}
     </View>

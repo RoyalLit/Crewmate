@@ -13,6 +13,7 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { tokens, StaggeredText } from './shared';
 
+
 const { height } = Dimensions.get('window');
 
 const SCENE_4 = require('../../../assets/images/onboarding/scene4.png');
@@ -56,15 +57,15 @@ export function Screen4({ currentIndex, myIndex, topInset }: { currentIndex: Sha
 
   return (
     <View style={styles.screenContent}>
-      <View style={[styles.heroZone, { height: height * 0.52 }]}>
-        <Image source={SCENE_4} style={[styles.heroImage, { height: height * 0.65, transform: [{ scale: 1.6 }] }]} resizeMode="cover" accessibilityElementsHidden />
+      <View style={[styles.heroZone, { height: height }]}>
+        <Image source={SCENE_4} style={[styles.heroImage, { height: height, transform: [{ scale: 1.8 }, { translateY: -height * 0.08 }] }]} resizeMode="cover" accessibilityElementsHidden />
         <LinearGradient colors={[tokens.bg, 'rgba(13,13,28,0.8)', 'transparent']} locations={[0, 0.4, 1]} style={[styles.gradientMaskTop, { height: topInset + 60 }]} />
-        <LinearGradient colors={['transparent', 'rgba(13,13,28,0)', tokens.bg]} locations={[0, 0.4, 1]} style={styles.gradientMask} />
+        <LinearGradient colors={['transparent', tokens.bg, tokens.bg]} locations={[0, 0.55, 1]} style={[styles.gradientMask, { height: height * 0.65 }]} />
       </View>
-      <View style={[styles.bottomZone, { top: height * 0.52 }]}>
-        <StaggeredText text="Someone's always heading your way." currentIndex={currentIndex} myIndex={myIndex} />
+      <View style={[styles.bottomZone, { bottom: 120 }]}>
+        <StaggeredText text="Never commute alone again." currentIndex={currentIndex} myIndex={myIndex} />
         <Animated.Text style={[styles.subtext, { opacity: subOpacity }]}>
-          Every weekend, students from your campus go home. Now you go together.
+          Join hundreds of students saving money and making friends on the way home.
         </Animated.Text>
         <View style={styles.avatarRow}>
           <View style={styles.avatarStack}>

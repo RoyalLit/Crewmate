@@ -19,6 +19,7 @@ import { tokens } from './shared';
 
 const { width, height } = Dimensions.get('window');
 const LOGO = require('../../../assets/icon.png');
+const BG_IMAGE = require('../../../assets/images/auth-bg.png');
 
 // ─── Particle configuration ──────────────────────────────────────────────────
 const PARTICLES = [
@@ -104,6 +105,30 @@ export function AuthScreen({ currentIndex, myIndex }: { currentIndex: SharedValu
   const btnOpacity = useSharedValue(0);
   const btnY = useSharedValue(24);
 
+  // Background Parallax
+  const bgTranslateX = useSharedValue(0);
+  const bgTranslateY = useSharedValue(0);
+
+  useEffect(() => {
+    // Smooth infinite diagonal panning for the background image
+    bgTranslateX.value = withRepeat(
+      withSequence(
+        withTiming(-width * 0.15, { duration: 25000, easing: Easing.inOut(Easing.sin) }),
+        withTiming(width * 0.15, { duration: 25000, easing: Easing.inOut(Easing.sin) })
+      ),
+      -1,
+      true
+    );
+    bgTranslateY.value = withRepeat(
+      withSequence(
+        withTiming(-height * 0.08, { duration: 32000, easing: Easing.inOut(Easing.sin) }),
+        withTiming(height * 0.08, { duration: 32000, easing: Easing.inOut(Easing.sin) })
+      ),
+      -1,
+      true
+    );
+  }, []);
+
   useAnimatedReaction(
     () => Math.round(currentIndex.value) === myIndex,
     (isActive) => {
@@ -168,13 +193,30 @@ export function AuthScreen({ currentIndex, myIndex }: { currentIndex: SharedValu
     opacity: btnOpacity.value,
     transform: [{ translateY: btnY.value }],
   }));
+  const bgStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: bgTranslateX.value },
+      { translateY: bgTranslateY.value },
+      { scale: 1.35 } // Scale up so we don't see edges during panning
+    ],
+  }));
 
   return (
     <View style={styles.authScreen}>
-      {/* Background gradient */}
+      {/* Cinematic Panning Background */}
+      <Animated.Image 
+        source={BG_IMAGE} 
+        style={[StyleSheet.absoluteFillObject, { width: '100%', height: '100%', opacity: 0.8 }, bgStyle]} 
+        resizeMode="cover"
+      />
+      
+      {/* Dark overlay to ensure white text remains readable and keeps the dark mode aesthetic */}
+      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(13, 13, 28, 0.65)' }]} />
+      
+      {/* Subtle bottom gradient to blend the buttons beautifully */}
       <LinearGradient
-        colors={['#0D0D1C', '#0F0F1F', '#13131F']}
-        locations={[0, 0.5, 1]}
+        colors={['transparent', 'rgba(13, 13, 28, 0.8)', '#0D0D1C']}
+        locations={[0, 0.7, 1]}
         style={StyleSheet.absoluteFillObject}
       />
 

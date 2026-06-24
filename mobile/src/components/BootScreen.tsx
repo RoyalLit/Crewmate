@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Dimensions, View } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -43,6 +43,7 @@ function AnimatedLetter({ letter, index, letterProgress }: { letter: string; ind
 }
 
 export function BootScreen({ onAnimationDone, isReady }: { onAnimationDone: () => void, isReady?: boolean }) {
+  const [isTextDone, setIsTextDone] = useState(false);
   const letterProgress = useSharedValue(0);
   const letterOpacity = useSharedValue(1);
   const solidOpacity = useSharedValue(1);
@@ -52,15 +53,24 @@ export function BootScreen({ onAnimationDone, isReady }: { onAnimationDone: () =
 
   useEffect(() => {
     // 1. Drop letters in
+    letterProgress.value = 0; // reset for hot reloads
     letterProgress.value = withSpring(1, {
       damping: 12,
       stiffness: 100,
       mass: 1,
     });
+
+    // The withSpring callback sometimes doesn't fire on hot-reloads or fast device loads.
+    // A guaranteed 1200ms timeout ensures the spring has visually settled before we allow the hole to open.
+    const textTimer = setTimeout(() => {
+      setIsTextDone(true);
+    }, 1200);
+
+    return () => clearTimeout(textTimer);
   }, []);
 
   useEffect(() => {
-    if (isReady === false) return; // Wait until ready
+    if (isReady === false || !isTextDone) return; // Wait until BOTH app is ready AND text animation is completely settled
 
     // 2. Explode the circle outwards using GPU scale
     // Add a tiny 200ms delay to allow React Native to decode the image texture to GPU
@@ -82,7 +92,7 @@ export function BootScreen({ onAnimationDone, isReady }: { onAnimationDone: () =
     }, 200);
 
     return () => clearTimeout(timer);
-  }, [isReady]);
+  }, [isReady, isTextDone]);
 
   const holeStyle = useAnimatedStyle(() => ({
     transform: [{ scale: holeScale.value }],

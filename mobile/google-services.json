@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1034572156622",
+    "project_id": "crewmute-01",
+    "storage_bucket": "crewmute-01.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1034572156622:android:20d8e8f1e0ee1fe2560a9f",
+        "android_client_info": {
+          "package_name": "com.crewmute.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBrxbnE_SPMwqbUK-iTQZD4HpDbX-f5dvw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

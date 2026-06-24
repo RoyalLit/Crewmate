@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { tokens, StaggeredText } from './shared';
 
+
 const { height } = Dimensions.get('window');
 
 const SCENE_2 = require('../../../assets/images/onboarding/scene2.png');
@@ -40,15 +41,15 @@ export function Screen2({ currentIndex, myIndex, topInset }: { currentIndex: Sha
 
   return (
     <View style={styles.screenContent}>
-      <View style={[styles.heroZone, { height: height * 0.58 }]}>
-        <Image source={SCENE_2} style={[styles.heroImage, { height: height * 0.65, transform: [{ scale: 1.05 }] }]} resizeMode="cover" accessibilityElementsHidden />
+      <View style={[styles.heroZone, { height: height }]}>
+        <Image source={SCENE_2} style={[styles.heroImage, { height: height, transform: [{ scale: 1.2 }, { translateY: -height * 0.12 }] }]} resizeMode="cover" accessibilityElementsHidden />
         <LinearGradient colors={[tokens.bg, 'rgba(13,13,28,0.8)', 'transparent']} locations={[0, 0.4, 1]} style={[styles.gradientMaskTop, { height: topInset + 60 }]} />
-        <LinearGradient colors={['transparent', 'rgba(13,13,28,0)', tokens.bg]} locations={[0, 0.4, 1]} style={styles.gradientMask} />
+        <LinearGradient colors={['transparent', tokens.bg, tokens.bg]} locations={[0, 0.55, 1]} style={[styles.gradientMask, { height: height * 0.65 }]} />
       </View>
-      <View style={[styles.bottomZone, { top: height * 0.58 }]}>
-        <StaggeredText text="Your campus. Your people." currentIndex={currentIndex} myIndex={myIndex} />
+      <View style={[styles.bottomZone, { bottom: 120 }]}>
+        <StaggeredText text="Verified students only." currentIndex={currentIndex} myIndex={myIndex} />
         <Animated.Text style={[styles.subtext, { opacity: subOpacity }]}>
-          Everyone here goes to your college. That's the vibe check.
+          No strangers. No sketchy rides. Only share rides with verified students.
         </Animated.Text>
         <Animated.View style={[styles.trustPill, { transform: [{ scale: pillScale }], opacity: pillOpacity }]}>
           <View style={styles.trustShield}>

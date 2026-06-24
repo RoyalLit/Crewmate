@@ -4,6 +4,7 @@ import { RideRequestModel } from '../../db/models/RideRequest';
 import { UserModel } from '../../db/models/User';
 import { NotFoundError, AppError, ConflictError } from '../../shared/errors';
 import type { UserResponseDTO } from '../auth/auth.types';
+import { Types } from 'mongoose';
 
 import { usersRepository } from './users.repository';
 import type { UpdateProfileRequestDTO, PublicProfileResponseDTO, CreateReviewRequestDTO, ReviewResponseDTO } from './users.types';
@@ -180,10 +181,13 @@ export class UsersService {
   }
 
   async getStats(userId: string): Promise<{ ridesGiven: number; ridesTaken: number }> {
+    const objectId = new Types.ObjectId(userId);
     const [ridesGiven, ridesTaken] = await Promise.all([
-      RideModel.countDocuments({ posterId: userId, status: 'expired' }),
-      RideRequestModel.countDocuments({ requesterId: userId, status: 'accepted' }),
+      RideModel.countDocuments({ posterId: objectId, status: 'expired' }),
+      RideRequestModel.countDocuments({ requesterId: objectId, status: 'accepted' }),
     ]);
+    
+    console.log(`[getStats] User ${userId} -> Given: ${ridesGiven}, Taken: ${ridesTaken}`);
 
     return { ridesGiven, ridesTaken };
   }

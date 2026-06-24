@@ -182,22 +182,24 @@ export default function RidesScreen(): React.JSX.Element {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
-      <View style={[styles.headerContainer, { paddingTop: Math.max(insets.top, spacing.xl) }]}>
-        <Text style={[styles.headerTitle, { color: colors.text.primary }]}>My Rides</Text>
-        <SegmentedControl {...{ activeTab, handleTabPress, animatedPillStyle, colors, isDark }} />
-      </View>
-
       <FlatList
         data={displayRides}
         keyExtractor={(item: any) => item._id || item.id}
         renderItem={renderRideItem}
         ListEmptyComponent={<EmptyState icon="calendar-outline" title="No rides found" subtitle="Your rides and requests will appear here" />}
+        ListHeaderComponent={
+          <View style={[styles.headerContainer, { paddingTop: spacing.xl }]}>
+            <Text style={[styles.headerTitle, { color: colors.text.primary }]}>My Rides</Text>
+            <SegmentedControl {...{ activeTab, handleTabPress, animatedPillStyle, colors, isDark }} />
+          </View>
+        }
         contentContainerStyle={{
-          paddingTop: spacing.lg,
           paddingBottom: TAB_BAR_HEIGHT + spacing['2xl'],
           paddingHorizontal: spacing.lg,
           flexGrow: 1,
         }}
+        contentInset={{ top: insets.top }}
+        contentOffset={{ x: 0, y: -insets.top }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl 
@@ -205,6 +207,7 @@ export default function RidesScreen(): React.JSX.Element {
              onRefresh={handleRefresh} 
              tintColor={colors.interactive.primary} 
              colors={[colors.interactive.primary]}
+             progressViewOffset={insets.top}
           />
         }
       />

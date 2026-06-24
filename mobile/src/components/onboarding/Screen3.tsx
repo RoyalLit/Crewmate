@@ -12,6 +12,7 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { tokens, StaggeredText } from './shared';
 
+
 const { height } = Dimensions.get('window');
 
 const SCENE_3 = require('../../../assets/images/onboarding/scene3.png');
@@ -58,15 +59,15 @@ export function Screen3({ currentIndex, myIndex, topInset }: { currentIndex: Sha
 
   return (
     <View style={styles.screenContent}>
-      <View style={[styles.heroZone, { height: height * 0.50 }]}>
-        <Image source={SCENE_3} style={[styles.heroImage, { height: height * 0.65 }]} resizeMode="cover" accessibilityElementsHidden />
+      <View style={[styles.heroZone, { height: height }]}>
+        <Image source={SCENE_3} style={[styles.heroImage, { height: height, transform: [{ scale: 1.2 }, { translateY: -height * 0.12 }] }]} resizeMode="cover" accessibilityElementsHidden />
         <LinearGradient colors={[tokens.bg, 'rgba(13,13,28,0.8)', 'transparent']} locations={[0, 0.4, 1]} style={[styles.gradientMaskTop, { height: topInset + 60 }]} />
-        <LinearGradient colors={['transparent', 'rgba(13,13,28,0)', tokens.bg]} locations={[0, 0.4, 1]} style={styles.gradientMask} />
+        <LinearGradient colors={['transparent', tokens.bg, tokens.bg]} locations={[0, 0.55, 1]} style={[styles.gradientMask, { height: height * 0.65 }]} />
       </View>
-      <View style={[styles.bottomZone, { top: height * 0.50 }]}>
-        <StaggeredText text="Stop paying full price to go home." currentIndex={currentIndex} myIndex={myIndex} />
+      <View style={[styles.bottomZone, { bottom: 120 }]}>
+        <StaggeredText text="Split the cost effortlessly." currentIndex={currentIndex} myIndex={myIndex} />
         <Animated.Text style={[styles.subtext, { opacity: subOpacity }]}>
-          Four of you. One cab. One-fourth the price. Simple math.
+          Auto-calculate splits based on drop-offs. Pay directly in the app.
         </Animated.Text>
         <View style={styles.savingsCard}>
           <AnimatedNumber currentIndex={currentIndex} myIndex={myIndex} />
@@ -85,7 +86,7 @@ const styles = StyleSheet.create({
   gradientMask: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   bottomZone: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 24, paddingTop: 16 },
   subtext: { fontFamily: 'PlusJakartaSans-400Regular', fontSize: 15, color: tokens.textMuted, lineHeight: 24 },
-  savingsCard: { backgroundColor: tokens.card, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 24, borderWidth: 0.5, borderColor: '#2E2E4A', alignSelf: 'flex-start', marginTop: 12, alignItems: 'center' },
+  savingsCard: { backgroundColor: tokens.card, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 24, borderWidth: 0.5, borderColor: '#2E2E4A', alignSelf: 'flex-start', marginTop: 24, alignItems: 'center' },
   savingsNumber: { fontFamily: 'PlusJakartaSans-800ExtraBold', fontSize: 40, color: tokens.accent, textShadowColor: 'rgba(34,211,238,0.6)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 12, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
   savingsLabel: { fontFamily: 'PlusJakartaSans-500Medium', fontSize: 12, color: tokens.textMuted, marginTop: -4 },
 });

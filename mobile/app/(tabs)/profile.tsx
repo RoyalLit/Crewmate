@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -11,6 +11,7 @@ import { TAB_BAR_HEIGHT, spacing, brandColors } from '../../src/design/tokens';
 import { useAuthStore } from '../../src/store/authStore';
 import { useLogoutMutation } from '../../src/api/authHooks';
 import { useMyStatsQuery } from '../../src/api/usersHooks';
+import { useQueryClient } from '@tanstack/react-query';
 import { Avatar } from '../../src/components/Avatar';
 import { VerifiedBadge } from '../../src/components/VerifiedBadge';
 import { StarRating } from '../../src/components/StarRating';
@@ -34,6 +35,15 @@ export default function ProfileScreen(): React.JSX.Element {
 
   const postedCount = myStatsData?.data?.ridesGiven || 0;
   const joinedCount = myStatsData?.data?.ridesTaken || 0;
+
+  const [refreshing, setRefreshing] = React.useState(false);
+  const queryClient = useQueryClient();
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await queryClient.invalidateQueries({ queryKey: ['users', 'me', 'stats'] });
+    setRefreshing(false);
+  }, [queryClient]);
 
   const handleLogout = async () => {
     try {
@@ -63,12 +73,22 @@ export default function ProfileScreen(): React.JSX.Element {
     <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
       <ScrollView
         contentContainerStyle={{
-          paddingTop: Math.max(insets.top, spacing.xl),
+          paddingTop: spacing.xl,
           paddingBottom: TAB_BAR_HEIGHT + insets.bottom + spacing['3xl'] + spacing.lg,
           paddingHorizontal: spacing.lg,
           gap: spacing.md,
         }}
+        contentInset={{ top: insets.top }}
+        contentOffset={{ x: 0, y: -insets.top }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh} 
+            tintColor={colors.interactive.primary}
+            progressViewOffset={insets.top}
+          />
+        }
       >
         <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Profile</Text>
 

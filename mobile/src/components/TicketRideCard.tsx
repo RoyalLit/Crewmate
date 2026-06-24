@@ -23,8 +23,8 @@ export function TicketRideCard({ ride, requestStatus }: TicketRideCardProps) {
     if (requestStatus === 'rejected') return brandColors.coralPink;
     
     if (derivedStatus === 'active') return brandColors.mintGreen;
-    if (derivedStatus === 'completed') return brandColors.electricViolet;
-    return brandColors.coralPink; // cancelled or expired
+    if (derivedStatus === 'completed' || derivedStatus === 'expired') return brandColors.electricViolet;
+    return brandColors.coralPink; // cancelled
   };
 
   const getStatusText = () => {

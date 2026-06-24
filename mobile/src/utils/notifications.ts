@@ -11,7 +11,8 @@ try {
   // expo-notifications was removed from Expo Go on Android in SDK 53+
   if (!(Platform.OS === 'android' && Constants.appOwnership === 'expo')) {
     Notifications = require('expo-notifications');
-    Notifications.setNotificationHandler({
+    if (Notifications) {
+      Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,
         shouldShowBanner: true,
@@ -20,6 +21,7 @@ try {
         shouldSetBadge: false,
       }),
     });
+    }
   }
 } catch (e) {
   logger.log('expo-notifications not available', e);

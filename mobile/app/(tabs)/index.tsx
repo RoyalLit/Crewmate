@@ -2,7 +2,7 @@
  * Explore tab — Home feed screen.
  */
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, Text, View, FlatList, Pressable, Platform, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, FlatList, Pressable, Platform, ActivityIndicator, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -65,84 +65,92 @@ export default function ExploreScreen(): React.JSX.Element {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
-      {/* Header rendered OUTSIDE FlatList to allow CityAutocomplete dropdowns to escape clipping */}
-      <View style={{ paddingTop: Math.max(insets.top, spacing.xl), paddingHorizontal: spacing.md, zIndex: 10 }}>
-        {Platform.OS === 'ios' && insets.top > 20 && (
-          <View style={[styles.easterEggContainer, { top: 15 }]} pointerEvents="none">
-            <Text style={[styles.easterEggText, { color: colors.interactive.primary }]}>🚗 beep beep!</Text>
-          </View>
-        )}
-
-        <View style={styles.headerTop}>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.title, { color: colors.text.primary }]}>Find your crew.</Text>
-            <Text style={[styles.subtitle, { color: colors.text.secondary }]}>Where are you heading today?</Text>
-          </View>
-          <Pressable 
-            onPress={() => alert('Advanced filters coming soon!')}
-            style={[styles.themeToggle, { backgroundColor: colors.background.subtle }]}
-          >
-            <Ionicons name="options-outline" size={22} color={colors.text.primary} />
-          </Pressable>
-        </View>
-
-        {/* Search Card */}
-        <View style={[styles.searchCard, { backgroundColor: colors.background.card, zIndex: 20 }, shadowStyle]}>
-          <View style={styles.searchTimelineContainer}>
-            <View style={styles.searchTimeline}>
-              <Ionicons name="location" size={16} color={brandColors.electricViolet} />
-              <View style={[styles.searchTimelineLine, { backgroundColor: colors.border.default }]} />
-              <Ionicons name="location-outline" size={16} color={brandColors.coralPink} />
-            </View>
-            
-            <View style={styles.searchInputs}>
-              {/* Z-index matters here: top one needs higher z-index so its dropdown covers the bottom one */}
-              <View style={{ zIndex: 2 }}>
-                <CityAutocomplete 
-                  value={fromCityFilter}
-                  onChange={setFromCityFilter}
-                  placeholder="Leaving from..."
-                  iconName="car-outline"
-                />
-              </View>
-              <View style={{ marginTop: spacing.sm, zIndex: 1 }}>
-                <CityAutocomplete 
-                  value={toCityFilter}
-                  onChange={setToCityFilter}
-                  placeholder="Going to..."
-                  iconName="flag-outline"
-                />
-              </View>
-            </View>
-          </View>
-        </View>
-        
-        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Active Rides</Text>
-      </View>
-
-      {/* Rides List */}
+      {/* Rides List with Header integrated */}
       <View style={{ flex: 1, zIndex: 1 }}>
-        {isLoading ? (
-          <ActivityIndicator size="large" color={colors.interactive.primary} style={{ marginTop: 40 }} />
-        ) : isError ? (
-          <Text style={{ textAlign: 'center', marginTop: 40, color: colors.text.secondary }}>Failed to load rides.</Text>
-        ) : (
-          <FlatList
-            data={rides}
-            keyExtractor={(item: any) => item.id || item._id}
-            renderItem={renderItem}
-            ListEmptyComponent={<EmptyState icon="car-outline" title="No rides found" subtitle="Check back later for new rides near you" />}
-            style={[styles.container, { backgroundColor: 'transparent' }]}
-            contentContainerStyle={{ 
-              paddingBottom: TAB_BAR_HEIGHT + spacing.md, 
-              paddingHorizontal: spacing.md,
-              paddingTop: spacing.md
-            }}
-            showsVerticalScrollIndicator={false}
-            refreshing={isPulling}
-            onRefresh={handleRefresh}
-          />
-        )}
+        <FlatList
+          data={isLoading ? [] : rides}
+          keyExtractor={(item: any) => item.id || item._id || Math.random().toString()}
+          renderItem={renderItem}
+          ListHeaderComponent={
+            <View style={{ paddingTop: spacing.xl, paddingHorizontal: spacing.md, zIndex: 10, paddingBottom: spacing.lg }}>
+              {Platform.OS === 'ios' && insets.top > 20 && (
+                <View style={[styles.easterEggContainer, { top: 15 }]} pointerEvents="none">
+                  <Text style={[styles.easterEggText, { color: colors.interactive.primary }]}>🚗 beep beep!</Text>
+                </View>
+              )}
+
+              <View style={styles.headerTop}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.title, { color: colors.text.primary }]}>Find your crew.</Text>
+                  <Text style={[styles.subtitle, { color: colors.text.secondary }]}>Where are you heading today?</Text>
+                </View>
+                <Pressable 
+                  onPress={() => alert('Advanced filters coming soon!')}
+                  style={[styles.themeToggle, { backgroundColor: colors.background.subtle }]}
+                >
+                  <Ionicons name="options-outline" size={22} color={colors.text.primary} />
+                </Pressable>
+              </View>
+
+              {/* Search Card */}
+              <View style={[styles.searchCard, { backgroundColor: colors.background.card, zIndex: 20 }, shadowStyle]}>
+                <View style={styles.searchTimelineContainer}>
+                  <View style={styles.searchTimeline}>
+                    <Ionicons name="location" size={16} color={brandColors.electricViolet} />
+                    <View style={[styles.searchTimelineLine, { backgroundColor: colors.border.default }]} />
+                    <Ionicons name="location-outline" size={16} color={brandColors.coralPink} />
+                  </View>
+                  
+                  <View style={styles.searchInputs}>
+                    <View style={{ zIndex: 2 }}>
+                      <CityAutocomplete 
+                        value={fromCityFilter}
+                        onChange={setFromCityFilter}
+                        placeholder="Leaving from..."
+                        iconName="car-outline"
+                      />
+                    </View>
+                    <View style={{ marginTop: spacing.sm, zIndex: 1 }}>
+                      <CityAutocomplete 
+                        value={toCityFilter}
+                        onChange={setToCityFilter}
+                        placeholder="Going to..."
+                        iconName="flag-outline"
+                      />
+                    </View>
+                  </View>
+                </View>
+              </View>
+              
+              <Text style={[styles.sectionTitle, { color: colors.text.primary, marginBottom: 0 }]}>Active Rides</Text>
+            </View>
+          }
+          ListEmptyComponent={
+            isLoading ? (
+              <ActivityIndicator size="large" color={colors.interactive.primary} style={{ marginTop: 40 }} />
+            ) : isError ? (
+              <Text style={{ textAlign: 'center', marginTop: 40, color: colors.text.secondary }}>Failed to load rides.</Text>
+            ) : (
+              <EmptyState icon="car-outline" title="No rides found" subtitle="Check back later for new rides near you" />
+            )
+          }
+          style={[styles.container, { backgroundColor: 'transparent' }]}
+          contentContainerStyle={{ 
+            paddingBottom: TAB_BAR_HEIGHT + spacing.md, 
+          }}
+          contentInset={{ top: insets.top }}
+          contentOffset={{ x: 0, y: -insets.top }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl 
+               refreshing={isPulling} 
+               onRefresh={handleRefresh} 
+               tintColor={colors.interactive.primary} 
+               colors={[colors.interactive.primary]}
+               progressViewOffset={insets.top}
+            />
+          }
+        />
       </View>
     </View>
   );

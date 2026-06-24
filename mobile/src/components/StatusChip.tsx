@@ -20,8 +20,12 @@ interface StatusChipProps {
 
 export function StatusChip({ status }: StatusChipProps) {
   const { colors } = useTheme();
-  const displayStatus = status.charAt(0).toUpperCase() + status.slice(1) as RideStatus;
+  let displayStatus = status.charAt(0).toUpperCase() + status.slice(1) as RideStatus | 'Completed';
   let textColor = '';
+
+  if (displayStatus === 'Expired') {
+    displayStatus = 'Completed';
+  }
 
   switch (displayStatus) {
     case 'Active':
@@ -37,7 +41,9 @@ export function StatusChip({ status }: StatusChipProps) {
     case 'Full':
       textColor = brandColors.electricViolet;
       break;
-    case 'Expired':
+    case 'Completed':
+      textColor = brandColors.electricViolet;
+      break;
     case 'Cancelled':
     default:
       textColor = colors.text.placeholder;
