@@ -1,3 +1,4 @@
+import { Toast } from './Toast';
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -5,15 +6,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../design/theme';
 import { brandColors, spacing } from '../design/tokens';
 import { Avatar } from './Avatar';
-import { Alert } from './GlobalAlert';
+
 
 import { useAcceptRequestMutation, useRejectRequestMutation } from '../api/requestsHooks';
 
 interface IncomingRequestItemProps {
   request: any;
+  isRidePast?: boolean;
 }
 
-export const IncomingRequestItem = React.memo(function IncomingRequestItem({ request }: IncomingRequestItemProps) {
+export const IncomingRequestItem = React.memo(function IncomingRequestItem({ request, isRidePast }: IncomingRequestItemProps) {
   const { colors, isDark } = useTheme();
   const router = useRouter();
   
@@ -23,7 +25,7 @@ export const IncomingRequestItem = React.memo(function IncomingRequestItem({ req
   const handleAccept = () => {
     acceptMutation.mutate(request.id, {
       onError: (error: any) => {
-        Alert.alert('Error', error.response?.data?.error?.message || 'Failed to accept request');
+        Toast.show({ title: 'Error', message: error.response?.data?.error?.message || 'Failed to accept request', type: 'error' });
       }
     });
   };
@@ -31,7 +33,7 @@ export const IncomingRequestItem = React.memo(function IncomingRequestItem({ req
   const handleReject = () => {
     rejectMutation.mutate(request.id, {
       onError: (error: any) => {
-        Alert.alert('Error', error.response?.data?.error?.message || 'Failed to reject request');
+        Toast.show({ title: 'Error', message: error.response?.data?.error?.message || 'Failed to reject request', type: 'error' });
       }
     });
   };
@@ -91,20 +93,38 @@ export const IncomingRequestItem = React.memo(function IncomingRequestItem({ req
 
       {request.status === 'accepted' && (
         <View style={styles.actions}>
-          <Pressable 
-            style={[styles.btn, { backgroundColor: brandColors.mintGreen, flexDirection: 'row' }]}
-            onPress={() => {
-              const rId = request.rideId?._id || request.rideId?.id || request.rideId || request.ride?._id || request.ride?.id;
-              const rInfo = request.rideId?.fromCity ? `${request.rideId.fromCity} to ${request.rideId.toCity}` : '';
-              router.push(`/chat/${rId}/${request.requester.id || request.requester._id}?name=${encodeURIComponent(request.requester.name)}&rideInfo=${encodeURIComponent(rInfo)}`);
-            }}
-            accessible
-            accessibilityRole="button"
-            accessibilityLabel={`Send message to ${request.requester.name}`}
-          >
-            <Ionicons name="chatbubbles" size={16} color={colors.background.card} style={{ marginRight: 6 }} />
-            <Text style={[styles.btnText, { color: colors.background.card }]}>Message</Text>
-          </Pressable>
+          {!isRidePast && (
+            <Pressable 
+              style={[styles.btn, { backgroundColor: brandColors.mintGreen, flexDirection: 'row' }]}
+              onPress={() => {
+                const rId = request.rideId?._id || request.rideId?.id || request.rideId || request.ride?._id || request.ride?.id;
+                const rInfo = request.rideId?.fromCity ? `${request.rideId.fromCity} to ${request.rideId.toCity}` : '';
+                router.push(`/chat/${rId}/${request.requester.id || request.requester._id}?name=${encodeURIComponent(request.requester.name)}&rideInfo=${encodeURIComponent(rInfo)}`);
+              }}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={`Send message to ${request.requester.name}`}
+            >
+              <Ionicons name="chatbubbles" size={16} color={colors.background.card} style={{ marginRight: 6 }} />
+              <Text style={[styles.btnText, { color: colors.background.card }]}>Message</Text>
+            </Pressable>
+          )}
+
+          {isRidePast && (
+            <Pressable 
+              style={[styles.btn, { backgroundColor: colors.interactive.primary, flexDirection: 'row' }]}
+              onPress={() => {
+                const rId = request.rideId?._id || request.rideId?.id || request.rideId || request.ride?._id || request.ride?.id;
+                router.push(`/review/${request.requester.id || request.requester._id}?rideId=${rId}`);
+              }}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={`Review ${request.requester.name}`}
+            >
+              <Ionicons name="star" size={16} color={colors.interactive.primaryText} style={{ marginRight: 6 }} />
+              <Text style={[styles.btnText, { color: colors.interactive.primaryText }]}>Leave a Review</Text>
+            </Pressable>
+          )}
         </View>
       )}
     </View>

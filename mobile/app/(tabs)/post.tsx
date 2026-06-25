@@ -1,3 +1,4 @@
+import { Toast } from '../../src/components/Toast';
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TextInput, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { CityAutocomplete } from '../../src/components/CityAutocomplete';
 import { useCreateRideMutation } from '../../src/api/ridesHooks';
 import { useRouter } from 'expo-router';
-import { Alert } from '../../src/components/GlobalAlert';
+
 
 export default function PostScreen(): React.JSX.Element {
   const { colors, isDark } = useTheme();
@@ -30,19 +31,19 @@ export default function PostScreen(): React.JSX.Element {
   const handlePost = async () => {
     // Basic validation
     if (!fromCity || !toCity || !date || !time || !seats || !fare) {
-      Alert.alert('Missing Fields', 'Please fill in all fields to post a ride.');
+      Toast.show({ title: 'Missing Fields', message: 'Please fill in all fields to post a ride.', type: 'error' });
       return;
     }
 
     // Date validation simple regex YYYY-MM-DD
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      Alert.alert('Invalid Date', 'Please use YYYY-MM-DD format (e.g. 2026-10-25)');
+      Toast.show({ title: 'Invalid Date', message: 'Please use YYYY-MM-DD format (e.g. 2026-10-25)', type: 'error' });
       return;
     }
 
     // Time validation HH:mm
     if (!/^\d{2}:\d{2}$/.test(time)) {
-      Alert.alert('Invalid Time', 'Please use HH:MM format (e.g. 14:30)');
+      Toast.show({ title: 'Invalid Time', message: 'Please use HH:MM format (e.g. 14:30)', type: 'error' });
       return;
     }
 
@@ -58,7 +59,7 @@ export default function PostScreen(): React.JSX.Element {
         genderPreference: sameGenderOnly ? 'SAME_GENDER' : 'ANY',
       });
 
-      Alert.alert('Success', 'Ride posted successfully!');
+      Toast.show({ title: 'Success', message: 'Ride posted successfully!', type: 'success' });
       
       // Reset form
       setFromCity('');
@@ -73,7 +74,7 @@ export default function PostScreen(): React.JSX.Element {
       router.push('/(tabs)');
     } catch (error: any) {
       const msg = error.response?.data?.error?.message || 'Failed to post ride';
-      Alert.alert('Error', msg);
+      Toast.show({ title: 'Error', message: msg, type: 'error' });
     }
   };
 

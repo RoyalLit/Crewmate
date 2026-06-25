@@ -48,6 +48,7 @@ import { AuthProvider } from '../src/context/AuthContext';
 import { SocketProvider } from '../src/context/SocketContext';
 import { ActionSheetProvider } from '@expo/react-native-action-sheet';
 import { GlobalAlert } from '../src/components/GlobalAlert';
+import { ToastProvider } from '../src/components/Toast';
 import ErrorBoundary from '../src/components/ErrorBoundary';
 import OfflineNotice from '../src/components/OfflineNotice';
 
@@ -164,6 +165,7 @@ export default function RootLayout(): React.JSX.Element | null {
                   <Stack.Screen name="ride/[id]" />
                 </Stack>
                 <GlobalAlert />
+                <ToastProvider />
                 {(!animationDone || !isAuthChecked) && <BootScreen onAnimationDone={() => setAnimationDone(true)} isReady={isAuthChecked} />}
               </>
             </ActionSheetProvider>

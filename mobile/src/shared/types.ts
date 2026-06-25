@@ -55,4 +55,18 @@ export interface UserRef {
   homeCity: string;
   profilePhoto?: string;
   isVerified: boolean;
+  averageRating?: number;
+  totalReviews?: number;
+}
+
+// ── Reviews ───────────────────────────────────────────────────────────────────
+export interface Review {
+  id: string;
+  reviewerId: string | UserRef;
+  reviewer?: UserRef;
+  revieweeId: string;
+  rideId: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
 }

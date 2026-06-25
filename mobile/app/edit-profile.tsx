@@ -1,3 +1,4 @@
+import { Toast } from '../src/components/Toast';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -29,7 +30,7 @@ export default function EditProfileScreen() {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('Error', 'Name cannot be empty.');
+      Toast.show({ title: 'Error', message: 'Name cannot be empty.', type: 'error' });
       return;
     }
     
@@ -40,10 +41,10 @@ export default function EditProfileScreen() {
         college: college.trim(),
         gender,
       });
-      Alert.alert('Success', 'Profile updated successfully!');
+      Toast.show({ title: 'Success', message: 'Profile updated successfully!', type: 'success' });
       router.back();
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.error?.message || 'Failed to update profile.');
+      Toast.show({ title: 'Error', message: err.response?.data?.error?.message || 'Failed to update profile.', type: 'error' });
     }
   };
 
@@ -68,9 +69,9 @@ export default function EditProfileScreen() {
 
     try {
       await updateAvatarMutation.mutateAsync(pickerResult.assets[0].uri);
-      Alert.alert('Success', 'Profile photo updated!');
+      Toast.show({ title: 'Success', message: 'Profile photo updated!', type: 'success' });
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.error?.message || 'Failed to upload photo.');
+      Toast.show({ title: 'Error', message: err.response?.data?.error?.message || 'Failed to upload photo.', type: 'error' });
     }
   };
 

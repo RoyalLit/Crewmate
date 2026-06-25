@@ -65,7 +65,7 @@ Ride Posting
 
 Ride Discovery
 •	Browse rides filtered by route (from + to) and date
-•	Search with city autocomplete (Google Places API)
+•	Search with city autocomplete (Nominatim/OpenStreetMap)
 •	View ride card: poster's college, home city, seats left, fare, departure time
 •	View poster's profile before requesting
 
@@ -85,10 +85,14 @@ Cost Split Calculator
 •	Displayed on ride card and in chat for reference
 •	No in-app payment processing — settlement happens offline
 
+Ratings & Reviews
+•	Leave a 1 to 5 star rating and optional text review for co-passengers and posters after a ride has departed
+•	View a user's average rating and total review count on their profile
+•	View a dedicated screen listing all past reviews a user has received
+
 3.2 Out of Scope (MVP)
 •	In-app payments or UPI integration
 •	Driver/cab booking functionality
-•	Ratings and reviews
 •	Group rides with more than one cab
 •	Ride tracking / live GPS
 •	Web version
@@ -132,7 +136,7 @@ F10	My Rides	View rides posted and rides joined	P0
 F11	Browse Feed	Paginated list of active rides, newest first	P0
 F12	Route Filter	Filter by from city + to city	P0
 F13	Date Filter	Filter by travel date	P0
-F14	City Autocomplete	Nominatim (OpenStreetMap) for city input fields — Google Places swap deferred	P0
+F14	City Autocomplete	Nominatim (OpenStreetMap) for city input fields	P0
 F15	Ride Detail View	Full ride info + poster's college profile	P0
 
 5.4 Requests & Matching
@@ -167,7 +171,7 @@ TanStack Query	v5	Server state management (caching, pagination, mutations)
 Zustand	v4	Minimal global state (auth, theme, notifications)
 Socket.io Client	4.x	Real-time chat connection
 Expo Notifications	latest	Push notification handling
-React Native Maps	latest	City search + route preview (Nominatim fallback for autocomplete)
+React Native Maps	latest	City search + route preview (Nominatim for autocomplete)
 expo-blur	SDK 54 compatible	iOS Liquid Glass tab bar blur effect
 expo-image	3.x	Image caching and performance
 React Native Reanimated	4.x	Animation library (onboarding, transitions)
@@ -255,7 +259,7 @@ Week	Phase	Deliverables
 1	Backend Core	Project setup, Express boilerplate, MongoDB connection, Auth endpoints (register, login, OTP, refresh, logout), JWT middleware, Postman collection
 2	Backend Features	Ride CRUD endpoints, Request endpoints, User profile endpoints, Cloudinary integration, Input validation, Rate limiting, GitHub Actions CI
 3	Mobile Foundation	Expo project setup, Expo Router navigation, NativeWind config, Auth screens (register, login, OTP), Profile setup screen, API integration (Axios)
-4	Mobile Core	Home feed, Ride detail, Post ride form, Request flow, My rides screen, Google Places autocomplete, Cost calculator UI
+4	Mobile Core	Home feed, Ride detail, Post ride form, Request flow, My rides screen, Nominatim autocomplete, Cost calculator UI
 5	Real-time & Polish	Socket.io chat, Push notifications (Expo), Read receipts, Error states, Loading skeletons, Edge case handling
 6	Ship	EAS build (APK + IPA), Railway backend deploy, MongoDB Atlas production setup, README, demo video, GitHub cleanup
 
@@ -263,7 +267,7 @@ Week	Phase	Deliverables
 10. Risks & Mitigations
 Risk	Likelihood	Mitigation
 React Native learning curve delays mobile build	High	Start with Expo, use NativeWind for familiar syntax, mock API in Week 3
-Google Maps API billing	Medium	Use Places autocomplete only (low call volume), set billing alert at $0
+Free Nominatim Tier	Medium	Keep request volume low, cache results where possible
 College email not available for all Indian students	High	Student ID fallback implemented as P0
 Socket.io complexity on mobile	Medium	Use Expo managed workflow, test on real device from day one
 Railway free tier cold starts	Low	Add keep-alive ping via cron job or UptimeRobot (free)
@@ -271,7 +275,6 @@ BlurView performance on Android mid-range devices.	Medium	BlurView is iOS-only i
 
 11. Future Roadmap (Post-MVP)
 v1.1
-•	Ratings and reviews for riders
 •	Ride history with basic stats
 •	Gender preference filter (opt-in)
 

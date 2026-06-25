@@ -55,7 +55,19 @@ export const useCreateReviewMutation = () => {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['users', variables.userId, 'reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['users', variables.userId] });
     },
+  });
+};
+
+export const useUserReviewsQuery = (userId: string, page = 1) => {
+  return useQuery({
+    queryKey: ['users', userId, 'reviews', page],
+    queryFn: async () => {
+      const response = await client.get(`/users/${userId}/reviews`, { params: { page } });
+      return response.data;
+    },
+    enabled: !!userId,
   });
 };
 

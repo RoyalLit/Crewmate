@@ -230,7 +230,7 @@ react-native-safe-area-context	Already in Expo SDK	Bottom inset for home indicat
 •	Header: 'Join Crewmute' — H1
 •	Fields (stacked, 16px gap): Full Name, College Email, College Name, Home City, Password, Confirm Password
 •	College Name: free-text input (not a picker — too many colleges in India)
-•	Home City: Google Places autocomplete, cities only
+•	Home City: Nominatim autocomplete, cities only
 •	Password: show/hide toggle icon in input right
 •	CTA: 'Send OTP' — Primary full-width button
 •	Footer: 'Already have an account? Log in' — Ghost centered

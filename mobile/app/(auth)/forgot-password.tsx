@@ -1,3 +1,4 @@
+import { Toast } from '../../src/components/Toast';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,7 +7,7 @@ import { useTheme } from '../../src/design/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { spacing, brandColors } from '../../src/design/tokens';
 import { useForgotPasswordMutation } from '../../src/api/authHooks';
-import { Alert } from '../../src/components/GlobalAlert';
+
 
 export default function ForgotPasswordScreen() {
   const { colors, isDark } = useTheme();
@@ -24,7 +25,7 @@ export default function ForgotPasswordScreen() {
 
     try {
       await forgotPasswordMutation.mutateAsync({ email });
-      Alert.alert('Success', 'If an account exists, an OTP has been sent to your email.');
+      Toast.show({ title: 'Success', message: 'If an account exists, an OTP has been sent to your email.', type: 'success' });
       router.push({
         pathname: '/(auth)/reset-password',
         params: { email }

@@ -17,8 +17,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.crewmute.app",
-      "deploymentTarget": "26.0",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "deploymentTarget": "26.0"
     },
     "android": {
       "adaptiveIcon": {
@@ -26,8 +25,7 @@
         "backgroundColor": "#0F0F1A"
       },
       "package": "com.crewmute.app",
-      "minSdkVersion": 26,
-      "googleServicesFile": "./google-services.json"
+      "minSdkVersion": 26
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -72,8 +70,7 @@
           }
         }
       ],
-      "@react-native-community/datetimepicker",
-      "expo-video"
+      "@react-native-community/datetimepicker"
     ],
     "scheme": "crewmute",
     "extra": {

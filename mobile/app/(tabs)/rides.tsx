@@ -1,3 +1,4 @@
+import { Toast } from '../../src/components/Toast';
 import React, { useState, useCallback } from 'react';
 import { StyleSheet, Text, View, FlatList, Pressable, Dimensions, ActivityIndicator, RefreshControl } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
@@ -107,7 +108,7 @@ export default function RidesScreen(): React.JSX.Element {
             try {
               await cancelMutation.mutateAsync(rideId);
             } catch (e: any) {
-              Alert.alert('Error', e.response?.data?.error?.message || 'Failed to cancel ride');
+              Toast.show({ title: 'Error', message: e.response?.data?.error?.message || 'Failed to cancel ride', type: 'error' });
             }
           }
         }

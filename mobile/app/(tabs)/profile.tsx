@@ -1,3 +1,4 @@
+import { Toast } from '../../src/components/Toast';
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,7 +16,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Avatar } from '../../src/components/Avatar';
 import { VerifiedBadge } from '../../src/components/VerifiedBadge';
 import { StarRating } from '../../src/components/StarRating';
-import { Alert } from '../../src/components/GlobalAlert';
+
 import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 
@@ -220,7 +221,7 @@ export default function ProfileScreen(): React.JSX.Element {
           </Pressable>
           <View style={[styles.divider, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} />
 
-          <Pressable style={styles.settingRow} onPress={() => Alert.alert('Privacy Policy', 'This is a mock Privacy Policy for Crewmute MVP.')}>
+          <Pressable style={styles.settingRow} onPress={() => Toast.show({ title: 'Privacy Policy', message: 'This is a mock Privacy Policy for Crewmute MVP.', type: 'info' })}>
             <View style={styles.settingIcon}>
               <Ionicons name="document-text-outline" size={20} color={colors.text.primary} />
             </View>
@@ -229,7 +230,7 @@ export default function ProfileScreen(): React.JSX.Element {
           </Pressable>
           <View style={[styles.divider, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]} />
 
-          <Pressable style={styles.settingRow} onPress={() => Alert.alert('Terms of Service', 'This is a mock Terms of Service for Crewmute MVP.')}>
+          <Pressable style={styles.settingRow} onPress={() => Toast.show({ title: 'Terms of Service', message: 'This is a mock Terms of Service for Crewmute MVP.', type: 'info' })}>
             <View style={styles.settingIcon}>
               <Ionicons name="information-circle-outline" size={20} color={colors.text.primary} />
             </View>

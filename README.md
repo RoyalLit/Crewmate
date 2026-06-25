@@ -89,7 +89,6 @@ npx expo start         # press 'a' for Android, 'i' for iOS, or scan QR with Exp
 | Variable | Purpose |
 |---|---|
 | `EXPO_PUBLIC_API_URL` | Backend base URL (e.g. `http://localhost:5000/api/v1`) |
-| `EXPO_PUBLIC_GOOGLE_PLACES_KEY` | Google Places API key (optional — falls back to Nominatim) |
 
 </details>
 

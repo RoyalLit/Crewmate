@@ -35,7 +35,6 @@ if (__DEV__ && Constants.expoConfig?.hostUri) {
 
 const mobileEnv = {
   apiUrl,
-  googlePlacesKey: requirePublicEnv(process.env.EXPO_PUBLIC_GOOGLE_PLACES_KEY, 'EXPO_PUBLIC_GOOGLE_PLACES_KEY'),
 } as const;
 
 export default mobileEnv;

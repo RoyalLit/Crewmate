@@ -101,12 +101,24 @@ export class UsersService {
     const ride = await RideModel.findById(data.rideId);
     if (!ride) throw new NotFoundError('Ride', data.rideId);
 
+    if (new Date(ride.departureTime) > new Date()) {
+      throw new ConflictError('Cannot review a ride that has not departed yet');
+    }
+
     // Verify reviewer and reviewee were part of the ride (one is poster, one is accepted requester)
     const isPosterReviewer = ride.posterId.toString() === reviewerId;
     const isPosterReviewee = ride.posterId.toString() === revieweeId;
     
-    if (!isPosterReviewer && !isPosterReviewee) {
-      // Neither is the poster, they must be co-passengers. We allow co-passenger reviews too.
+    const [reviewerRequest, revieweeRequest] = await Promise.all([
+      isPosterReviewer ? null : RideRequestModel.findOne({ rideId: data.rideId, requesterId: reviewerId, status: 'accepted' }),
+      isPosterReviewee ? null : RideRequestModel.findOne({ rideId: data.rideId, requesterId: revieweeId, status: 'accepted' })
+    ]);
+
+    if (!isPosterReviewer && !reviewerRequest) {
+      throw new ConflictError('You were not an accepted passenger on this ride');
+    }
+    if (!isPosterReviewee && !revieweeRequest) {
+      throw new ConflictError('The user you are reviewing was not an accepted passenger on this ride');
     }
 
     const revieweeExists = await UserModel.exists({ _id: revieweeId });

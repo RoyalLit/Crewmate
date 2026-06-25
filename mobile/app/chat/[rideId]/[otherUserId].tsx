@@ -90,7 +90,7 @@ export default function ChatScreen(): React.JSX.Element {
 
   const actionOptions = actionLabels.map(label => ({
     label,
-    isDestructive: label === 'Remove Passenger' || label === 'Withdraw Request',
+    isDestructive: label === 'Remove Passenger' || label === 'Withdraw Request' || label === 'Block User',
     onPress: () => handleAction(label),
   }));
 
@@ -187,13 +187,21 @@ export default function ChatScreen(): React.JSX.Element {
             imageUrl={otherUserProfile?.profilePhotoUrl} 
           />
         </View>
-        <View style={styles.headerTitleContainer}>
+        <Pressable 
+          style={styles.headerTitleContainer} 
+          onPress={() => router.push(`/user/${otherUserId}/reviews`)}
+        >
           <Text style={[styles.headerTitle, { color: colors.text.primary }]}>{name || otherUserProfile?.name || 'Chat'}</Text>
+          {otherUserProfile?.totalReviews !== undefined && otherUserProfile.totalReviews > 0 ? (
+            <Text style={[styles.headerSubtitle, { color: brandColors.electricViolet, marginTop: 2 }]}>
+              ★ {otherUserProfile.averageRating?.toFixed(1)} ({otherUserProfile.totalReviews} reviews)
+            </Text>
+          ) : null}
           {/* Banner text for context */}
           {rideInfo ? (
             <Text style={[styles.headerSubtitle, { color: colors.text.secondary }]}>{rideInfo}</Text>
           ) : null}
-        </View>
+        </Pressable>
         <Pressable 
           onPress={openActionSheet} 
           style={styles.menuButton}

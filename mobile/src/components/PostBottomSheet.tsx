@@ -1,10 +1,11 @@
+import { Toast } from './Toast';
 import React, { useCallback, useMemo, forwardRef, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import BottomSheet, { BottomSheetScrollView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../design/theme';
 import { spacing, brandColors } from '../design/tokens';
-import { Alert } from './GlobalAlert';
+
 import { useCreateRideMutation, type CreateRideData } from '../api/ridesHooks';
 import { CityAutocomplete } from './CityAutocomplete';
 import { useAuthStore } from '../store/authStore';
@@ -86,37 +87,37 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
   const handleNext = async () => {
     if (step < 3) {
       if (step === 1 && (!from || !to)) {
-        Alert.alert('Missing Fields', 'Please select departure and arrival cities.');
+        Toast.show({ title: 'Missing Fields', message: 'Please select departure and arrival cities.', type: 'error' });
         return;
       }
       if (step === 2) {
         if (!date || !time || !arrivalTime || dateError || timeError || arrivalTimeError || pastTimeError) {
-           Alert.alert('Invalid Input', 'Please fix the errors in red before continuing.');
+           Toast.show({ title: 'Invalid Input', message: 'Please fix the errors in red before continuing.', type: 'error' });
            return;
         }
       }
       if (step === 3) {
         if (!cabType) {
-          Alert.alert('Missing Field', 'Please select a vehicle type.');
+          Toast.show({ title: 'Missing Field', message: 'Please select a vehicle type.', type: 'error' });
           return;
         }
         if (!fare || fareError) {
-          Alert.alert('Missing Field', 'Please enter a valid fare per seat.');
+          Toast.show({ title: 'Missing Field', message: 'Please enter a valid fare per seat.', type: 'error' });
           return;
         }
       }
       setStep(step + 1);
     } else {
       if (!cabType) {
-        Alert.alert('Missing Field', 'Please select a vehicle type.');
+        Toast.show({ title: 'Missing Field', message: 'Please select a vehicle type.', type: 'error' });
         return;
       }
       if (!fare || fareError) {
-        Alert.alert('Missing Field', 'Please enter a valid fare per seat.');
+        Toast.show({ title: 'Missing Field', message: 'Please enter a valid fare per seat.', type: 'error' });
         return;
       }
       if (genderError) {
-        Alert.alert('Invalid Option', genderError);
+        Toast.show({ title: 'Invalid Option', message: genderError, type: 'info' });
         return;
       }
       try {
@@ -133,7 +134,7 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
           genderPreference: genderPreference,
         });
 
-        Alert.alert('Success', 'Ride Posted Successfully!');
+        Toast.show({ title: 'Success', message: 'Ride Posted Successfully!', type: 'success' });
         // @ts-expect-error - BottomSheet ref type doesn't expose close() on current
         ref?.current?.close();
         setTimeout(() => {
@@ -147,7 +148,7 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
           setGenderPreference('ANY');
         }, 500);
       } catch (e: any) {
-        Alert.alert('Error', e.response?.data?.error?.message || 'Failed to post ride');
+        Toast.show({ title: 'Error', message: e.response?.data?.error?.message || 'Failed to post ride', type: 'error' });
       }
     }
   };

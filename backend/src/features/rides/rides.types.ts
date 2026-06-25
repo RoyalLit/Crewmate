@@ -38,6 +38,7 @@ export interface RideResponseDTO {
   id: string;
   posterId: string;
   poster?: PublicProfileResponseDTO; // Populated when fetching ride details
+  passengers?: PublicProfileResponseDTO[]; // Populated when fetching ride details
   fromCity: string;
   toCity: string;
   departureDate: string;

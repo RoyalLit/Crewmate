@@ -1,3 +1,4 @@
+import { Toast } from '../../src/components/Toast';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,7 +7,7 @@ import { useTheme } from '../../src/design/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { spacing, brandColors } from '../../src/design/tokens';
 import { useResetPasswordMutation } from '../../src/api/authHooks';
-import { Alert } from '../../src/components/GlobalAlert';
+
 
 export default function ResetPasswordScreen() {
   const { colors, isDark } = useTheme();
@@ -48,7 +49,7 @@ export default function ResetPasswordScreen() {
         newPassword
       });
       
-      Alert.alert('Success', 'Your password has been reset successfully!');
+      Toast.show({ title: 'Success', message: 'Your password has been reset successfully!', type: 'success' });
       router.replace('/(auth)/login');
     } catch (err: any) {
       setError(err.response?.data?.error?.message || 'Failed to reset password');

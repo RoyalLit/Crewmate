@@ -20,7 +20,7 @@ Database	MongoDB Atlas (Mongoose)	All persistent data: users, rides, requests, m
 Real-time	Socket.io	Live chat, seat count updates, notification events
 Media Storage	Cloudinary	Profile photos, student ID uploads
 Push Notifications	Expo Push Notification Service	FCM/APNs delivery via Expo
-Maps & Places	Google Places API	City autocomplete in ride forms
+Maps & Places	Nominatim API	City autocomplete in ride forms
 Deployment	Railway (backend) + EAS (mobile)	Production hosting and app builds
 
 1.2 Communication Flow
@@ -340,8 +340,7 @@ CLIENT_URL	No (default: *)	Mobile app URL for CORS
 
 8.2 Mobile (.env)
 Variable	Required	Purpose
-EXPO_PUBLIC_API_URL	✅ (production)	Backend base URL (e.g. http://localhost:5000/api/v1)
-EXPO_PUBLIC_GOOGLE_PLACES_KEY	No (Nominatim fallback)	Google Places API key for city autocomplete (deferred — FEAT-08)
+EXPO_PUBLIC_API_URL	Yes	Base URL for backend API (e.g., http://localhost:5001)
 
 9. DevOps & Deployment
 9.1 GitHub Strategy

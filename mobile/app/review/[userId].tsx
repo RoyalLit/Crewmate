@@ -1,9 +1,9 @@
+import { Toast } from '../../src/components/Toast';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Alert } from '../../src/components/GlobalAlert';
 import { useTheme } from '../../src/design/theme';
 import { spacing } from '../../src/design/tokens';
 import { useCreateReviewMutation } from '../../src/api/usersHooks';
@@ -19,7 +19,7 @@ export default function ReviewScreen() {
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      Alert.alert('Rating Required', 'Please select a rating from 1 to 5 stars.');
+      Toast.show({ title: 'Rating Required', message: 'Please select a rating from 1 to 5 stars.', type: 'error' });
       return;
     }
 
@@ -30,10 +30,10 @@ export default function ReviewScreen() {
         rating,
         comment: comment.trim(),
       });
-      Alert.alert('Review Submitted', 'Thank you for your feedback!');
+      Toast.show({ title: 'Review Submitted', message: 'Thank you for your feedback!', type: 'success' });
       router.back();
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.error?.message || 'Failed to submit review');
+      Toast.show({ title: 'Error', message: error.response?.data?.error?.message || 'Failed to submit review', type: 'error' });
     }
   };
 

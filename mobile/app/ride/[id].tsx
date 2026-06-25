@@ -1,3 +1,4 @@
+import { Toast } from '../../src/components/Toast';
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -79,9 +80,9 @@ export default function RideDetailScreen() {
   const handleRequestSeat = async () => {
     try {
       await createRequestMutation.mutateAsync({ rideId: ride.id });
-      Alert.alert('Success', 'Your request has been sent to the poster.');
+      Toast.show({ title: 'Success', message: 'Your request has been sent to the poster.', type: 'success' });
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.error?.message || 'Failed to request seat');
+      Toast.show({ title: 'Error', message: error.response?.data?.error?.message || 'Failed to request seat', type: 'error' });
     }
   };
 
@@ -96,7 +97,7 @@ export default function RideDetailScreen() {
           try {
             await withdrawRequestMutation.mutateAsync(existingRequest._id || existingRequest.id);
           } catch (error: any) {
-            Alert.alert('Error', error.response?.data?.error?.message || 'Failed to withdraw');
+            Toast.show({ title: 'Error', message: error.response?.data?.error?.message || 'Failed to withdraw', type: 'error' });
           }
         }
       }
@@ -112,10 +113,10 @@ export default function RideDetailScreen() {
         onPress: async () => {
           try {
             await cancelRideMutation.mutateAsync(ride.id);
-            Alert.alert('Ride Canceled', 'Your ride has been canceled.');
+            Toast.show({ title: 'Ride Canceled', message: 'Your ride has been canceled.', type: 'info' });
             router.back();
           } catch (error: any) {
-            Alert.alert('Error', error.response?.data?.error?.message || 'Failed to cancel ride');
+            Toast.show({ title: 'Error', message: error.response?.data?.error?.message || 'Failed to cancel ride', type: 'error' });
           }
         }
       }
@@ -282,6 +283,37 @@ export default function RideDetailScreen() {
           </View>
         </View>
 
+        {/* Passengers */}
+        {ride.passengers && ride.passengers.length > 0 && (
+          <View style={{ marginTop: spacing.xl }}>
+            <Text style={[styles.sectionTitle, { color: colors.text.primary, marginBottom: spacing.xs }]}>Passengers</Text>
+            {ride.passengers.map((passenger: any) => (
+              <View key={passenger.id || passenger._id} style={[styles.posterCard, { backgroundColor: colors.background.subtle, marginTop: spacing.sm, padding: spacing.sm }]}>
+                <Avatar 
+                  name={passenger.name} 
+                  imageUrl={passenger.profilePhotoUrl} 
+                  isVerified={passenger.isVerified || passenger.isEmailVerified}
+                  size="md"
+                />
+                <View style={styles.posterDetails}>
+                  <Text style={[styles.posterName, { color: colors.text.primary, fontSize: 15 }]}>
+                    {passenger.name} {passenger.id === currentUser?.id && '(You)'}
+                  </Text>
+                  <Text style={[styles.posterCollege, { color: colors.text.secondary, fontSize: 13 }]}>
+                    {passenger.college}
+                  </Text>
+                </View>
+                {passenger.totalReviews > 0 && passenger.averageRating !== undefined && (
+                   <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? 'rgba(255, 215, 0, 0.15)' : 'rgba(255, 215, 0, 0.2)', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 8 }}>
+                     <Ionicons name="star" size={12} color="#DBA514" style={{ marginRight: 4 }} />
+                     <Text style={{ fontFamily: 'PlusJakartaSans-700Bold', fontSize: 12, color: colors.text.primary }}>{passenger.averageRating.toFixed(1)}</Text>
+                   </View>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* Route Map */}
         <Text style={[styles.sectionTitle, { color: colors.text.primary, marginTop: spacing.xl }]}>Route</Text>
         <RideMap fromCity={ride.fromCity} toCity={ride.toCity} stops={ride.stops || []} />
@@ -293,7 +325,7 @@ export default function RideDetailScreen() {
               Passenger Requests ({rideIncomingRequests.length})
             </Text>
             {rideIncomingRequests.map((req: any) => (
-              <IncomingRequestItem key={req._id || req.id} request={req} />
+              <IncomingRequestItem key={req._id || req.id} request={req} isRidePast={derivedStatus === 'expired'} />
             ))}
           </View>
         )}

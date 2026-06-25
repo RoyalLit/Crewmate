@@ -1,3 +1,4 @@
+import { Toast } from '../../src/components/Toast';
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -20,7 +21,7 @@ export default function ReportScreen() {
 
   const handleReport = () => {
     if (reason.trim().length < 5) {
-      Alert.alert('Error', 'Please provide a valid reason (at least 5 characters).');
+      Toast.show({ title: 'Error', message: 'Please provide a valid reason (at least 5 characters).', type: 'error' });
       return;
     }
 
@@ -31,7 +32,7 @@ export default function ReportScreen() {
         ]);
       },
       onError: (err: any) => {
-        Alert.alert('Error', err.response?.data?.message || 'Failed to submit report. Please try again.');
+        Toast.show({ title: 'Error', message: err.response?.data?.message || 'Failed to submit report. Please try again.', type: 'error' });
       }
     });
   };

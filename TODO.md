@@ -126,8 +126,6 @@
 ## Skipped
 
 | Item | Why |
-|------|-----|
-| **FEAT-08** — Google Places API swap | Requires Google API key + Places SDK setup. Nominatim works. Do when ready. |
 | **QLTY-03** — Remove `@expo/react-native-action-sheet` | Actively used in `_layout.tsx:36` for the action sheet provider |
 
 ---

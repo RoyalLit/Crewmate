@@ -52,12 +52,24 @@ export class RidesService {
 
     const formattedRide = this.formatRide(ride);
     
-    // Fetch poster profile
+    // Fetch poster profile and passengers
     try {
-      const poster = await usersService.getPublicProfile(formattedRide.posterId);
+      const [poster, acceptedRequests] = await Promise.all([
+        usersService.getPublicProfile(formattedRide.posterId),
+        requestsRepository.findByRideIdAndStatus(id, 'accepted')
+      ]);
+      
       formattedRide.poster = poster;
+      
+      if (acceptedRequests.length > 0) {
+        const passengerIds = acceptedRequests.map(req => req.requesterId.toString());
+        const passengers = await usersRepository.findByIds(passengerIds);
+        formattedRide.passengers = passengers.map(p => usersService.formatPublicProfile(p));
+      } else {
+        formattedRide.passengers = [];
+      }
     } catch (error) {
-      logger.warn({ error }, 'Failed to fetch poster profile for ride details');
+      logger.warn({ error }, 'Failed to fetch poster or passengers for ride details');
     }
 
     return formattedRide;
