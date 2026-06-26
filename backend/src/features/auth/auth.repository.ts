@@ -66,16 +66,15 @@ export class AuthRepository {
   }
 
   /**
-   * Removes a refresh token hash by index (used during rotation).
+   * Removes a refresh token hash by value using atomic $pull.
+   * Returns true if the hash was actually found and removed (prevents race conditions).
    */
-  async removeRefreshTokenHash(userId: string, index: number): Promise<void> {
-    await UserModel.findByIdAndUpdate(userId, {
-      $unset: { [`refreshTokenHashes.${index}`]: 1 },
-    });
-    // Clean up null entries after removal
-    await UserModel.findByIdAndUpdate(userId, {
-      $pull: { refreshTokenHashes: null },
-    });
+  async consumeRefreshTokenHash(userId: string, hash: string): Promise<boolean> {
+    const result = await UserModel.updateOne(
+      { _id: userId, refreshTokenHashes: hash },
+      { $pull: { refreshTokenHashes: hash } }
+    );
+    return result.modifiedCount > 0;
   }
 
   /**

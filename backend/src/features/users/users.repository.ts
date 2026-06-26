@@ -8,7 +8,7 @@ export class UsersRepository {
   }
 
   async findById(id: string): Promise<IUser | null> {
-    const user = await UserModel.findById(id).lean();
+    const user = await UserModel.findById(id).select('-password').lean();
     return user ? (user as unknown as IUser) : null;
   }
 

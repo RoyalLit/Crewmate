@@ -71,7 +71,8 @@ apiClient.interceptors.response.use(
         if (!refreshToken) throw new Error('No refresh token');
 
         const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
-        const { accessToken, refreshToken: newRefreshToken } = response.data;
+        // The backend wraps responses in a { status: 'success', data: { ... } } structure
+        const { accessToken, refreshToken: newRefreshToken } = response.data.data;
 
         await storage.setAccessToken(accessToken);
         await storage.setRefreshToken(newRefreshToken);

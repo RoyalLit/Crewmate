@@ -31,6 +31,11 @@ export interface ResetPasswordRequestDTO {
   newPassword?: string;
 }
 
+export interface RegisterResult {
+  user?: UserResponseDTO;
+  message: string;
+}
+
 export interface UserResponseDTO {
   id: string;
   name: string;

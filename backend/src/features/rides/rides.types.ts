@@ -32,6 +32,8 @@ export interface RideFilterQuery extends PaginationQuery {
   excludePosterId?: string;
   requesterId?: string;
   requesterGender?: 'MALE' | 'FEMALE' | 'OTHER';
+  sortBy?: 'earliest' | 'cheapest';
+  onlyAvailableSeats?: string; // Query string "true" or "false"
 }
 
 export interface RideResponseDTO {

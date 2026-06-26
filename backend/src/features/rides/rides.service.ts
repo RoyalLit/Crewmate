@@ -143,7 +143,11 @@ export class RidesService {
       }
     }
 
-    const updates: any = { ...data };
+    const ALLOWED_UPDATE_FIELDS = ['departureDate', 'departureTime', 'arrivalTime', 'stops', 'totalSeats', 'farePerSeat', 'cabType', 'genderPreference'] as const;
+    const updates: any = {};
+    for (const key of ALLOWED_UPDATE_FIELDS) {
+      if (key in data) updates[key] = (data as any)[key];
+    }
     
     if (data.totalSeats !== undefined) {
       const difference = data.totalSeats - ride.totalSeats;

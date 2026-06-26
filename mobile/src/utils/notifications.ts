@@ -102,7 +102,11 @@ export function navigateFromNotification(
   }
 
   try {
-    router.push(data.route as Href);
+    // Slight delay to ensure auth routing (like replacing to /(tabs)) has settled 
+    // before we push the deep link on top of the stack.
+    setTimeout(() => {
+      router.push(data.route as Href);
+    }, 150);
   } catch (e) {
     logger.log('Failed to navigate from notification:', e);
   }

@@ -21,6 +21,8 @@ export interface RideFilterData {
   date?: string;
   page?: number;
   limit?: number;
+  sortBy?: 'earliest' | 'cheapest';
+  onlyAvailableSeats?: boolean;
 }
 
 export function useCreateRideMutation() {
@@ -56,6 +58,8 @@ export function useBrowseRidesQuery(filters: RideFilterData) {
       if (filters.date) params.append('date', filters.date);
       if (filters.page) params.append('page', filters.page.toString());
       if (filters.limit) params.append('limit', filters.limit.toString());
+      if (filters.sortBy) params.append('sortBy', filters.sortBy);
+      if (filters.onlyAvailableSeats) params.append('onlyAvailableSeats', 'true');
 
       const response = await apiClient.get(`/rides?${params.toString()}`);
       return response.data;

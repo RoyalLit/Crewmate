@@ -10,7 +10,7 @@ import logger from '../../shared/logger';
 import { mailerService } from '../../shared/mailer';
 
 import { authRepository } from './auth.repository';
-import type { RegisterRequestDTO, LoginRequestDTO, VerifyOTPRequestDTO, ResendOTPRequestDTO, AuthTokens, UserResponseDTO, JwtPayload } from './auth.types';
+import type { RegisterRequestDTO, LoginRequestDTO, VerifyOTPRequestDTO, ResendOTPRequestDTO, AuthTokens, UserResponseDTO, JwtPayload, RegisterResult } from './auth.types';
 
 
 // Node's native jsonwebtoken library is typically used for JWTs
@@ -66,12 +66,12 @@ export class AuthService {
   /**
    * Registers a new user. If OTP is enabled, sets it up.
    */
-  async register(data: RegisterRequestDTO): Promise<{ user: UserResponseDTO; message: string }> {
+  async register(data: RegisterRequestDTO): Promise<RegisterResult> {
     const existingUser = await authRepository.findByEmail(data.email);
     
     if (existingUser) {
       if (existingUser.isEmailVerified) {
-        throw new ConflictError('User already exists with this email.');
+        return { message: 'Registration successful. Please verify your email with the OTP sent.' };
       } else {
         // Allow re-registration if not verified
         // Delete the existing unverified user to prevent E11000 duplicate key error
@@ -87,8 +87,11 @@ export class AuthService {
     const otpExpiresAt = new Date(Date.now() + TOKEN.OTP_EXPIRY_MINUTES * 60 * 1000); // 15 mins validity
 
     const newUser = await authRepository.createUser({
-      ...data,
+      name: data.name,
+      email: data.email,
       password: hashedPassword,
+      college: data.college,
+      homeCity: data.homeCity,
       isEmailVerified: false,
       status: 'active',
       otpCode: hashedOtp,
@@ -117,11 +120,11 @@ export class AuthService {
     const user = await authRepository.findByEmail(data.email);
 
     if (!user) {
-      throw new UnauthorizedError('No account found with this email.');
+      return { message: 'If an account exists, an OTP has been sent.' };
     }
 
     if (user.isEmailVerified) {
-      throw new ConflictError('Email is already verified.');
+      return { message: 'If an account exists, an OTP has been sent.' };
     }
 
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -314,17 +317,15 @@ export class AuthService {
         throw new UnauthorizedError('Your account has been suspended.');
       }
 
-      // Verify this specific refresh token against stored hashes (rotation check)
+      // Atomically consume the refresh token hash (prevents race conditions
+      // where two simultaneous requests with the same token both succeed)
       const tokenHash = hashToken(oldRefreshToken);
-      const hashIndex = (user.refreshTokenHashes || []).findIndex(h => h === tokenHash);
+      const consumed = await authRepository.consumeRefreshTokenHash(decoded.userId, tokenHash);
 
-      if (hashIndex === -1) {
+      if (!consumed) {
         throw new UnauthorizedError('Refresh token has already been used or is invalid.');
       }
 
-      // Remove the used token hash and generate a new pair
-      await authRepository.removeRefreshTokenHash(decoded.userId, hashIndex);
-      
       return this.generateTokens(decoded.userId, user.tokenVersion);
     } catch (error) {
       if (error instanceof UnauthorizedError) {

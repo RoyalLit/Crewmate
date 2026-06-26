@@ -12,6 +12,7 @@ import { RideCard } from '../../src/components/RideCard';
 import { useBrowseRidesQuery } from '../../src/api/ridesHooks';
 import { CityAutocomplete } from '../../src/components/CityAutocomplete';
 import { EmptyState } from '../../src/components/EmptyState';
+import { FilterBottomSheet, FilterBottomSheetRef, FilterOptions } from '../../src/components/FilterBottomSheet';
 import { useRouter } from 'expo-router';
 
 export default function ExploreScreen(): React.JSX.Element {
@@ -22,13 +23,20 @@ export default function ExploreScreen(): React.JSX.Element {
   const [fromCityFilter, setFromCityFilter] = useState('');
   const [toCityFilter, setToCityFilter] = useState('');
   const [isPulling, setIsPulling] = useState(false);
+  const filterSheetRef = React.useRef<FilterBottomSheetRef>(null);
+  const [filters, setFilters] = useState<FilterOptions>({
+    sortBy: 'earliest',
+    onlyAvailableSeats: false,
+  });
   
   // Real API Query
   const { data, isLoading, isError, refetch } = useBrowseRidesQuery({
     fromCity: fromCityFilter,
     toCity: toCityFilter,
     page: 1,
-    limit: 20
+    limit: 20,
+    sortBy: filters.sortBy,
+    onlyAvailableSeats: filters.onlyAvailableSeats,
   });
 
   const rides = data?.data?.data || [];
@@ -85,7 +93,7 @@ export default function ExploreScreen(): React.JSX.Element {
                   <Text style={[styles.subtitle, { color: colors.text.secondary }]}>Where are you heading today?</Text>
                 </View>
                 <Pressable 
-                  onPress={() => alert('Advanced filters coming soon!')}
+                  onPress={() => filterSheetRef.current?.present()}
                   style={[styles.themeToggle, { backgroundColor: colors.background.subtle }]}
                 >
                   <Ionicons name="options-outline" size={22} color={colors.text.primary} />
@@ -152,6 +160,7 @@ export default function ExploreScreen(): React.JSX.Element {
           }
         />
       </View>
+      <FilterBottomSheet ref={filterSheetRef} filters={filters} onFiltersChange={setFilters} />
     </View>
   );
 }

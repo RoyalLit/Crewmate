@@ -56,14 +56,18 @@ describe('Auth Flow', () => {
     expect(res.body.data.tokens.refreshToken).toBeDefined();
   });
 
-  it('POST /api/v1/auth/register — rejects duplicate email for verified user', async () => {
+  it('POST /api/v1/auth/register — returns success for duplicate email (anti-enumeration)', async () => {
     const res = await request(app)
       .post('/api/v1/auth/register')
       .send(TEST_USER);
 
-    expect(res.status).toBe(409);
-    expect(res.body.success).toBe(false);
-    expect(res.body.error.code).toBe('CONFLICT');
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+    // Verify the original account still works
+    const loginRes = await request(app)
+      .post('/api/v1/auth/login')
+      .send({ email: TEST_USER.email, password: TEST_USER.password });
+    expect(loginRes.status).toBe(200);
   });
 
   it('POST /api/v1/auth/login — logs in with valid credentials', async () => {

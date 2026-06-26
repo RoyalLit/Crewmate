@@ -23,10 +23,14 @@ export class RidesRepository {
   }
 
   async findRides(query: RideFilterQuery): Promise<PaginatedResult<IRide>> {
-    const { page = 1, pageSize = 20, fromCity, toCity, date, requesterGender } = query;
+    const { page = 1, pageSize = 20, fromCity, toCity, date, requesterGender, sortBy = 'earliest', onlyAvailableSeats } = query;
     const skip = (page - 1) * pageSize;
 
-    const filter: FilterQuery<IRide> = { status: 'active', availableSeats: { $gt: 0 } };
+    const filter: FilterQuery<IRide> = { status: 'active' };
+    
+    if (onlyAvailableSeats === 'true') {
+      filter.availableSeats = { $gt: 0 };
+    }
 
     // Calculate IST threshold (current time - 10 minutes)
     const threshold = new Date(Date.now() - 10 * 60 * 1000);
@@ -85,10 +89,14 @@ export class RidesRepository {
       filter.$and = conditions;
     }
 
+    const sortObj: any = sortBy === 'cheapest' 
+      ? { farePerSeat: 1, departureDate: 1, departureTime: 1 } 
+      : { departureDate: 1, departureTime: 1 };
+
     const [data, total] = await Promise.all([
       RideModel.find(filter)
         .select('posterId posterGender genderPreference fromCity toCity departureDate departureTime arrivalTime stops totalSeats availableSeats farePerSeat cabType status')
-        .sort({ departureDate: 1, departureTime: 1 }).skip(skip).limit(pageSize).lean(),
+        .sort(sortObj).skip(skip).limit(pageSize).lean(),
       RideModel.countDocuments(filter),
     ]);
 

@@ -35,7 +35,11 @@ const rawEnvSchema = z.object({
     .string()
     .optional()
     .default('false')
-    .transform((val) => val === 'true'),
+    .transform((val) => val === 'true')
+    .refine((val) => {
+      if (val && process.env.NODE_ENV === 'production') return false;
+      return true;
+    }, { message: 'MAGIC_OTP_ENABLED cannot be true in production' }),
   CRON_ENABLED: z
     .string()
     .optional()

@@ -43,4 +43,6 @@ export const rideFilterValidator = [
   query('fromCity').optional().isString().trim().isLength({ max: 100 }).withMessage('fromCity must be at most 100 characters'),
   query('toCity').optional().isString().trim().isLength({ max: 100 }).withMessage('toCity must be at most 100 characters'),
   query('date').optional().isISO8601(),
+  query('sortBy').optional().isIn(['earliest', 'cheapest']).withMessage('sortBy must be earliest or cheapest'),
+  query('onlyAvailableSeats').optional().isString().isIn(['true', 'false']),
 ];
