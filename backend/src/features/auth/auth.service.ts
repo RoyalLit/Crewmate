@@ -280,11 +280,11 @@ export class AuthService {
     }
 
     if (!user.isEmailVerified) {
-      throw new UnauthorizedError('Please verify your email before logging in.');
+      throw new UnauthorizedError('Invalid email or password.');
     }
 
     if (user.status === 'suspended') {
-      throw new UnauthorizedError('Your account has been suspended.');
+      throw new UnauthorizedError('Invalid email or password.');
     }
 
     const tokens = await this.generateTokens((user as any)._id.toString(), user.tokenVersion);

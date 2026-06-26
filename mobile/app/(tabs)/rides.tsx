@@ -11,6 +11,7 @@ import { TAB_BAR_HEIGHT, spacing } from '../../src/design/tokens';
 import { TicketRideCard } from '../../src/components/TicketRideCard';
 import { IncomingRequestItem } from '../../src/components/IncomingRequestItem';
 import { EmptyState } from '../../src/components/EmptyState';
+import { LeaveReviewSheet, LeaveReviewSheetRef } from '../../src/components/LeaveReviewSheet';
 import { useMyRidesQuery, useCancelRideMutation } from '../../src/api/ridesHooks';
 import { useMyRequestsQuery, useIncomingRequestsQuery } from '../../src/api/requestsHooks';
 import { getDerivedRideStatus } from '../../src/utils/rideUtils';
@@ -23,6 +24,7 @@ export default function RidesScreen(): React.JSX.Element {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'riding' | 'driving' | 'history'>('riding');
   const [isPulling, setIsPulling] = useState(false);
+  const reviewSheetRef = React.useRef<LeaveReviewSheetRef>(null);
 
   const { data, isLoading, isError, error: myRidesError, refetch: refetchMyRides } = useMyRidesQuery();
   const { data: myReqData, isLoading: reqLoading, error: myReqError, refetch: refetchMyReqs } = useMyRequestsQuery();
@@ -141,6 +143,15 @@ export default function RidesScreen(): React.JSX.Element {
               Long press to cancel
             </Text>
           )}
+          {activeTab === 'history' && (getDerivedRideStatus(ride) === 'expired' || getDerivedRideStatus(ride) === 'completed') && (
+            <Pressable 
+              style={[styles.leaveReviewBtn, { borderColor: brandColors.electricViolet }]}
+              onPress={() => reviewSheetRef.current?.present(rideId)}
+            >
+              <Ionicons name="star" size={16} color={brandColors.electricViolet} />
+              <Text style={[styles.leaveReviewText, { color: brandColors.electricViolet }]}>Leave Review</Text>
+            </Pressable>
+          )}
         </Pressable>
 
         {pendingRequests.map((req: any) => (
@@ -212,6 +223,7 @@ export default function RidesScreen(): React.JSX.Element {
           />
         }
       />
+      <LeaveReviewSheet ref={reviewSheetRef} onSuccess={handleRefresh} />
     </View>
   );
 }
@@ -307,5 +319,20 @@ const styles = StyleSheet.create({
   incomingRequestWrapper: {
     marginBottom: spacing.md,
   },
-
+  leaveReviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    gap: 8,
+    borderTopWidth: 0,
+    marginTop: -8, // Pull it up slightly so it attaches to the card seamlessly
+  },
+  leaveReviewText: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans-700Bold',
+  }
 });
