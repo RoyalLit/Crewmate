@@ -140,13 +140,21 @@ export default function ProfileScreen(): React.JSX.Element {
         </View>
 
         {/* Verified Student Wide Tile */}
-        <View style={[bentoBox, styles.verifiedTile, { backgroundColor: isDark ? 'rgba(0, 200, 150, 0.15)' : 'rgba(0, 200, 150, 0.12)', borderColor: isDark ? 'rgba(0, 200, 150, 0.3)' : 'rgba(0, 200, 150, 0.2)' }]}>
-          <View style={styles.verifiedIconContainer}>
-            <Ionicons name="shield-checkmark" size={24} color={brandColors.mintGreen} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.verifiedTitle, { color: isDark ? brandColors.mintGreen : brandColors.brandNavy }]}>Verified Student</Text>
-            <Text style={[styles.verifiedSub, { color: isDark ? 'rgba(255,255,255,0.8)' : colors.text.secondary }]}>Active university email</Text>
+        <View style={[bentoBox, styles.verifiedTile, { overflow: 'hidden', padding: 0, borderWidth: 0 }]}>
+          <LinearGradient
+            colors={isDark ? ['rgba(0, 200, 150, 0.2)', 'rgba(0, 200, 150, 0.05)'] : ['rgba(0, 200, 150, 0.15)', 'rgba(0, 200, 150, 0.02)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[StyleSheet.absoluteFillObject]}
+          />
+          <View style={[{ padding: spacing.xl, flexDirection: 'row', alignItems: 'center', gap: spacing.md }]}>
+            <View style={[styles.verifiedIconContainer, { backgroundColor: 'transparent' }]}>
+              <Ionicons name="shield-checkmark" size={28} color={brandColors.mintGreen} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.verifiedTitle, { color: isDark ? brandColors.mintGreen : brandColors.brandNavy }]}>Verified Student</Text>
+              <Text style={[styles.verifiedSub, { color: isDark ? 'rgba(255,255,255,0.8)' : colors.text.secondary }]}>Active university email</Text>
+            </View>
           </View>
         </View>
 

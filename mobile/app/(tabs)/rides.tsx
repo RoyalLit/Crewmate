@@ -189,7 +189,7 @@ export default function RidesScreen(): React.JSX.Element {
         renderItem={renderRideItem}
         ListEmptyComponent={<EmptyState icon="calendar-outline" title="No rides found" subtitle="Your rides and requests will appear here" />}
         ListHeaderComponent={
-          <View style={[styles.headerContainer, { paddingTop: spacing.xl }]}>
+          <View style={[styles.headerContainer, { paddingTop: spacing.xl, paddingHorizontal: 0 }]}>
             <Text style={[styles.headerTitle, { color: colors.text.primary }]}>My Rides</Text>
             <SegmentedControl {...{ activeTab, handleTabPress, animatedPillStyle, colors, isDark }} />
           </View>

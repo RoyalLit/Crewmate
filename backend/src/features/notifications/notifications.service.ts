@@ -36,30 +36,30 @@ class NotificationsService {
   }
 
   // Domain-specific notification wrappers
-  async notifyRequestReceived(pushToken: string, requesterName: string, rideDestination: string) {
+  async notifyRequestReceived(pushToken: string, requesterName: string, rideDestination: string, rideId: string) {
     await this.sendPushNotification(
       pushToken,
       'New Ride Request',
       `${requesterName} has requested a seat for your ride to ${rideDestination}.`,
-      { type: 'REQUEST_RECEIVED' }
+      { type: 'REQUEST_RECEIVED', route: `/ride/${rideId}` }
     );
   }
 
-  async notifyRequestAccepted(pushToken: string, posterName: string, rideDestination: string) {
+  async notifyRequestAccepted(pushToken: string, posterName: string, rideDestination: string, rideId: string, posterId: string) {
     await this.sendPushNotification(
       pushToken,
       'Request Accepted!',
       `${posterName} accepted your request for the ride to ${rideDestination}.`,
-      { type: 'REQUEST_ACCEPTED' }
+      { type: 'REQUEST_ACCEPTED', route: `/chat/${rideId}/${posterId}` }
     );
   }
 
-  async notifyNewMessage(pushToken: string, senderName: string) {
+  async notifyNewMessage(pushToken: string, senderName: string, rideId: string, senderId: string) {
     await this.sendPushNotification(
       pushToken,
       'New Message',
       `${senderName} sent you a message.`,
-      { type: 'NEW_MESSAGE' }
+      { type: 'NEW_MESSAGE', route: `/chat/${rideId}/${senderId}` }
     );
   }
 

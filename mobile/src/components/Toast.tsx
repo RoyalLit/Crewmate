@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform, DeviceEventEmitter } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSequence,
-  withDelay,
+  withSpring,
+  cancelAnimation,
   runOnJS
 } from 'react-native-reanimated';
 import { useTheme } from '../design/theme';
@@ -21,14 +21,11 @@ export interface ToastData {
   duration?: number;
 }
 
-type ToastListener = (data: ToastData) => void;
-let showListener: ToastListener | null = null;
+const TOAST_EVENT = 'SHOW_GLOBAL_TOAST';
 
 export class Toast {
   static show(options: ToastData) {
-    if (showListener) {
-      showListener(options);
-    }
+    DeviceEventEmitter.emit(TOAST_EVENT, options);
   }
 }
 
@@ -41,57 +38,62 @@ export function ToastProvider() {
   const opacity = useSharedValue(0);
 
   useEffect(() => {
-    showListener = (toastData: ToastData) => {
+    const subscription = DeviceEventEmitter.addListener(TOAST_EVENT, (toastData: ToastData) => {
       setData(toastData);
-      // Trigger intentional haptic feedback
+      
       if (Platform.OS !== 'web') {
         if (toastData.type === 'success') {
-          // A satisfying double-pulse for success (e.g. after posting a ride)
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } else if (toastData.type === 'error') {
-          // A heavy, warning vibration for errors
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } else {
-          // A light tick for general info
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         }
       }
-      
-      const duration = toastData.duration || 3000;
-      
-      // Animate in
-      translateY.value = withTiming(0, { duration: 300 });
-      opacity.value = withTiming(1, { duration: 300 });
-      
-      // Animate out after delay
-      translateY.value = withSequence(
-        withDelay(
-          duration,
-          withTiming(-100, { duration: 300 }, (finished) => {
-            if (finished) {
-              runOnJS(setData)(null);
-            }
-          })
-        )
-      );
-      opacity.value = withSequence(
-        withDelay(duration, withTiming(0, { duration: 300 }))
-      );
-    };
+    });
+    
     return () => {
-      showListener = null;
+      subscription.remove();
     };
   }, []);
+
+  useEffect(() => {
+    if (data) {
+      const duration = data.duration || 3000;
+      
+      cancelAnimation(translateY);
+      cancelAnimation(opacity);
+
+      // Animate in
+      translateY.value = withSpring(0, { damping: 12, stiffness: 150 });
+      opacity.value = withTiming(1, { duration: 200 });
+      
+      // Animate out after delay
+      const timeout = setTimeout(() => {
+        translateY.value = withTiming(-100, { duration: 300 });
+        opacity.value = withTiming(0, { duration: 300 }, (finished) => {
+          if (finished) {
+            runOnJS(setData)(null);
+          }
+        });
+      }, duration);
+
+      return () => clearTimeout(timeout);
+    } else {
+      // Instantly reset when data is null
+      translateY.value = -100;
+      opacity.value = 0;
+    }
+    return undefined;
+  }, [data]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
   }));
 
-  if (!data) return null;
-
-  const isSuccess = data.type === 'success';
-  const isError = data.type === 'error';
+  const isSuccess = data?.type === 'success';
+  const isError = data?.type === 'error';
   const backgroundColor = isError ? colors.status.rejectedBackground : (isSuccess ? colors.status.acceptedBackground : colors.background.card);
   const iconName = isError ? 'alert-circle' : (isSuccess ? 'checkmark-circle' : 'information-circle');
   const textColor = '#FFFFFF';
@@ -102,7 +104,7 @@ export function ToastProvider() {
         styles.container,
         animatedStyle,
         {
-          top: Platform.OS === 'ios' ? Math.max(insets.top, 40) : 40,
+          top: Math.max(insets.top + 10, 50),
           backgroundColor,
         }
       ]}
@@ -110,10 +112,10 @@ export function ToastProvider() {
     >
       <Ionicons name={iconName} size={24} color={textColor} />
       <View style={styles.textContainer}>
-        {!!data.title && (
+        {!!data?.title && (
           <Text style={[styles.title, { color: textColor }]}>{data.title}</Text>
         )}
-        <Text style={[styles.message, { color: textColor }]}>{data.message}</Text>
+        <Text style={[styles.message, { color: textColor }]}>{data?.message}</Text>
       </View>
     </Animated.View>
   );
@@ -129,7 +131,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.md,
     borderRadius: 12,
-    elevation: 8,
+    elevation: 999,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,

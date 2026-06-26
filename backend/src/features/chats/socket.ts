@@ -132,7 +132,7 @@ export function initializeSockets(server: HttpServer): void {
           ]);
           
           if (receiver?.expoPushToken && sender) {
-            notificationsService.notifyNewMessage(receiver.expoPushToken, sender.name);
+            notificationsService.notifyNewMessage(receiver.expoPushToken, sender.name, data.rideId, user.userId);
           }
         } catch (pushErr) {
           logger.error(`Error sending push notification: ${String(pushErr)}`);

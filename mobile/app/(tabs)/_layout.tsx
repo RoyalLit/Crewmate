@@ -287,7 +287,7 @@ export default function TabsLayout(): React.JSX.Element {
   return (
     <ErrorBoundary>
       <Tabs
-        tabBar={(props) => <CustomTabBar {...props} onPostPress={() => bottomSheetRef.current?.expand()} />}
+        tabBar={(props) => <CustomTabBar {...props} onPostPress={() => bottomSheetRef.current?.present()} />}
         screenOptions={{ headerShown: false }}
       >
         <Tabs.Screen name="index" />

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TextInput, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, TextInput } from 'react-native';
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../design/theme';
 import { spacing } from '../design/tokens';
@@ -9,9 +10,10 @@ interface CityAutocompleteProps {
   onChange: (city: string) => void;
   placeholder: string;
   iconName: keyof typeof Ionicons.glyphMap;
+  inBottomSheet?: boolean;
 }
 
-export function CityAutocomplete({ value, onChange, placeholder, iconName }: CityAutocompleteProps) {
+export function CityAutocomplete({ value, onChange, placeholder, iconName, inBottomSheet = false }: CityAutocompleteProps) {
   const { colors, isDark } = useTheme();
   const [query, setQuery] = useState(value);
   const [results, setResults] = useState<any[]>([]);
@@ -81,15 +83,16 @@ export function CityAutocomplete({ value, onChange, placeholder, iconName }: Cit
     setShowDropdown(false);
   };
 
+  const InputComponent = inBottomSheet ? BottomSheetTextInput : TextInput;
+
   return (
     <View style={styles.container}>
       <View style={[styles.inputWrapper, { backgroundColor: colors.background.subtle, borderColor: colors.border.default }]}>
         <Ionicons name={iconName} size={20} color={colors.text.placeholder} style={styles.inputIcon} />
-        <TextInput
+        <InputComponent
           style={[styles.input, { color: colors.text.primary }]}
           placeholder={placeholder}
           placeholderTextColor={colors.text.placeholder}
-          keyboardAppearance={isDark ? 'dark' : 'light'}
           value={query}
           onChangeText={searchCities}
           onFocus={() => {

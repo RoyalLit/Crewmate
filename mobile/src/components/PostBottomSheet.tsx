@@ -1,7 +1,7 @@
 import { Toast } from './Toast';
 import React, { useCallback, useMemo, forwardRef, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator } from 'react-native';
-import BottomSheet, { BottomSheetScrollView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { BottomSheetScrollView, BottomSheetBackdrop, BottomSheetModal, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../design/theme';
 import { spacing, brandColors } from '../design/tokens';
@@ -10,7 +10,7 @@ import { useCreateRideMutation, type CreateRideData } from '../api/ridesHooks';
 import { CityAutocomplete } from './CityAutocomplete';
 import { useAuthStore } from '../store/authStore';
 
-export type PostBottomSheetRef = BottomSheet;
+export type PostBottomSheetRef = BottomSheetModal;
 
 export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
   const { colors, isDark } = useTheme();
@@ -135,8 +135,8 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
         });
 
         Toast.show({ title: 'Success', message: 'Ride Posted Successfully!', type: 'success' });
-        // @ts-expect-error - BottomSheet ref type doesn't expose close() on current
-        ref?.current?.close();
+        // @ts-expect-error - BottomSheet ref type doesn't expose dismiss() directly without casting
+        ref?.current?.dismiss();
         setTimeout(() => {
           setStep(1);
           setFrom('');
@@ -165,6 +165,7 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
                 onChange={setFrom}
                 placeholder="Leaving from"
                 iconName="location-outline"
+                inBottomSheet
               />
             </View>
             
@@ -174,6 +175,7 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
                 onChange={setTo}
                 placeholder="Going to"
                 iconName="flag-outline"
+                inBottomSheet
               />
             </View>
 
@@ -226,7 +228,7 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
             <Text style={[styles.stepperLabel, { color: colors.text.primary, marginBottom: spacing.sm }]}>Date of travel</Text>
             <View style={[styles.inputContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: dateError ? brandColors.coralPink : 'transparent', borderWidth: dateError ? 1 : 0, marginBottom: dateError ? 4 : spacing.md }]}>
               <Ionicons name="calendar-outline" size={20} color={colors.text.placeholder} style={styles.inputIcon} />
-              <TextInput
+              <BottomSheetTextInput
                 style={[styles.input, { color: colors.text.primary }]}
                 placeholder="YYYY-MM-DD"
                 placeholderTextColor={colors.text.placeholder}
@@ -241,7 +243,7 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
             <Text style={[styles.stepperLabel, { color: colors.text.primary, marginTop: spacing.md, marginBottom: spacing.sm }]}>Departure Time</Text>
             <View style={[styles.inputContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: (timeError || pastTimeError) ? brandColors.coralPink : 'transparent', borderWidth: (timeError || pastTimeError) ? 1 : 0, marginBottom: (timeError || pastTimeError) ? 4 : spacing.md }]}>
               <Ionicons name="time-outline" size={20} color={colors.text.placeholder} style={styles.inputIcon} />
-              <TextInput
+              <BottomSheetTextInput
                 style={[styles.input, { color: colors.text.primary }]}
                 placeholder="HH:mm (24hr)"
                 placeholderTextColor={colors.text.placeholder}
@@ -256,7 +258,7 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
             <Text style={[styles.stepperLabel, { color: colors.text.primary, marginTop: spacing.md, marginBottom: spacing.sm }]}>Estimated Arrival Time</Text>
             <View style={[styles.inputContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: arrivalTimeError ? brandColors.coralPink : 'transparent', borderWidth: arrivalTimeError ? 1 : 0, marginBottom: (arrivalTimeError || arrivesNextDay) ? 4 : spacing.md }]}>
               <Ionicons name="time-outline" size={20} color={colors.text.placeholder} style={styles.inputIcon} />
-              <TextInput
+              <BottomSheetTextInput
                 style={[styles.input, { color: colors.text.primary }]}
                 placeholder="HH:mm (24hr)"
                 placeholderTextColor={colors.text.placeholder}
@@ -294,7 +296,7 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
 
             <View style={[styles.inputContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: fareError ? brandColors.coralPink : 'transparent', borderWidth: fareError ? 1 : 0, marginBottom: fareError ? 4 : spacing.md }]}>
               <Text style={[styles.currencySymbol, { color: colors.text.primary }]}>₹</Text>
-              <TextInput
+              <BottomSheetTextInput
                 style={[styles.input, { color: colors.text.primary, fontSize: 20, fontFamily: 'PlusJakartaSans-700Bold' }]}
                 placeholder="0"
                 keyboardType="numeric"
@@ -370,9 +372,9 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
   };
 
   return (
-    <BottomSheet
+    <BottomSheetModal
       ref={ref}
-      index={-1}
+      index={0}
       snapPoints={snapPoints}
       enablePanDownToClose
       backdropComponent={renderBackdrop}
@@ -411,7 +413,7 @@ export const PostBottomSheet = forwardRef<PostBottomSheetRef>((_props, ref) => {
           </Pressable>
         </View>
       </BottomSheetScrollView>
-    </BottomSheet>
+    </BottomSheetModal>
   );
 });
 

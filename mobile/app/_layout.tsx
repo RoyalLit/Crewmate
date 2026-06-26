@@ -47,6 +47,7 @@ import { queryClient } from '../src/lib/queryClient';
 import { AuthProvider } from '../src/context/AuthContext';
 import { SocketProvider } from '../src/context/SocketContext';
 import { ActionSheetProvider } from '@expo/react-native-action-sheet';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { GlobalAlert } from '../src/components/GlobalAlert';
 import { ToastProvider } from '../src/components/Toast';
 import ErrorBoundary from '../src/components/ErrorBoundary';
@@ -158,17 +159,17 @@ export default function RootLayout(): React.JSX.Element | null {
           <AuthProvider>
           <SocketProvider>
             <ActionSheetProvider>
-              <>
+              <BottomSheetModalProvider>
                 <Stack screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="(auth)" />
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen name="ride/[id]" />
                 </Stack>
                 <GlobalAlert />
-                <ToastProvider />
                 {(!animationDone || !isAuthChecked) && <BootScreen onAnimationDone={() => setAnimationDone(true)} isReady={isAuthChecked} />}
-              </>
+              </BottomSheetModalProvider>
             </ActionSheetProvider>
+            <ToastProvider />
           </SocketProvider>
           </AuthProvider>
         </ThemeProvider>

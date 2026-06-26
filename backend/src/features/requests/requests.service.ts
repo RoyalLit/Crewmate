@@ -83,7 +83,7 @@ export class RequestsService {
         usersRepository.findById(userId)
       ]).then(([poster, requester]) => {
         if (poster?.expoPushToken && requester) {
-          notificationsService.notifyRequestReceived(poster.expoPushToken, requester.name, ride.toCity);
+          notificationsService.notifyRequestReceived(poster.expoPushToken, requester.name, ride.toCity, ride._id.toString());
         }
       }).catch(err => logger.error({ err }, 'Failed to send push notification'));
 
@@ -177,7 +177,7 @@ export class RequestsService {
         usersRepository.findById(userId)
       ]).then(([requester, poster]) => {
         if (requester?.expoPushToken && poster) {
-          notificationsService.notifyRequestAccepted(requester.expoPushToken, poster.name, ride.toCity);
+          notificationsService.notifyRequestAccepted(requester.expoPushToken, poster.name, ride.toCity, ride._id.toString(), poster._id.toString());
         }
       }).catch(err => logger.error({ err }, 'Failed to send push notification'));
 
